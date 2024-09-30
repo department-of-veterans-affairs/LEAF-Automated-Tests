@@ -116,6 +116,14 @@ test('navigate to Form Editor and create a travel form', async ({ page }, testIn
   await page.locator('#workflowID').selectOption(optionToSelect);
   expect(page.locator('#workflowID')).toHaveValue(optionToSelect);
 
+  // Publish the form
+  let formOptionToSelect = await page.locator('option', { hasText: 'Available' }).getAttribute('value');
+  if(formOptionToSelect == null) {
+    formOptionToSelect = '';
+  }
+  await page.locator('#availability').selectOption(formOptionToSelect);
+  expect(page.locator('#availability')).toHaveValue("1");
+
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 });
