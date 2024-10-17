@@ -30,8 +30,8 @@ test.skip('column order is maintained after modifying the search filter', { tag:
     await expect(page.locator('th').nth(4)).toContainText('Numeric');
 });
 
-test.only("Report Builder table displays selected data column", async ({ page }) => {
-    await page.goto("https://host.docker.internal/Test_Request_Portal/", { timeout: 60000 });
+test("Report Builder table displays selected data column", async ({ page }) => {
+    await page.goto("https://host.docker.internal/Test_Request_Portal/");
     await page.getByText('Report Builder Create custom').click();
     await page.getByRole('button', { name: 'Next Step' }).click();
     await page.locator('#indicatorList').getByText('Service', { exact: true }).click();
@@ -64,7 +64,7 @@ test("User Redirect to SearchFilter Page on Modify Filter", async ({ page }) => 
 
 test("Pop up model opens and updates title on title column value click", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
-    await page.getByRole('cell', { name: 'Available for TEST CHANGE' }).click();
+    await page.getByRole('cell', { name: 'Available for test case' }).first().click();
     await page.getByLabel('Report Title').click();
 
     await page.getByLabel('Report Title').fill('Available for TEST CHANGE TITLE');
@@ -75,10 +75,7 @@ test("Pop up model opens and updates title on title column value click", async (
 test("Connected forms open on UID link click", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
     await page.getByRole('link', { name: '956' }).click();
-    await page.getByText('Available for TEST CHANGE').click();
-    await page.getByRole('link', { name: 'Main Page' }).click();
-    await page.getByText('Report Builder Create custom').click();
-    await page.getByRole('button', { name: 'Next Step' }).click();
+    await expect(page.locator('#headerTab')).toContainText('Request #956');
 });
 
 test("Modify Search if updated Generate Report will shows No Result  ", async ({ page }) => {
