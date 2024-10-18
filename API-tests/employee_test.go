@@ -164,7 +164,7 @@ func TestEmployee_AvoidPhantomIncrements(t *testing.T) {
 	local := localEmployeeRes[localEmployeeKey].UserName
 	nat := natEmpoyeeRes[natEmployeeKey].UserName
 
-	if (!(nat != local && strings.ToLower(nat) == strings.ToLower(local))) {
+	if !(nat != local && strings.ToLower(nat) == strings.ToLower(local)) {
 		t.Errorf("userNames should match except case - local = %v, national = %v", local, nat)
 	}
 
@@ -204,7 +204,7 @@ func TestEmployee_AvoidPhantomIncrements(t *testing.T) {
 		t.Error("empUID is not a number")
 	}
 
-	if  id2 != (id1 + 1) {
+	if id2 != (id1 + 1) {
 		t.Error("unexpected auto increment value")
 	}
 }
