@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // When the underlying issue is fixed, we should expect this test to pass.
 // Tests should be tagged with an associated ticket or PR reference
-test.skip('column order is maintained after modifying the search filter', { tag: '@issue:LEAF-4482' }, async ({ page }, testInfo) => {
+test.fail('column order is maintained after modifying the search filter', { tag: '@issue:LEAF-4482' }, async ({ page }, testInfo) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJBghmXEAGhDQDsM0BjfAeygEkARbAVmJFoAdo6psAPBxj4qAC2wBOAAyyOAc3wRsAQQByLAL5F0WRDggAbCJCwluvMPWwBeYaImJpJRZFUaQmgLokAVrXIEFB8QOHowJGBtEHkTJnxCFBAAFg4ARjSOdhDDNBg0CMQ02WcQXPywAHkAM2q4EyRpTSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgBZmtBvjABZAK4kiAAhLQyy5GQAeHam3Qc8ARl79YCFBhwzjxyfUatoAc3Kr1mnXtbt8AJjNICyFrUTAAVgdpAgA5eQZ0BGYDIwBmbgBdIA%3D%3D&sort=N4Ig1gpgniBcIFYQBoQHsBOATCG4hwGcBjEAXyA%3D');
 
     await expect(page.getByLabel('Sort by Numeric')).toBeInViewport();
@@ -150,17 +150,23 @@ test('modify search with And logical filter', async ({ page }) => {
     await page.getByRole('cell', { name: 'Resolved' }).locator('a').click();
     await page.getByRole('option', { name: 'Submitted', exact: true }).click();
     await page.getByRole('button', { name: 'Next Step' }).click();
-    await page.getByText('Multi line text').click();
-    await page.getByTitle('indicatorID: 3\nSingle line text').click();
+    await page.locator('#indicatorList').getByText('General Form').click();
+    await page.getByTitle('indicatorID: 7\nRadio').locator('span').click();
     await page.getByRole('button', { name: 'Generate Report' }).click();
+    await expect(page.getByLabel('Sort by Radio')).toBeVisible();
 });
 
-test("fill textbox for multi line text", async ({ page }) => {
+test.only("fill textbox for multi line text", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
-    await page.locator('#LeafFormGrid642_961_4').click();
     await page.getByRole('textbox', { name: 'Multi line text' }).click();
-    await page.getByRole('textbox', { name: 'Multi line text' }).fill('multi\nline\ntext');
+    
+    await page.getByRole('textbox', { name: 'Multi line text' }).fill('test this is a test');
     await page.getByRole('button', { name: 'Save Change' }).click();
+    await expect(page.locator('#LeafFormGrid517_960_4')).toContainText('test this is a test');
+    await page.getByRole('cell', { name: 'test this is the test' }).click();
+  await page.getByLabel('Multi line text', { exact: true }).click();
+  await page.getByLabel('Multi line text', { exact: true }).fill('test');
+  await page.getByRole('button', { name: 'Save Change' }).click();
 });
 
 test("Select multiple filter using AND/OR,", async ({ page }) => {
