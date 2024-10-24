@@ -8,13 +8,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-<<<<<<< HEAD
-    "@playwright/test": "^1.48.1",
-    "@types/node": "^22.7.6",
-    "typescript": "^5.6.3"
-=======
     "@playwright/test": "^1.47.2",
     "@types/node": "^22.1.0"
->>>>>>> e31c4af1cc97f0ac1bd42adce95756ddf52b0a2b
   }
 }
