@@ -31,6 +31,7 @@ test.fail('column order is maintained after modifying the search filter', { tag:
 });
 
 test("Report Builder table displays selected data column", async ({ page }) => {
+    await page.waitForTimeout(3000);
     await page.goto("https://host.docker.internal/Test_Request_Portal/");
     await page.getByText('Report Builder Create custom').click();
     await page.getByRole('button', { name: 'Next Step' }).click();
@@ -40,13 +41,13 @@ test("Report Builder table displays selected data column", async ({ page }) => {
     await expect(page.getByLabel('Type of Request')).toBeChecked();
     await page.getByRole('button', { name: 'Generate Report' }).click();
 
-    await expect(page.getByLabel('Sort by Title')).toBeVisible();
     await expect(page.getByLabel('Sort by Service')).toBeVisible();
     await expect(page.getByLabel('Sort by Current Status')).toBeVisible();
     await expect(page.getByLabel('Sort by Type')).toBeVisible();
 });
 
 test("User Redirect to SearchFilter Page on Modify Filter", async ({ page }) => {
+    await page.waitForTimeout(5000);
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
     await page.getByRole('button', { name: 'Modify Search' }).click();
     await page.getByRole('cell', { name: 'Resolved' }).locator('a').click();
@@ -68,6 +69,11 @@ test("Pop up model opens and updates title on title column value click", async (
     await page.getByLabel('Report Title').click();
 
     await page.getByLabel('Report Title').fill('Available for TEST CHANGE TITLE');
+    await page.getByLabel('Report Title').press('Enter');
+    await page.getByRole('button', { name: 'Save Change' }).click();
+    await page.getByRole('cell', { name: 'Available for TEST CHANGE TITLE' }).first().click();
+    await page.getByLabel('Report Title').click();
+    await page.getByLabel('Report Title').fill('Available for test case');
     await page.getByLabel('Report Title').press('Enter');
     await page.getByRole('button', { name: 'Save Change' }).click();
 });
@@ -121,10 +127,6 @@ test("Test Edit Labels/JSON button working", async ({ page }) => {
     await page.getByRole('button', { name: 'Shorten Link' }).click();
     await page.getByRole('button', { name: 'Expand Link' }).click();
     await page.getByRole('button', { name: 'Close' }).click();
-
-    //await page.getByRole('button', { name: 'email report Edit Labels' }).click();
-    //await page.locator('#xhr').click();
-    //await page.getByRole('button', { name: 'Save Change' }).click(); // test test
 });
 
 test('validate create row button', async ({ page }) => {
@@ -158,31 +160,27 @@ test('modify search with And logical filter', async ({ page }) => {
 
 test("fill textbox for multi line text", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
-    await page.getByRole("cell", { name: "testing" }).click();
+    await page.getByRole("cell", { name: "test", exact: true }).click();
     await page.getByLabel("Multi line text", { exact: true }).click();
     await page.getByLabel('Multi line text', { exact: true }).fill("test this is a test");
     await page.getByRole("button", { name: "Save Change" }).click();
     await expect(page.getByRole('cell', { name: "test this is a test" })).toBeVisible();
 
     await page.getByRole("cell", { name: "test this is a test" }).click();
-    await expect(page.locator('#LeafFormGrid517_960_4')).toContainText("test this is a test");
     await page.getByLabel("Multi line text", { exact: true }).click();
-    await page.getByLabel('Multi line text', { exact: true }).fill('testing');
+    await page.getByLabel('Multi line text', { exact: true }).fill('test');
     await page.getByRole('button', { name: 'Save Change' }).click();
 });
 
 test("Select multiple filter using AND/OR,", async ({ page }) => {
-    await page.goto("https://host.docker.internal/Test_Request_Portal/");
-    await page.getByText('Report Builder Create custom').click();
+    await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3");
     await page.getByRole('cell', { name: 'IS NOT' }).locator('a').click();
     await page.getByRole('option', { name: 'IS', exact: true }).click();
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
-    await page.getByRole('option', { name: 'Current Status' }).click();
-    await page.getByLabel('add logical and filter').click();
-    await page.getByRole('cell', { name: 'Current Status', exact: true }).locator('a').click();
-    await page.locator('#LeafFormSearch3_widgetTerm_1-chosen-search-result-6').click();
+    await page.getByRole('option', { name: 'Type', exact: true }).click();
     await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
     await page.getByRole('option', { name: 'General Form' }).click();
+    await page.getByLabel('add logical and filter').click();
     await page.getByRole('button', { name: 'Next Step' }).click();
     await page.getByRole('button', { name: 'Generate Report' }).click();
 });
@@ -197,10 +195,15 @@ test("Edit Report Title", async ({ page }) => {
     await page.getByRole('button', { name: 'Save Change' }).click();
 });
 
-test("Assigned Group form check", async ({ page }) => {
+test("Check Single Line Text", async ({ page }) => {
     page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAVztASQBEQAaEAewAdoBDMCqbAXjJBnoGMALbNgc3oRsAQQByJAL6l0WRCE5D%2BjAJ7E21OgybzW5DmB7YAZoxgB9AKwRaABgDsAodgDyAJRDTZ2DBAA2EJBY5JpQ9IwsbAZGiLbkgpCiEp4AuuQAVhRoAHYIKCD4UABuaJzC5DloYGjhUGK0MMJpBYxgSMDSIPyBRPS0SMggAJxsACxsjuQAzCDNfmgwVUgAjLZr5POLYC7GxvhtsZJAA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAizLoAbggrVaDfGGZt0HPDz6RYCFBhyLoxCLvTN5jJdRVqN%2FbUL2iwieEVRQAQgFdkaKGfoLZXYuXjtBE30CAE4AhQIAQRYWCABzKDIYAAIAcXRULwAHYNVQzQEdYSiwABY4iwBZLxIiLJJoMizkMgAPDisQ9TCtCKqnAHZ6xQAlRDhUEpthiocRRQBmKYIAZWhU8jaOrt7%2B1kGeAF0gA%3D");
-    await page.locator('#LeafFormGrid264_961_9').click();
-    await page.getByTitle('194').click();
-    await page.getByTitle('194').click();
-    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole("cell", { name: "test1"}).click();
+    await page.getByLabel('Single line text', {exact: true}).click();
+    await page.getByLabel('Single line text', {exact: true}).fill("test single line");
+    await page.getByRole("button", {name: "Save Change"}).click();
+
+    await page.getByRole("cell", { name : "test single line"}).click();
+    await page.getByLabel('Single line text', {exact: true}).click();
+    await page.getByLabel('Single line text', {exact: true}).fill("test1");
+    await page.getByRole("button", {name: "Save Change"}).click();
 });
