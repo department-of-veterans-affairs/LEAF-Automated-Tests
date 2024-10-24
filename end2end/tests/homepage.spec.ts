@@ -46,7 +46,7 @@ test('new record', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
   await page.getByLabel('single line text').click();
   await page.getByLabel('single line text').fill('single line');
-  await page.getByRole('button', { name: 'Next Question', exact: true }).click();
+  await page.getByRole('button', { name: 'Next Question', exact: true }).first().click();
   await expect(page.locator('#requestTitle')).toContainText(uniqueText);
 
   const screenshot = await page.screenshot();
@@ -67,4 +67,17 @@ test('table header background color is inverted when scrolled down', async ({ pa
 
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+});
+
+test('show more records', async ({ page }, testInfo) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+
+  // Wait for async load
+  await expect(page.locator('#searchContainer')).not.toContainText('Searching for records');
+
+  await expect(page.getByRole('link', { name: '5', exact: true })).not.toBeVisible(); // arbitrary record that would be on the bottom of the full list
+  await page.getByRole('button', { name: 'Show more records' }).click();
+  await expect(page.getByRole('button', { name: 'Show more records' })).not.toBeVisible();
+  await page.keyboard.press('End');
+  await expect(page.getByRole('link', { name: '5', exact: true })).toBeVisible();;
 });
