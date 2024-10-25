@@ -4050,5 +4050,5 @@ CREATE TABLE `tag_hierarchy` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `tag_hierarchy` (`tag`, `parentTag`) VALUES
-('quadrad',	NULL),
-('service',	'quadrad');
+('ELT',	NULL),
+('service',	'ELT');
