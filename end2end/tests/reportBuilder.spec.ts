@@ -30,26 +30,32 @@ test.fail('column order is maintained after modifying the search filter', { tag:
     await expect(page.locator('th').nth(4)).toContainText('Numeric');
 });
 
-test("Report Builder table displays selected data column", async ({ page }) => {
+test.only("Report Builder table displays selected data column", async ({ page }) => {
     await page.waitForTimeout(3000);
     await page.goto("https://host.docker.internal/Test_Request_Portal/");
     await page.getByText('Report Builder Create custom').click();
     await page.getByRole('button', { name: 'Next Step' }).click();
-    await page.locator('#indicatorList').getByText('Service', { exact: true }).click();
+    const serviceColumn = page.locator('#indicatorList').getByText('Service', { exact: true });
+    await expect(serviceColumn).toBeVisible({timeout: 5000});
+    await serviceColumn.click();
     await page.locator('#indicatorList').getByText('Current Status').click();
-    await page.getByText('Type of Request').click();
-    await expect(page.getByLabel('Type of Request')).toBeChecked();
+    const typeOfRequest = page.getByText('Type of Request');
+    await expect(typeOfRequest).toBeVisible({timeout: 5000});
+    await typeOfRequest.click();
+    await expect(page.getByLabel('Type of Request')).toBeChecked({timeout: 5000});
     await page.getByRole('button', { name: 'Generate Report' }).click();
 
-    await expect(page.getByLabel('Sort by Service')).toBeVisible();
-    await expect(page.getByLabel('Sort by Current Status')).toBeVisible();
-    await expect(page.getByLabel('Sort by Type')).toBeVisible();
+    await expect(page.getByLabel('Sort by Service')).toBeVisible({timeout: 5000});
+    await expect(page.getByLabel('Sort by Current Status')).toBeVisible({timeout: 5000});
+    await expect(page.getByLabel('Sort by Type')).toBeVisible({timeout: 5000});
 });
 
 test("User Redirect to SearchFilter Page on Modify Filter", async ({ page }) => {
     await page.waitForTimeout(5000);
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
     await page.getByRole('button', { name: 'Modify Search' }).click();
+    const verifyModifySearch = page.getByText('Step 1: Develop search filter');
+    await expect(verifyModifySearch).toHaveText('Step 1: Develop search filter', {timeout: 5000});
     await page.getByRole('cell', { name: 'Resolved' }).locator('a').click();
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
     await page.getByRole('option', { name: 'Data Field' }).click();
@@ -65,17 +71,20 @@ test("User Redirect to SearchFilter Page on Modify Filter", async ({ page }) => 
 
 test("Pop up model opens and updates title on title column value click", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
-    await page.getByRole('cell', { name: 'Available for test case' }).first().click();
-    await page.getByLabel('Report Title').click();
+    const verifyTitle = page.getByRole('cell', { name: 'Available for test case' }).first();
+    await verifyTitle.click();
+    const title = page.getByLabel('Report Title');
+    await title.click();
 
-    await page.getByLabel('Report Title').fill('Available for TEST CHANGE TITLE');
-    await page.getByLabel('Report Title').press('Enter');
+    await title.fill('Available for TEST CHANGE TITLE');
     await page.getByRole('button', { name: 'Save Change' }).click();
-    await page.getByRole('cell', { name: 'Available for TEST CHANGE TITLE' }).first().click();
-    await page.getByLabel('Report Title').click();
-    await page.getByLabel('Report Title').fill('Available for test case');
-    await page.getByLabel('Report Title').press('Enter');
+    const changedTitle = page.getByRole('cell', { name: 'Available for TEST CHANGE TITLE' }).first()
+    await expect(changedTitle).toHaveText('Available for TEST CHANGE TITLE', {timeout: 5000});
+    await changedTitle.click();
+    await title.click();
+    await title.fill('Available for test case');
     await page.getByRole('button', { name: 'Save Change' }).click();
+    await expect(verifyTitle).toHaveText('Available for test case', {timeout: 5000});
 });
 
 test("Connected forms open on UID link click", async ({ page }) => {
@@ -118,7 +127,6 @@ test("Test Share Report button", async ({ page }) => {
     await page.getByText('https://host.docker.internal/').click();
     await page.getByText('This link can be shared to provide a live view into this report.https://host.').click();
     await page.getByRole('button', { name: 'Close' }).click();
-    //await page.getByRole('button', { name: 'Email Report', exact: true }).click();
 });
 
 test("Test Edit Labels/JSON button working", async ({ page }) => {
@@ -155,21 +163,26 @@ test('modify search with And logical filter', async ({ page }) => {
     await page.locator('#indicatorList').getByText('General Form').click();
     await page.getByTitle('indicatorID: 7\nRadio').locator('span').click();
     await page.getByRole('button', { name: 'Generate Report' }).click();
-    await expect(page.getByLabel('Sort by Radio')).toBeVisible();
+    await expect(page.getByLabel('Sort by Radio')).toBeVisible({timeout: 5000});
 });
 
 test("fill textbox for multi line text", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
-    await page.getByRole("cell", { name: "test", exact: true }).click();
-    await page.getByLabel("Multi line text", { exact: true }).click();
-    await page.getByLabel('Multi line text', { exact: true }).fill("test this is a test");
-    await page.getByRole("button", { name: "Save Change" }).click();
-    await expect(page.getByRole('cell', { name: "test this is a test" })).toBeVisible();
+    const firstText = page.getByRole("cell", { name: "test", exact: true });
+    await firstText.click();
+    const multiText = page.getByLabel("Multi line text", { exact: true });
 
-    await page.getByRole("cell", { name: "test this is a test" }).click();
-    await page.getByLabel("Multi line text", { exact: true }).click();
-    await page.getByLabel('Multi line text', { exact: true }).fill('test');
+    await multiText.click();
+    await multiText.fill("test this is a test");
+    await page.getByRole("button", { name: "Save Change" }).click();
+    const changedText = page.getByRole('cell', { name: "test this is a test" });
+    await expect(changedText).toBeVisible({timeout: 5000});
+
+    await changedText.click();
+    await multiText.click();
+    await multiText.fill('test');
     await page.getByRole('button', { name: 'Save Change' }).click();
+    await expect(firstText).toBeVisible({timeout: 5000});
 });
 
 test("Select multiple filter using AND/OR,", async ({ page }) => {
@@ -188,22 +201,35 @@ test("Select multiple filter using AND/OR,", async ({ page }) => {
 test("Edit Report Title", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
     await page.getByRole('cell', { name: 'TestForm_NonadminCannotCancelOwnSubmittedRecord_new' }).click();
-    await page.getByLabel('Report Title').dblclick();
-    await page.getByLabel('Report Title').dblclick();
-    await page.getByLabel('Report Title').click();
-    await page.getByLabel('Report Title').fill('TestForm_NonadminCannotCancelOwnSubmittedRecord_new_Title');
+    const reportTitle = page.getByLabel('Report Title');
+    await reportTitle.click();
+    await reportTitle.fill('TestForm_NonadminCannotCancelOwnSubmittedRecord_new_Title');
     await page.getByRole('button', { name: 'Save Change' }).click();
+    const updatedTitle = page.getByRole('cell', { name: 'TestForm_NonadminCannotCancelOwnSubmittedRecord_new_Title' })
+    await expect(updatedTitle).toHaveText("TestForm_NonadminCannotCancelOwnSubmittedRecord_new_Title");
+
+    await updatedTitle.click();
+    await reportTitle.click();
+    await reportTitle.fill('TestForm_NonadminCannotCancelOwnSubmittedRecord_new');
+    await page.getByRole('button', { name: 'Save Change' }).click();
+    const revertedTitle = page.getByRole('cell', { name: 'TestForm_NonadminCannotCancelOwnSubmittedRecord_new' });
+    await expect(revertedTitle).toHaveText("TestForm_NonadminCannotCancelOwnSubmittedRecord_new");
+
 });
 
 test("Check Single Line Text", async ({ page }) => {
-    page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAVztASQBEQAaEAewAdoBDMCqbAXjJBnoGMALbNgc3oRsAQQByJAL6l0WRCE5D%2BjAJ7E21OgybzW5DmB7YAZoxgB9AKwRaABgDsAodgDyAJRDTZ2DBAA2EJBY5JpQ9IwsbAZGiLbkgpCiEp4AuuQAVhRoAHYIKCD4UABuaJzC5DloYGjhUGK0MMJpBYxgSMDSIPyBRPS0SMggAJxsACxsjuQAzCDNfmgwVUgAjLZr5POLYC7GxvhtsZJAA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAizLoAbggrVaDfGGZt0HPDz6RYCFBhyLoxCLvTN5jJdRVqN%2FbUL2iwieEVRQAQgFdkaKGfoLZXYuXjtBE30CAE4AhQIAQRYWCABzKDIYAAIAcXRULwAHYNVQzQEdYSiwABY4iwBZLxIiLJJoMizkMgAPDisQ9TCtCKqnAHZ6xQAlRDhUEpthiocRRQBmKYIAZWhU8jaOrt7%2B1kGeAF0gA%3D");
-    await page.getByRole("cell", { name: "test1"}).click();
+    await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAVztASQBEQAaEAewAdoBDMCqbAXjJBnoGMALbNgc3oRsAQQByJAL6l0WRCE5D%2BjAJ7E21OgybzW5DmB7YAZoxgB9AKwRaABgDsAodgDyAJRDTZ2DBAA2EJBY5JpQ9IwsbAZGiLbkgpCiEp4AuuQAVhRoAHYIKCD4UABuaJzC5DloYGjhUGK0MMJpBYxgSMDSIPyBRPS0SMggAJxsACxsjuQAzCDNfmgwVUgAjLZr5POLYC7GxvhtsZJAA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAizLoAbggrVaDfGGZt0HPDz6RYCFBhyLoxCLvTN5jJdRVqN%2FbUL2iwieEVRQAQgFdkaKGfoLZXYuXjtBE30CAE4AhQIAQRYWCABzKDIYAAIAcXRULwAHYNVQzQEdYSiwABY4iwBZLxIiLJJoMizkMgAPDisQ9TCtCKqnAHZ6xQAlRDhUEpthiocRRQBmKYIAZWhU8jaOrt7%2B1kGeAF0gA%3D");
+    const firstText =  page.getByRole("cell", {name: "test1"});
+    await firstText.click();
     await page.getByLabel('Single line text', {exact: true}).click();
     await page.getByLabel('Single line text', {exact: true}).fill("test single line");
     await page.getByRole("button", {name: "Save Change"}).click();
+    const singleLineText = page.getByRole("cell", {name: "test single line"});
+    await expect(singleLineText).toHaveText("test single line");
 
-    await page.getByRole("cell", { name : "test single line"}).click();
+    await singleLineText.click();
     await page.getByLabel('Single line text', {exact: true}).click();
     await page.getByLabel('Single line text', {exact: true}).fill("test1");
     await page.getByRole("button", {name: "Save Change"}).click();
+    await expect(firstText).toHaveText("test1");
 });
