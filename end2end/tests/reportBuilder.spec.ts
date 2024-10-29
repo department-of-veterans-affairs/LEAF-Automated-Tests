@@ -30,9 +30,9 @@ test.fail('column order is maintained after modifying the search filter', { tag:
     await expect(page.locator('th').nth(4)).toContainText('Numeric');
 });
 
-test.only("Report Builder table displays selected data column", async ({ page }) => {
+test("Report Builder table displays selected data column", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/");
-    await expect(page.getByText('Report Builder Create custom')).toBeVisible({timeout: 5000});
+    await expect(page.getByText('Report Builder Create custom')).toBeVisible({ timeout: 5000 });
     await page.getByText('Report Builder Create custom').click();
     await page.getByRole('button', { name: 'Next Step' }).click();
     const serviceColumn = page.locator('#indicatorList').getByText('Service', { exact: true });
@@ -108,14 +108,14 @@ test("Take Action allow user to perform necessary form Action", async ({ page })
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
     // Need to pass different row to Take Action
     const actionRow = page.getByRole('row', { name: '951 Take Action Available for' });
-    if(await actionRow.isVisible()){
+    if (await actionRow.isVisible()) {
         await actionRow.locator('div').click();
         const validateForm = page.getByText('Group designated step (Office');
-        await expect(validateForm).toBeVisible({timeout: 5000});
+        await expect(validateForm).toBeVisible({ timeout: 5000 });
         await page.getByLabel('comment text area').click();
         await page.getByLabel('comment text area').fill('testing purpose');
         await page.getByRole('button', { name: 'Approve' }).click();
-    }else {
+    } else {
         console.log("Row 951 does not exist, skipping Action");
     }
 });
@@ -125,14 +125,14 @@ test("Test Share Report button", async ({ page }) => {
     await page.getByRole('button', { name: 'Share Report' }).click();
     await page.getByText('https://host.docker.internal/').click();
     const emailReport = page.getByRole('button', { name: 'Email Report' });
-    await expect(emailReport).toBeVisible({timeout: 5000});
+    await expect(emailReport).toBeVisible({ timeout: 5000 });
     await emailReport.click();
 });
 
 test("Test JSON button working", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
     await page.getByRole('button', { name: 'JSON' }).click();
-    await expect(page.getByText('This provides a live data')).toBeVisible({timeout: 5000});
+    await expect(page.getByText('This provides a live data')).toBeVisible({ timeout: 5000 });
     await page.getByRole('button', { name: 'Shorten Link' }).click();
     await page.getByRole('button', { name: 'Expand Link' }).click();
     await page.getByRole('button', { name: 'Close' }).click();
@@ -170,7 +170,7 @@ test('modify search with And logical filter', async ({ page }) => {
     const updatedFilter = page.getByLabel('Sort by Radio');
     await expect(updatedFilter).toBeVisible({ timeout: 5000 });
 
-    await page.getByRole('button', {name: "Edit Labels"}).click();
+    await page.getByRole('button', { name: "Edit Labels" }).click();
     await page.getByRole('button', { name: 'Save Change' }).click();
 });
 
