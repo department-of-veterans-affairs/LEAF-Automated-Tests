@@ -26,6 +26,8 @@ var runningTests = false
 var mxRunningTests sync.Mutex
 
 func handleRunTest(w http.ResponseWriter, r *http.Request) {
+	modeVerbose := r.URL.Query().Has("-v")
+
 	mxRunningTests.Lock()
 	if !runningTests {
 		runningTests = true
@@ -35,7 +37,14 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		cmdClear.Dir = "../API-tests/"
 		cmdClear.Run()
 
-		cmd := exec.Command("go", "test", "-v")
+		var cmd *exec.Cmd
+		if modeVerbose {
+			log.Println("Running in verbose mode")
+			cmd = exec.Command("go", "test", "-v")
+		} else {
+			cmd = exec.Command("go", "test")
+		}
+
 		cmd.Dir = "../API-tests/"
 		pipe, err := cmd.StdoutPipe()
 		if err != nil {
