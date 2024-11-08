@@ -103,13 +103,13 @@ test("Modify Develop Search Filter to Generate Report with shows No Result", asy
 test("Take Action allow user to perform necessary form Action", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
     const actionRow = page.getByRole('row', { name: '951 Take Action Available for' });
-        await expect(actionRow).toBeVisible();
-        await actionRow.locator('div').click();
-        const validateForm = page.getByText('Group designated step (Office');
-        await expect(validateForm).toBeVisible();
-        await page.getByLabel('comment text area').click();
-        await page.getByLabel('comment text area').fill('testing purpose');
-        await page.getByRole('button', { name: 'Approve' }).click();
+    await expect(actionRow).toBeVisible();
+    await actionRow.locator('div').click();
+    const validateForm = page.getByText('Group designated step (Office');
+    await expect(validateForm).toBeVisible();
+    await page.getByLabel('comment text area').click();
+    await page.getByLabel('comment text area').fill('testing purpose');
+    await page.getByRole('button', { name: 'Approve' }).click();
 });
 
 test("Validate Share Report button", async ({ page }) => {
