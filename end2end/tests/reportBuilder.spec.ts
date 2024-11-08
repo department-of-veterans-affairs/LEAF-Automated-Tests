@@ -89,7 +89,7 @@ test("Navigate to a record when clicking on UID link", async ({ page }) => {
     await expect(page.locator('#headerTab')).toContainText('Request #956');
 });
 
-test("Modify Develop Search Filter to Generate Report with shows No Result  ", async ({ page }) => {
+test("Modify Develop Search Filter to Generate Report with shows No Result", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/");
     await page.getByText('Report Builder Create custom').click();
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
@@ -102,7 +102,6 @@ test("Modify Develop Search Filter to Generate Report with shows No Result  ", 
 
 test("Take Action allow user to perform necessary form Action", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
-    // Need to pass different row to Take Action
     const actionRow = page.getByRole('row', { name: '951 Take Action Available for' });
         await expect(actionRow).toBeVisible();
         await actionRow.locator('div').click();
@@ -113,7 +112,7 @@ test("Take Action allow user to perform necessary form Action", async ({ page })
         await page.getByRole('button', { name: 'Approve' }).click();
 });
 
-test("Test Share Report button", async ({ page }) => {
+test("Validate Share Report button", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
     await page.getByRole('button', { name: 'Share Report' }).click();
     await page.getByText('https://host.docker.internal/').click();
@@ -122,7 +121,7 @@ test("Test Share Report button", async ({ page }) => {
     await emailReport.click();
 });
 
-test("Test JSON button working", async ({ page }) => {
+test("Validate JSON button", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
     await page.getByRole('button', { name: 'JSON' }).click();
     await expect(page.getByText('This provides a live data')).toBeVisible();
@@ -131,7 +130,7 @@ test("Test JSON button working", async ({ page }) => {
     await page.getByRole('button', { name: 'Close' }).click();
 });
 
-test('validate create row button', async ({ page }) => {
+test('Validate create row button', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/")
     await page.getByText('Report Builder Create custom').click();
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
@@ -150,7 +149,7 @@ test('validate create row button', async ({ page }) => {
     await expect(createButton).toBeFocused();
 });
 
-test('modify search with And logical filter', async ({ page }) => {
+test('Modify search with AND logical filter', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwQ8ABgDsXQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyTT6iyKo0hNAXXoArYjQAOwQUXxA4UjAkYG0QQlMqAjwkZBAAFi4AZhBwozQYNGjEAEZpcvp8wrAAeUFBOFNnTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAonhFUUAEIBXZGijNaDfGGZt0HPDz6RYCFBhxqALMvqMwAWVkkiAAhLQyD5GQAeHapu27%2BBkLGomAAzBaqBADK0ADm5E4ubp7erOxc3AC6QA%3D%3D");
     await page.getByRole('button', { name: 'Modify Search' }).click();
     await page.getByLabel('add logical and filter').click();
@@ -166,7 +165,7 @@ test('modify search with And logical filter', async ({ page }) => {
     await page.getByRole('button', { name: 'Save Change' }).click();
 });
 
-test("fill textbox for multi line text", async ({ page }) => {
+test("Verify multi line textbox", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
     const firstText = page.getByRole("cell", { name: "12977", exact: true });
     await firstText.click();
@@ -206,7 +205,7 @@ test("Select multiple filter using AND/OR,", async ({ page }) => {
     await expect(updateFilter).toBeVisible();
 });
 
-test("Edit Report Title", async ({ page }) => {
+test("Edit report title", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
     await page.getByRole('cell', { name: 'TestFormQuery_GroupClickedApprove' }).click();
     const reportTitle = page.getByLabel('Report Title');
@@ -223,7 +222,7 @@ test("Edit Report Title", async ({ page }) => {
     await expect(revertedTitle).toHaveText("TestFormQuery_GroupClickedApprove");
 });
 
-test("Check Single Line Text", async ({ page }) => {
+test("Validate single line textbox", async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAVztASQBEQAaEAewAdoBDMCqbAXjJBnoGMALbNgc3oRsAQQByJAL6l0WRCE5D%2BjAJ7E21OgybzW5DmB7YAZoxgB9AKwRaABgDsAodgDyAJRDTZ2DBAA2EJBY5JpQ9IwsbAZGiLbkgpCiEp4AuuQAVhRoAHYIKCD4UABuaJzC5DloYGjhUGK0MMJpBYxgSMDSIPyBRPS0SMggAJxsACxsjuQAzCDNfmgwVUgAjLZr5POLYC7GxvhtsZJAA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAizLoAbggrVaDfGGZt0HPDz6RYCFBhyLoxCLvTN5jJdRVqN%2FbUL2iwieEVRQAQgFdkaKGfoLZXYuXjtBE30CAE4AhQIAQRYWCABzKDIYAAIAcXRULwAHYNVQzQEdYSiwABY4iwBZLxIiLJJoMizkMgAPDisQ9TCtCKqnAHZ6xQAlRDhUEpthiocRRQBmKYIAZWhU8jaOrt7%2B1kGeAF0gA%3D");
     const firstText = page.getByRole("cell", { name: "4331" });
     await firstText.click();
