@@ -4,34 +4,46 @@ test.beforeEach(async ({ page }) => {
   await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
 });
 
-test('create a new group and add a user', async ({ page }) => {
+test.afterAll(async ({ page }) => {
+  await page.close();
+});
+
+test('should create a new group and add a user', async ({ page }) => {
   await page.getByRole('button', { name: '+ Create group' }).click();
   await page.getByLabel('Group Title').fill('New Test Group 0');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('heading', { name: 'New Test Group 0' })).toBeVisible();
   await page.getByRole('heading', { name: 'New Test Group 0' }).click();
   await page.getByLabel('Search for user to add as').fill('test');
-  // await page.getByRole('cell', { name: 'users, testing' }).click();
   await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
-  await page.getByRole('button', { name: 'Save' }).click();
-  await page.waitForTimeout(5000)
+  await page.waitForTimeout(2000);
+  // await page.getByRole('button', { name: 'Save' }).click();
+  const saveBtn =page.getByRole('button', { name: 'Save' });
+  await saveBtn.waitFor({state: 'visible'});
+  await saveBtn.click();
+  await page.waitForTimeout(2000);
+  // await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).waitFor();
+  // await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
+  // await page.getByRole('button', { name: 'Save' }).waitFor();
+  // await page.getByRole('button', { name: 'Save' }).click();
 });
 
-test('Check the group is shown in the group history', async ({ page }) => {
+test('should display the new group in the group history', async ({ page }) => {
   await page.getByRole('button', { name: 'Show group history' }).click();
   await expect(page.locator('tbody')).toContainText('Tester Tester added new group: New Test Group 0');
   await page.getByRole('button', { name: 'Close' }).click();
 });
 
-test('check if the user is abel to for the newly created group in the User groups (21)', async ({ page }) => {
+test('should allow user to search for the new group in User groups', async ({ page }) => {
   await page.getByRole('link', { name: 'User groups' }).click();
   await page.getByLabel('Filter by group or user name').fill('New Test Group 0');
+  await page.keyboard.press('Enter');
   await expect(page.locator('text=New Test Group 0')).toBeVisible();
 });
 
-test('check if the user is abel to view the history ', async ({ page }) => {
+test('should allow user to view the group history', async ({ page }) => {
   await page.getByLabel('Filter by group or user name').fill('New Test Group 0');
-  await expect(page.locator('text = New Test Group 0')).toBeVisible();
+  await expect(page.locator('text=New Test Group 0')).toBeVisible();
   await page.getByRole('heading', { name: 'New Test Group' }).click();
   await page.getByRole('button', { name: 'View History' }).click();
   await expect(page.locator('#xhr')).toContainText('View History');
@@ -40,7 +52,71 @@ test('check if the user is abel to view the history ', async ({ page }) => {
   await page.getByRole('button', { name: 'Close' }).click();
 });
 
-test('Delete the group and the remove the user', async ({ page }) => {
+test('should allow user to add a user in Nexus', async ({ page }) => {
+  await page.getByRole('heading', { name: 'New Test Group' }).click();
+  await page.getByRole('button', { name: 'Add to Nexus' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await page.reload();
+  await page.getByText('New Test Group 0 ').click();
+  await expect(page.getByRole('table')).toContainText('✔');
+  await page.getByRole('button', { name: 'Close' }).click();
+});
+
+test('should allow user to search for System Admin in the System administrators', async ({ page }) => {
+  await page.getByRole('link', { name: 'System administrators (2)' }).click();
+  await page.getByLabel('Filter by group or user name').fill('sysa');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#groupTitle1')).toContainText('sysadmin');
+})
+
+test('should allow user to add a new admin in System Admin', async ({ page }) => {
+  const sysadmin = page.locator('#adminList');
+  await sysadmin.click();
+  await page.getByLabel('Search for user to add as').fill('carrol');
+  await page.getByRole('cell', { name: 'Carroll, Zoila Lind. Senior' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.reload();
+  await sysadmin.click();
+  await expect(page.locator('#adminSummary')).toContainText('Carroll, Zoila');
+});
+
+test('should allow user to find the new admin in the primary admin', async ({ page }) => {
+  await page.getByRole('heading', { name: 'Primary Admin' }).click();
+  await page.locator('#employeeSelectorDropdown').selectOption('vtrofbrebekah');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('heading', { name: 'Primary Admin' }).click();
+  await expect(page.locator('#employeeSelectorDropdown')).toContainText('Unset (No Primary Admin selected)Carroll, ZoilaTester, Tester');
+  await page.getByRole('button', { name: 'Close' }).click();
+});
+
+test('should allow user to see primary admin histroy', async ({ page }) => {
+  await page.getByRole('heading', { name: 'Primary Admin' }).click();
+  await page.getByRole('button', { name: 'View History' }).click();
+  await expect(page.locator('tbody')).toContainText('AMTester Tester set user Rhona Goodwin as primary admin');
+  await page.getByLabel('Group history').getByRole('button', { name: 'Close' }).click();
+});
+
+test('should allow user to remove an admin from System Admin', async ({ page }) => {
+  const sysadmin = page.locator('#adminList');
+  await sysadmin.click();
+  await page.getByLabel('REMOVE Carroll, Zoila').click();
+  await page.reload();
+  await sysadmin.click();
+  await expect(page.locator('#adminSummary')).not.toContainText('Carroll, Zoila');
+  await page.getByRole('button', { name: 'Close' }).click();
+});
+
+test('should allow user to import group', async ({ page }) => {
+  await page.getByRole('button', { name: 'Import group' }).click();
+  await page.getByLabel('Search for user to add as').fill('copper');
+  await page.getByRole('cell', { name: 'Copper Books' }).click();
+  await page.getByRole('button', { name: 'Import', exact: true }).click();
+  await page.getByLabel('Filter by group or user name').fill('copper Books');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#groupTitle183')).toContainText('Copper Books');
+})
+
+test('should delete the group and remove the user', async ({ page }) => {
   await page.getByRole('heading', { name: 'New Test Group 0' }).click();
   await page.getByRole('button', { name: 'Remove' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
@@ -48,5 +124,6 @@ test('Delete the group and the remove the user', async ({ page }) => {
   await page.getByRole('heading', { name: 'New Test Group 0' }).click();
   await page.getByRole('button', { name: 'Delete Group' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
+  await page.reload();
   await expect(page.getByRole('heading', { name: 'New Test Group 0' })).not.toBeVisible();
 });
