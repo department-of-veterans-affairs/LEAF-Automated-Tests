@@ -66,12 +66,22 @@ test('Validate if the user is able to search for System Admin in the System admi
 test('Validate if the user is able to add a new admin in System Admin', async ({ page }) => {
   const sysadmin = page.locator('#adminList');
   await sysadmin.click();
-  await page.getByLabel('Search for user to add as').fill('carrol');
-  await page.getByRole('cell', { name: 'Carroll, Zoila Lind. Senior' }).click();
-  await page.getByRole('button', { name: 'Save' }).click();
-  await page.reload();
+  const searchBox = page.getByLabel('Search for user to add as');
+  await searchBox.waitFor({ state: 'visible' });
+  await searchBox.click();
+  await searchBox.fill('carroll');
+  const employeeRow = page.locator('tr.employeeSelector:has-text("Carroll, Zoila Lind.")');
+  await employeeRow.waitFor({ state: 'visible' });
+  await employeeRow.click();
+  const saveButton = page.getByRole('button', { name: 'Save' });
+  await saveButton.waitFor({ state: 'visible' });
+  await saveButton.click();
+  const membersText = page.locator('text=Zoila Carroll + 1 others');
+  await membersText.waitFor({ state: 'visible' });
   await sysadmin.click();
-  await expect(page.locator('#adminSummary')).toContainText('Carroll, Zoila');
+  const adminSummary = page.locator('#adminSummary');
+  await adminSummary.waitFor({ state: 'visible' });
+  await expect(adminSummary).toContainText('Carroll, Zoila');
 });
 
 test('Validate if the user is able to find the new admin in the primary admin', async ({ page }) => {
