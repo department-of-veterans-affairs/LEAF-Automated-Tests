@@ -4,7 +4,7 @@ test.use({
   ignoreHTTPSErrors: true
 });
 
-test.only('test', async ({ page }) => {
+test('noGroupsOrPositions', async ({ page }, testInfo) => {
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
   //Open the New Account Update Page
@@ -33,16 +33,16 @@ test.only('test', async ({ page }) => {
 const OldRep:Locator = page1.locator('css=input.employeeSelectorInput').nth(0);
 await OldRep.click();
 await OldRep.fill("vtrmvtlynnette");
-//await expect(page.getByText('Old Account Search results')).toBeInViewport();
-//await expect(page.getByRole('cell', { name: 'Jacobs, Gilbert Wilderman.' })).toBeInViewport();
 await page1.getByRole('cell', { name: 'Jacobs, Gilbert Wilderman.' }).click();
   
  
 const oldAcct:Locator = page1.getByLabel('Jacobs, Gilbert Wilderman.');
 oldAcct.click();
-//.toContainText('Jacobs, Gilbert Wilderman.vtrmvtlynnette');
 
- 
+
+const screenshot = await page.screenshot()
+await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
 // Enter New Account information
 const newRep:Locator = page1.locator('css=input.employeeSelectorInput').nth(1);
 await newRep.click();
@@ -52,24 +52,44 @@ await newRep.fill("vtrkmwroseann");
 const newAcct:Locator = page1.getByLabel('Greenholt, Shirlene Parisian');
 newAcct.click();
 
+//await expect(page.getByRole('button', { name: 'Preview Changes' })).toBeInViewport();
+
+await expect(page1.getByText('New Account Search results')).toBeVisible();
+
+
 //Click to View Changes
 
-  await page1.getByRole('button', { name: 'Preview Changes' }).click();
+const previewChange:Locator = page1.getByRole('button', {name: 'Preview Changes'});
+await previewChange.hover();
+await previewChange.click ();
+
   
+await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+  
+//Wait for page to refresh (
+
+
   //Veirfy Goups and Positions is empty. 
- await expect (page1.locator('#grid_groups_info')).toContainText('No groups found');
+
+  await expect (page1.locator('#grid_groups_info')).toContainText('No groups found');
 
  await expect (page1.locator('#grid_positions_info')).toContainText('No Positions found');
  
+ await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
 //Accept changes
 await page1.getByRole('button', { name: 'Update Records' }).click();
 
+await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+//await expect(page1.getByText('Syncing has finished. You are')).toBeInViewport();
 //Verify there are not any group/positions updates
 await expect(page1.locator('#groups_no_updates')).toContainText('no updates');
 await expect(page1.locator('#positions_no_updates')).toContainText('no updates');
 
 //No processing errors
 await expect(page.locator('#no_errors')).toContainText('no errors');
+await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
 
 });
