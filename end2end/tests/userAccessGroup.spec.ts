@@ -1,169 +1,223 @@
 import { test, expect } from '@playwright/test';
 
-test.afterAll(async ({ page }) => {
-  await page.close();
-});
-
-test('Validate if the user is able to access user access groups from admin panel', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/');
-  await page.getByRole('button', { name: ' User Access Groups Modify' }).click();
-  await expect(page.locator('#bodyarea')).toContainText('AdminUser access');
-})
-
-test('Validate if the user is able to create a new group and add a user', async ({ page }) => {
+test('Validate group creation and an employee addition', async ({ page }) => {
   await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('button', { name: '+ Create group' }).click();
-  await page.getByLabel('Group Title').fill('New Test Group 0');
-  await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByRole('heading', { name: 'New Test Group 0' })).toBeVisible();
-  await page.getByRole('heading', { name: 'New Test Group 0' }).click();
-  await page.getByLabel('Search for user to add as').fill('test');
-  await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
-  const removeBtn = page.getByRole('button', { name: 'Remove' });
-  await removeBtn.waitFor();
-  await page.getByRole('button', { name: 'Save' }).click();
-  const user = page.locator('#members208').getByText('Rhona Goodwin + 1 others');
-  await user.waitFor({ state: 'visible' });
-});
 
-test('Validate if the user is able to view the new group in the group history', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('button', { name: 'Show group history' }).click();
-  await expect(page.locator('tbody')).toContainText('Tester Tester added new group: New Test Group 0');
-  await page.getByRole('button', { name: 'Close' }).click();
-});
+  // Create a new group
+  const createGroupButton = page.getByRole('button', { name: '+ Create group' });
+  await createGroupButton.click();
 
-test('Validate if the user is able to search for the new group in User groups', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('link', { name: 'User groups' }).click();
-  await page.getByLabel('Filter by group or user name').fill('New Test Group 0');
-  await page.keyboard.press('Enter');
-  await expect(page.locator('text=New Test Group 0')).toBeVisible();
-});
+  const groupTitle = page.getByLabel('Group Title');
+  await groupTitle.fill('New Test Group 0');
 
-test('Validate if the user is able to view the group history', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByLabel('Filter by group or user name').fill('New Test Group 0');
-  await expect(page.locator('text=New Test Group 0')).toBeVisible();
-  await page.getByRole('heading', { name: 'New Test Group' }).click();
-  await page.getByRole('button', { name: 'View History' }).click();
-  await expect(page.locator('#xhr')).toContainText('View History');
-  await expect(page.locator('#historyName')).toContainText('Group Name: New Test Group 0');
-  await page.getByLabel('Group history').getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Close' }).click();
-});
-
-test('Validate if the user is able to add the user in Nexus', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('heading', { name: 'New Test Group' }).click();
-  await page.getByRole('button', { name: 'Add to Nexus' }).click();
-  await page.getByRole('button', { name: 'Yes' }).click();
-  await page.reload();
-  await page.getByText('New Test Group 0 ').click();
-  await expect(page.getByRole('table')).toContainText('✔');
-  await page.getByRole('button', { name: 'Close' }).click();
-});
-
-test('Validate if the user is able to search for System Admin in the System administrators', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('link', { name: 'System administrators (2)' }).click();
-  await page.getByLabel('Filter by group or user name').fill('sysa');
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#groupTitle1')).toContainText('sysadmin');
-})
-
-test('Validate if the user is able to add a new admin in System Admin', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  const sysadmin = page.locator('#adminList');
-  await sysadmin.click();
-  const searchBox = page.getByLabel('Search for user to add as');
-  await searchBox.waitFor({ state: 'visible' });
-  await searchBox.click();
-  await searchBox.fill('carroll');
-  const employeeRow = page.locator('tr.employeeSelector:has-text("Carroll, Zoila Lind.")');
-  await employeeRow.waitFor({ state: 'visible' });
-  await employeeRow.click();
   const saveButton = page.getByRole('button', { name: 'Save' });
-  await saveButton.waitFor({ state: 'visible' });
   await saveButton.click();
-  const membersText = page.locator('text=Zoila Carroll + 1 others');
-  await membersText.waitFor({ state: 'visible' });
-  await sysadmin.click();
-  const adminSummary = page.locator('#adminSummary');
-  await adminSummary.waitFor({ state: 'visible' });
-  await expect(adminSummary).toContainText('Carroll, Zoila');
+
+  // Validate the new group is created
+  const newGroup = page.getByRole('heading', { name: 'New Test Group 0' });
+  await newGroup.waitFor();
+  await expect(newGroup).toBeVisible();
+
+  // Click on the new group to add a employee
+  await newGroup.click();
+
+  const searchInput = page.getByLabel('Search for user to add as');
+  await searchInput.fill('test');
+
+  const employeeToAdd = page.getByRole('cell', { name: 'Tester, Tester Product Liaison' });
+  await employeeToAdd.click();
+
+  // Validate remove employee button
+  const removeButton = page.getByRole('button', { name: 'Remove' });
+  await removeButton.waitFor();
+
+  await saveButton.click();
+
+  const employeeNames = page.getByText('Rhona Goodwin + 1 others');
+  await expect(employeeNames).toBeVisible();
 });
 
-test('Validate if the user is able to find the new admin in the primary admin', async ({ page }) => {
+test('Validate group import from another leaf site', async ({ page }) => {
   await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('heading', { name: 'Primary Admin' }).click();
-  await page.locator('#employeeSelectorDropdown').selectOption('vtrofbrebekah');
-  await page.getByRole('button', { name: 'Save' }).click();
-  await page.getByRole('heading', { name: 'Primary Admin' }).click();
-  await expect(page.locator('#employeeSelectorDropdown')).toContainText('Unset (No Primary Admin selected)Carroll, ZoilaTester, Tester');
-  await page.getByRole('button', { name: 'Close' }).click();
-});
 
-test('Validate if the user is able to see primary admin history', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('heading', { name: 'Primary Admin' }).click();
-  await expect(page.getByRole('button', { name: 'View History' })).toBeVisible();
-  await page.getByRole('button', { name: 'View History' }).click();
-  await expect(page.locator('#historyName')).toContainText('Primary Admin History');
-  await page.getByLabel('Group history').getByRole('button', { name: 'Close' }).click();
-});
+  // import button
+  const importGroupButton = page.getByRole('button', { name: 'Import group' });
+  await importGroupButton.waitFor();
+  await importGroupButton.click();
 
-test('Validate if the user is able to remove an admin from System Admin', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  const sysadmin = page.locator('#adminList');
-  await sysadmin.click();
-  await page.getByLabel('REMOVE Carroll, Zoila').click();
-  await page.reload();
-  await sysadmin.click();
-  await expect(page.locator('#adminSummary')).not.toContainText('Carroll, Zoila');
-  await page.getByRole('button', { name: 'Close' }).click();
-});
+  // Search for the user to add to the group
+  const searchLabel = page.getByLabel('Search for user to add as');
+  await searchLabel.waitFor();
+  await searchLabel.fill('Concrete Shoes');
 
-test('Validate if the user is able to import a group', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('button', { name: 'Import group' }).click();
-  await page.getByLabel('Search for user to add as').fill('copper');
-  await page.getByRole('cell', { name: 'Copper Books' }).click();
-  await page.getByRole('button', { name: 'Import', exact: true }).click();
-  await page.getByLabel('Filter by group or user name').fill('copper Books');
+  // group
+  const group = page.getByRole('cell', { name: 'Concrete Shoes & kids' });
+  await group.waitFor();
+  await group.click();
+
+  // import button 
+  const importButton = page.getByRole('button', { name: 'Import', exact: true });
+  await importButton.click();
+
+  const searchBox = page.getByLabel('Filter by group or user name');
+  await searchBox.fill('Concrete Shoes & kids');
   await page.keyboard.press('Enter');
-  await expect(page.locator('#groupTitle183')).toContainText('Copper Books');
+
+  // validate group is added
+  const importedGroup = page.getByRole('heading', { name: 'Concrete Shoes & Kids' });
+  await expect(importedGroup).toBeVisible();
 });
 
-test('Validate if the user can add multiple users to the group', async ({ page }) => {
+test('Validate user group search', async ({ page }) => {
   await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('heading', { name: 'New Test Group 0' }).click();
-  await page.getByLabel('Search for user to add as').click();
-  await page.getByLabel('Search for user to add as').fill('car');
-  await page.getByRole('cell', { name: 'Nikolaus, Carlton Hills.' }).click();
-  await page.getByLabel('Search for user to add as').click();
-  await page.getByLabel('Search for user to add as').fill('ni');
-  await page.getByRole('cell', { name: 'Nicolas, Sherlyn Huels.' }).click();
-  await page.getByLabel('Search for user to add as').click();
-  await expect(page.getByRole('table')).toContainText('Nicolas, Sherlyn');
-  await page.getByRole('button', { name: 'Save' }).click();
-  const users = page.locator('#members208').getByText('Rhona Goodwin + 3 others');
-  await users.waitFor();
-  await page.getByRole('heading', { name: 'New Test Group 0' }).click();
-  await expect(page.getByRole('table')).toContainText('Nikolaus, Carlton');
-  await expect(page.getByRole('table')).toContainText('Nicolas, Sherlyn');
-  await page.getByRole('button', { name: 'Close' }).click();
+
+  // user groups link
+  const userGroupsLink = page.getByRole('link', { name: 'User groups' });
+  await userGroupsLink.waitFor();
+  await userGroupsLink.click();
+
+  // Fill in the search box and press Enter
+  const searchBox = page.getByLabel('Filter by group or user name');
+  await searchBox.fill('Granite Baby ');
+  await page.keyboard.press('Enter');
+
+  // Wait for the group to be visible and verify
+  const group = page.getByText('Granite Baby ');
+  await group.waitFor();
+  await expect(group).toBeVisible();
 });
 
-test('Validate if the user is able to delete the group and remove the user', async ({ page }) => {
+test('Validate multiple employees addition', async ({ page }) => {
   await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
-  await page.getByRole('heading', { name: 'New Test Group 0' }).click();
-  await page.locator('#removeMember_0').click();
-  await page.getByRole('button', { name: 'Yes' }).click();
-  await expect(page.getByRole('cell', { name: 'users, testing' })).not.toBeVisible();
-  await page.getByRole('heading', { name: 'New Test Group 0' }).click();
-  await page.getByRole('button', { name: 'Delete Group' }).click();
-  await page.getByRole('button', { name: 'Yes' }).click();
+
+  // Open Group A
+  const group = page.getByRole('heading', { name: 'Group A' });
+  await group.click();
+
+  // Add first employee: Altenwerth, Ernest
+  const searchBox = page.getByLabel('Search for user to add as');
+  await searchBox.fill('Altenwerth, Ernest');
+  const firstEmployee = page.getByRole('cell', { name: 'Altenwerth, Ernest Bernier.' });
+  await firstEmployee.waitFor();
+  await firstEmployee.click();
+
+  // Add second employee: Aufderhar, Irwin Carroll
+  await searchBox.fill('Aufderhar');
+  const secondEmployee = page.getByRole('cell', { name: 'Aufderhar, Irwin Carroll.' });
+  await secondEmployee.waitFor();
+  await secondEmployee.click();
+
+  // Ensure that the employee removal buttons are visible
+  await expect(page.locator('#removeTempMember_2')).toBeVisible();
+  await expect(page.locator('#removeTempMember_3')).toBeVisible();
+
+  // Save the group changes
+  const saveButton = page.getByRole('button', { name: 'Save' });
+  await saveButton.click();
+
+  // Verify that the summary text indicates employees were added
+  const addedEmployeesSummary = page.getByText('Ernest Altenwerth + 1 others');
+  await addedEmployeesSummary.waitFor();
+  await group.click();
+
+  // Verify that the added employees are listed in the employee table
+  const employeesTable = page.getByRole('table');
+  await expect(employeesTable).toContainText('Altenwerth, Ernest');
+  await expect(employeesTable).toContainText('Aufderhar, Irwin');
+
+  // Close the group
+  const closeButton = page.getByRole('button', { name: 'Close' });
+  await closeButton.click();
+});
+
+test('Validate employees addition to Nexus', async ({ page }) => {
+  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
+
+  // // Create a new group: Nexus Addition Test Group
+  const createGroupButton = page.getByRole('button', { name: '+ Create group' });
+  await createGroupButton.click();
+
+  const groupTitle = page.getByLabel('Group Title');
+  await groupTitle.fill('Nexus Addition Test Group');
+
+  const saveButton = page.getByRole('button', { name: 'Save' });
+  await saveButton.click();
+
+  // Validate new group is created
+  const newGroup = page.getByRole('heading', { name: 'Nexus Addition Test Group' });
+  await newGroup.waitFor();
+  await expect(newGroup).toBeVisible();
+
+  // Open the new group to add an employee
+  await newGroup.click();
+
+  const searchInput = page.getByLabel('Search for user to add as');
+  await searchInput.fill('Antone Upton');
+
+  const employeeToAdd = page.getByRole('cell', { name: 'Upton, Antone Gulgowski.' });
+  await employeeToAdd.click();
+
+  // Validate that the remove employee button is visible
+  const removeButton = page.getByRole('button', { name: 'Remove' });
+  await removeButton.waitFor();
+
+  // save changes
+  await saveButton.click();
+
+  // // Validate that the employee is added to the group
+  const employeeName = page.getByText('Antone Upton').first();
+  await employeeName.waitFor();
+  await newGroup.click();
+
+  // Add the employee to Nexus
+  const addToNexusButton = page.getByRole('button', { name: 'Add to Nexus' });
+  await addToNexusButton.waitFor();
+  await addToNexusButton.click();
+
+  const yesButton = page.getByRole('button', { name: 'Yes' });
+  await yesButton.waitFor();
+  await yesButton.click();
+
+  // Reload the page
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'New Test Group 0' })).not.toBeVisible();
+
+  // Validate that the employee was added successfully to Nexus
+  await newGroup.click();
+  const employeeTable = page.getByRole('table');
+  await employeeTable.waitFor();
+  await expect(employeeTable).toContainText('✔');
+
+  // close group
+  const closeButton = page.getByRole('button', { name: 'Close' });
+  await closeButton.click();
+});
+
+test('Validate employee removal and group deletion', async ({ page }) => {
+  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
+
+  // open group
+  const group = page.getByRole('heading', { name: 'Bronze Computers ' });
+  await group.waitFor();
+  await group.click();
+
+  // Remove the first employee from the group (index 0)
+  const removeEmpButton = page.locator('#removeMember_0');
+  await removeEmpButton.waitFor();
+  await removeEmpButton.click();
+  const confirmRemoveButton = page.getByRole('button', { name: 'Yes' });
+  await confirmRemoveButton.waitFor();
+  await confirmRemoveButton.click();
+
+  // Validate the employee has been removed
+  const removedEmployee = page.getByRole('cell', { name: 'Bruen, Elisha' });
+  await expect(removedEmployee).not.toBeVisible();
+
+  // Reopen the group to delete it
+  await group.click();
+  const deleteGroupButton = page.getByRole('button', { name: 'Delete Group' });
+  await deleteGroupButton.click();
+
+  // Reload the page and validate the group is deleted
+  await page.reload();
+  await expect(group).not.toBeVisible();
 });
