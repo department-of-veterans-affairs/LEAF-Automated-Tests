@@ -41,7 +41,7 @@ Files must use camelCase. No spaces are permitted in filenames. Underscores shou
 
 ### Naming Tests (Titles)
 
-Tests Titles must briefly and plainly explain the component or feature it exercises. For example, if we're creating a test on the homepage to check the search box's ability to find a specific record in a certain way, the title can be `search [specific record] using [method]`. It's not necessary to explain that the test is for the homepage, because this is implicit in the filename. Titles must be formatted in plain language, no naming conventions such as CamelCase should be used for the whole title.
+Test Titles must briefly and plainly explain the component or feature it exercises. For example, if we're creating a test on the homepage to check the search box's ability to find a specific record in a certain way, the title can be `search [specific record] using [method]`. It's not necessary to explain that the test is for the homepage, because this is implicit in the filename. Titles must be formatted in plain language, no naming conventions such as CamelCase should be used for the whole title.
 
 ### Screenshots
 
