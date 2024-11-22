@@ -45,7 +45,7 @@ Test Titles must briefly and plainly explain the component or feature it exercis
 
 ### Screenshots
 
-Including screenshots within tests are highly recommended, but not currently required. Screenshots provide value when reviewing tests, as it can be immediately apparent in a screenshot if a test is functioning correctly.
+Including screenshots within tests is highly recommended, but not currently required. Screenshots provide value when reviewing tests, as it can be immediately apparent in a screenshot if a test is functioning correctly.
 
 
 ## Useful commands
