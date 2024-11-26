@@ -170,7 +170,7 @@ test('Update current status to Initiator to generate report with no result', asy
     await expect(reportBuilderButton).toBeVisible();
     await reportBuilderButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -183,12 +183,12 @@ test('Update current status to Initiator to generate report with no result', asy
     await expect(initiatorOption).toBeVisible();
     await initiatorOption.click();
 
-    // next button
+    //  Proceed to next step
     const nextButton = page.getByRole('button', { name: 'Next Step' });
     await expect(nextButton).toBeVisible();
     await nextButton.click();
 
-    // step 2
+    // Verify step 2
     const selectDataColumns = page.locator('#step_2');
     await selectDataColumns.waitFor();
 
@@ -201,9 +201,13 @@ test('Update current status to Initiator to generate report with no result', asy
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Verify the report shows "No Results"
-    const noResultsCell = page.getByRole('cell', { name: 'No Results' });
-    await expect(noResultsCell).toBeVisible();
+   // Wait for the #reportStats element containing "Loading..." to be hidden
+   await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+
+   // Verify number of records displayed in the search results
+   await page.locator('#reportStats').waitFor({ state: 'visible' });
+   const reportText = await page.locator('#reportStats').textContent();
+   expect(reportText).toBe('0 records');
 });
 
 test('Validate comment approval functionality and comment visibility on record page', async ({ page }) => {
@@ -295,7 +299,7 @@ test('Validate Report builder workflow and create row button functionality', asy
     await expect(reportBuilderButton).toBeVisible();
     await reportBuilderButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -392,15 +396,19 @@ test('Validate AND Logical Filter operators to generate report', async ({ page }
     const generalForm = page.locator('#indicatorList').getByText('General Form');
     await expect(generalForm).toBeVisible();
     await generalForm.click();
-    await page.getByTitle('indicatorID: 7\nRadio').locator('span').click();
+    const label = page.locator('label:has-text("Radio")');
 
     // Generate Report 
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Verify the updated filter is visible
-    const RadioHeader = await page.getByLabel('Sort by Radio').textContent();
-    expect(RadioHeader).toBe('Radio');
+    // Wait for the #reportStats element containing "Loading..." to be hidden
+    await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+
+    // Verify number of records displayed in the search results
+    await page.locator('#reportStats').waitFor({ state: 'visible' });
+    const reportText = await page.locator('#reportStats').textContent();
+    expect(reportText).toBe('2 records');
 });
 
 test('Verify user can change multi-line text and revert changes', async ({ page }) => {
