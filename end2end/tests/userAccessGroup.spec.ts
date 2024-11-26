@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.only('Validate group creation and an employee addition', async ({ page }) => {
+test('Validate group creation and an employee addition', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
 
   // Create a new group
