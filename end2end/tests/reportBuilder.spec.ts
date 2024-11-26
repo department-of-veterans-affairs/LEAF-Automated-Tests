@@ -170,7 +170,7 @@ test('Update current status to Initiator to generate report with no result', asy
     await expect(reportBuilderButton).toBeVisible();
     await reportBuilderButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -183,12 +183,12 @@ test('Update current status to Initiator to generate report with no result', asy
     await expect(initiatorOption).toBeVisible();
     await initiatorOption.click();
 
-    // next button
+    //  Proceed to next step
     const nextButton = page.getByRole('button', { name: 'Next Step' });
     await expect(nextButton).toBeVisible();
     await nextButton.click();
 
-    // step 2
+    // Verify step 2
     const selectDataColumns = page.locator('#step_2');
     await selectDataColumns.waitFor();
 
@@ -201,9 +201,13 @@ test('Update current status to Initiator to generate report with no result', asy
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Verify the report shows "No Results"
-    const noResultsCell = page.getByRole('cell', { name: 'No Results' });
-    await expect(noResultsCell).toBeVisible();
+   // Wait for the #reportStats element containing "Loading..." to be hidden
+   await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+
+   // Verify number of records displayed in the search results
+   await page.locator('#reportStats').waitFor({ state: 'visible' });
+   const reportText = await page.locator('#reportStats').textContent();
+   expect(reportText).toBe('0 records');
 });
 
 test('Validate comment approval functionality and comment visibility on record page', async ({ page }) => {
@@ -295,7 +299,7 @@ test('Validate Report builder workflow and create row button functionality', asy
     await expect(reportBuilderButton).toBeVisible();
     await reportBuilderButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -354,7 +358,7 @@ test('Validate Report builder workflow and create row button functionality', asy
     await expect(newRowTitle).toContainText('untitled');
 });
 
-test('Validate AND Logical Filter operators to generate report (UI Validation)', async ({ page }) => {
+test('Validate AND Logical Filter operators to generate report', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwQ8ABgDsXQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyTT6iyKo0hNAXXoArYjQAOwQUXxA4UjAkYG0QQlMqAjwkZBAAFi4AZhBwozQYNGjEAEZpcvp8wrAAeUFBOFNnTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAonhFUUAEIBXZGijNaDfGGZt0HPDz6RYCFBhxqALMvqMwAWVkkiAAhLQyD5GQAeHapu27%2BBkLGomAAzBaqBADK0ADm5E4ubp7erOxc3AC6QA%3D%3D");
 
     // modify button
@@ -367,7 +371,7 @@ test('Validate AND Logical Filter operators to generate report (UI Validation)',
     await expect(addAndFilterButton).toBeVisible();
     await addAndFilterButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -379,12 +383,12 @@ test('Validate AND Logical Filter operators to generate report (UI Validation)',
     await expect(submittedOption).toBeVisible();
     await submittedOption.click();
 
-    // next button
+    // Process to step 2
     const nextButton = page.getByRole('button', { name: 'Next Step' });
     await expect(nextButton).toBeVisible();
     await nextButton.click();
 
-    // step 2
+    // Verify step 2
     const selectDataColumns = page.locator('#step_2');
     await selectDataColumns.waitFor();
 
@@ -392,15 +396,19 @@ test('Validate AND Logical Filter operators to generate report (UI Validation)',
     const generalForm = page.locator('#indicatorList').getByText('General Form');
     await expect(generalForm).toBeVisible();
     await generalForm.click();
-    await page.getByTitle('indicatorID: 7\nRadio').locator('span').click();
+    const label = page.locator('label:has-text("Radio")');
 
     // Generate Report 
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Verify the updated filter is visible
-    const RadioHeader = await page.getByLabel('Sort by Radio').textContent();
-    expect(RadioHeader).toBe('Radio');
+    // Wait for the #reportStats element containing "Loading..." to be hidden
+    await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+
+    // Verify number of records displayed in the search results
+    await page.locator('#reportStats').waitFor({ state: 'visible' });
+    const reportText = await page.locator('#reportStats').textContent();
+    expect(reportText).toBe('2 records');
 });
 
 test('Verify user can change multi-line text and revert changes', async ({ page }) => {
@@ -433,51 +441,64 @@ test('Verify user can change multi-line text and revert changes', async ({ page 
     await expect(firstText).toBeVisible();
 });
 
-test('Verify multiple filters with logical AND/OR operators to generate report (UI Validation)', async ({ page }) => {
+test('Verify multiple filters with logical AND/OR operators to generate report', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3");
-    // step 1
+
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
-    // Apply filters
-    const filterIsNot = page.getByRole('cell', { name: 'IS NOT' }).locator('a');
-    await expect(filterIsNot).toBeVisible();
-    await filterIsNot.click();
-
-    const IsOption = page.getByRole('option', { name: 'IS', exact: true });
-    await expect(IsOption).toBeVisible();
-    await IsOption.click();
-
-    // select Type in current status
-    const currentStatusLink = page.getByRole('cell', { name: 'Current Status' }).locator('a');
-    await expect(currentStatusLink).toBeVisible();
-    await currentStatusLink.click();
-
-    const typeOption = page.getByRole('option', { name: 'Type' });
-    await expect(typeOption).toBeVisible();
-    await typeOption.click();
-
-    // Click on the 'Complex Form' cell
-    const complexFormCell = page.getByRole('cell', { name: 'Complex Form' }).locator('a');
-    await expect(complexFormCell).toBeVisible();
-    await complexFormCell.click();
-
-    // Click on the 'General Form' option
-    const generalFormOption = page.getByRole('option', { name: 'General Form' });
-    await expect(generalFormOption).toBeVisible();
-    await generalFormOption.click();
-
-    // Click on the 'Add logical and filter' button
+    // Add AND filter
     const addAndFilter = page.getByLabel('add logical and filter');
     await expect(addAndFilter).toBeVisible();
     await addAndFilter.click();
 
-    // next button
+    // AdD OR filter
+    const orFilter = page.getByLabel('add logical or filter');
+    await expect(orFilter).toBeVisible();
+    await orFilter.click();
+
+    // Modify operator of first condition
+    const firstConditionOperator = page.getByRole('cell', { name: 'IS NOT' }).nth(0).locator('a');
+    await expect(firstConditionOperator).toBeVisible();
+    await firstConditionOperator.click();
+    const IsOption = page.getByRole('option', { name: 'IS', exact: true });
+    await expect(IsOption).toBeVisible();
+    await IsOption.click();
+
+    // Modify field of second condition
+    await page.getByRole('cell', { name: 'Current Status', exact: true }).nth(1).locator('a').click();
+    await page.getByRole('option', { name: 'Service', exact: true}).click();
+
+    // Update second condition
+    const serviceDropdowm = page.getByRole('cell', { name: 'AS - Service' }).locator('a');
+    await serviceDropdowm.waitFor();
+    await serviceDropdowm.click();
+
+    const serviceConcreteElectronics = page.getByRole('option', { name: 'Concrete Electronics' });
+    await expect(serviceConcreteElectronics).toBeVisible();
+    await serviceConcreteElectronics.click();
+
+    // Modify field of third condition
+    await page.getByRole('cell', { name: 'Current Status', exact: true }).nth(1).locator('a').click();
+    const typeOption = page.getByRole('option', { name: 'Type' }).nth(1);
+    await expect(typeOption).toBeVisible();
+    await typeOption.click();
+
+    // Update third condition
+    const complexFormCell = page.getByRole('cell', { name: 'Complex Form' }).locator('a');
+    await expect(complexFormCell).toBeVisible();
+    await complexFormCell.click();
+    const generalFormOption = page.getByRole('option', { name: 'General Form' });
+    await expect(generalFormOption).toBeVisible();
+    await generalFormOption.click();
+
+    // Proceed to next step
     const nextButton = page.getByRole('button', { name: 'Next Step' });
     await expect(nextButton).toBeVisible();
     await nextButton.click();
 
-    // step 2
+    // Verify step 2
     const selectDataColumns = page.locator('#step_2');
     await selectDataColumns.waitFor();
 
@@ -485,29 +506,13 @@ test('Verify multiple filters with logical AND/OR operators to generate report (
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // verify table columns
-    const titleHeader = await page.locator('[aria-label="Sort by Title"]').textContent();
-    expect(titleHeader).toBe('Title');
+    // Wait for the #reportStats element containing "Loading..." to be hidden
+    await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
 
-    // modify button
-    const modifyButton = page.getByRole('button', { name: 'Modify Search' });
-    await modifyButton.waitFor();
-    await modifyButton.click();
-
-    //Apply filters using logical OR
-    const removeFilterRow = page.getByRole('row', { name: 'remove filter row AND Current' }).getByLabel('remove filter row');
-    await expect(removeFilterRow).toBeVisible();
-    await removeFilterRow.click();
-
-    const addOrFilter = page.getByLabel('add logical or filter');
-    await expect(addOrFilter).toBeVisible();
-    await addOrFilter.click();
-
-    await nextButton.click();
-    await generateReportButton.click();
-
-    // verify table columns
-    expect(titleHeader).toBe('Title');
+    // Verify number of records displayed in the search results
+    await page.locator('#reportStats').waitFor({ state: 'visible' });
+    const reportText = await page.locator('#reportStats').textContent();
+    expect(reportText).toBe('2 records');
 });
 
 test('Validate user can change and revert the report title', async ({ page }) => {
