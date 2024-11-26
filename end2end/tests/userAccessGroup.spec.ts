@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test('Validate group creation and an employee addition', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
+test.only('Validate group creation and an employee addition', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
 
   // Create a new group
   const createGroupButton = page.getByRole('button', { name: '+ Create group' });
@@ -40,7 +40,7 @@ test('Validate group creation and an employee addition', async ({ page }) => {
 });
 
 test('Validate group import from another leaf site', async ({ page }) => {
-  await page.goto('https://host.docker.internal/LEAF_Request_Portal/admin/?a=mod_groups#/');
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
 
   const importGroupButton = page.getByRole('button', { name: 'Import group' });
   await importGroupButton.click();
