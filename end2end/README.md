@@ -11,17 +11,21 @@ LEAF uses Playwright for end-to-end testing. The test database is populated and 
 1. Set up and run the [LEAF Development Environment](https://github.com/department-of-veterans-affairs/LEAF/blob/master/docs/InstallationConfiguration.md)
 3. On the command line: Navigate to the location where the development environment is installed
 4. Change directory into `LEAF-Automated-Tests/end2end`
-5. Install Playwright development tools:
-```
-npm install -D @playwright/test@latest
-npx playwright install
-```
-
-*Note: If you decide to use Playwright's installation instructions, it will prompt with with some decisions that need to be made. The choices we've made are:
-  - TypeScript or JavaScript? **TypeScript**
-  - Name of your tests folder? **tests**
-  - GitHub Actions workflow? **N**
-  - Install browsers? **Y**
+5. Install Playwright development tools using one of 2 methods:
+    - If you only intend on running tests through the command line, use the following commands
+        ```
+        npm install -D @playwright/test@latest
+        npx playwright install
+        ```
+   - In order to use the VSCode Playwright extension, Playwright must be installed using the following command:
+       ```
+       npm init playwright@latest
+       ```
+       As long as Playwright is being installed in LEAF-Automated-Tests/end2end, the default options can be used:
+      - TypeScript or JavaScript? **TypeScript**
+      - Name of your tests folder? **tests**
+      - GitHub Actions workflow? **N**
+      - Install browsers? **Y**
 
 ## Developing New Tests
 
