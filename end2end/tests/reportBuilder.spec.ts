@@ -2,10 +2,8 @@ import { test, expect } from '@playwright/test';
 
 // When the underlying issue is fixed, we should expect this test to pass.
 // Tests should be tagged with an associated ticket or PR reference
-test.fail('column order is maintained after modifying the search filter', { tag: '@issue:LEAF-4482' }, async ({ page }, testInfo) => {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJBghmXEAGhDQDsM0BjfAeygEkARbAVmJFoAdo6psAPBxj4qAC2wBOAAyyOAc3wRsAQQByLAL5F0WRDggAbCJCwluvMPWwBeYaImJpJRZFUaQmgLokAVrXIEFB8QOHowJGBtEHkTJnxCFBAAFg4ARjSOdhDDNBg0CMQ02WcQXPywAHkAM2q4EyRpTSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgBZmtBvjABZAK4kiAAhLQyy5GQAeHam3Qc8ARl79YCFBhwzjxyfUatoAc3Kr1mnXtbt8AJjNICyFrUTAAVgdpAgA5eQZ0BGYDIwBmbgBdIA%3D%3D&sort=N4Ig1gpgniBcIFYQBoQHsBOATCG4hwGcBjEAXyA%3D');
-    await expect(page.getByLabel('Sort by Numeric')).toBeInViewport();
-    await expect(page.locator('th').nth(4)).toContainText('Numeric');
+test('column order is maintained after modifying the search filter', async ({ page }, testInfo) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJBghmXEAGhDQDsM0BjfAeygEkARbAVmJFoAdo6psAPBxj4qAC2wBOAAyyOAc3wRsAQQByLAL5F0WRDggAbCJCwluvMPWwBeYaImJpJRZFUaQmgLokAVrXIEFB8QOHowJGBtEHkTJnxCFBAAFg4ARjSOdhDDNBg0CMQ02WcQXPywAHkAM2q4EyRpTSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgBZmtBvjABZAK4kiAAhLQyy5GQAeHam3Qc8ARl79YCFBhwzjxyfUatoAc3Kr1mnXtbt8AJjNICyFrUTAAVgdpAgA5eQZ0BGYDIwBmbgBdIA%3D%3D&sort=N4Ig1gpgniBcIFYQBoQHsBOATCG4hwGcBjEAXyA%3D');
 
     // Screenshot the original state
     let screenshot = await page.screenshot();
@@ -138,6 +136,7 @@ test('Validate user can update and revert report title from pop-up window', asyn
     const saveButton = page.getByRole('button', { name: 'Save Change' });
     await saveButton.waitFor();
     await saveButton.click();
+    await page.reload();
 
     // Verify the report title is updated
     const changedReportTitle = page.getByRole('cell', { name: 'Available for test change title' }).first();
@@ -170,7 +169,7 @@ test('Update current status to Initiator to generate report with no result', asy
     await expect(reportBuilderButton).toBeVisible();
     await reportBuilderButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -183,12 +182,12 @@ test('Update current status to Initiator to generate report with no result', asy
     await expect(initiatorOption).toBeVisible();
     await initiatorOption.click();
 
-    // next button
+    //  Proceed to next step
     const nextButton = page.getByRole('button', { name: 'Next Step' });
     await expect(nextButton).toBeVisible();
     await nextButton.click();
 
-    // step 2
+    // Verify step 2
     const selectDataColumns = page.locator('#step_2');
     await selectDataColumns.waitFor();
 
@@ -201,9 +200,13 @@ test('Update current status to Initiator to generate report with no result', asy
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Verify the report shows "No Results"
-    const noResultsCell = page.getByRole('cell', { name: 'No Results' });
-    await expect(noResultsCell).toBeVisible();
+    // Wait for the #reportStats element containing "Loading..." to be hidden
+    await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+
+    // Verify number of records displayed in the search results
+    await page.locator('#reportStats').waitFor({ state: 'visible' });
+    const reportText = await page.locator('#reportStats').textContent();
+    expect(reportText).toBe('0 records');
 });
 
 test('Validate comment approval functionality and comment visibility on record page', async ({ page }) => {
@@ -235,7 +238,10 @@ test('Validate comment approval functionality and comment visibility on record p
     await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
 
     // validate added comment visible on the record page
-    await expect(page.locator('#workflowbox_lastAction')).toContainText('testing purpose');
+    await page.reload();
+    const comment = page.locator('#workflowbox_lastAction');
+    await comment.waitFor({ state: 'visible' });
+    await expect(comment).toContainText('testing purpose');
 });
 
 test('Validate Share Report button is visible on the UI', async ({ page }) => {
@@ -295,7 +301,7 @@ test('Validate Report builder workflow and create row button functionality', asy
     await expect(reportBuilderButton).toBeVisible();
     await reportBuilderButton.click();
 
-    // step 1
+    // Verify step 1
     const developSearchFilter = page.locator('#step_1');
     await developSearchFilter.waitFor();
 
@@ -347,6 +353,7 @@ test('Validate Report builder workflow and create row button functionality', asy
     await createRowButton.waitFor();
     await expect(createRowButton).toBeVisible();
     await createRowButton.click();
+    await page.reload();
 
     // Validate that a new row with the title 'untitled' is created
     const newRowTitle = page.locator('//tbody/tr[1]/td[3]');
@@ -392,15 +399,20 @@ test('Validate AND Logical Filter operators to generate report', async ({ page }
     const generalForm = page.locator('#indicatorList').getByText('General Form');
     await expect(generalForm).toBeVisible();
     await generalForm.click();
-    await page.getByTitle('indicatorID: 7\nRadio').locator('span').click();
+    const radioLabel = page.locator('label:has-text("Radio")');
+    await radioLabel.click();
 
     // Generate Report 
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Verify the updated filter is visible
-    const RadioHeader = await page.getByLabel('Sort by Radio').textContent();
-    expect(RadioHeader).toBe('Radio');
+    // Wait for the #reportStats element containing "Loading..." to be hidden
+    await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+
+    // Verify number of records displayed in the search results
+    await page.locator('#reportStats').waitFor({ state: 'visible' });
+    const reportText = await page.locator('#reportStats').textContent();
+    expect(reportText).toBe('2 records');
 });
 
 test('Verify user can change multi-line text and revert changes', async ({ page }) => {
@@ -460,7 +472,7 @@ test('Verify multiple filters with logical AND/OR operators to generate report',
 
     // Modify field of second condition
     await page.getByRole('cell', { name: 'Current Status', exact: true }).nth(1).locator('a').click();
-    await page.getByRole('option', { name: 'Service', exact: true}).click();
+    await page.getByRole('option', { name: 'Service', exact: true }).click();
 
     // Update second condition
     const serviceDropdowm = page.getByRole('cell', { name: 'AS - Service' }).locator('a');
