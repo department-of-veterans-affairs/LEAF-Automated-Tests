@@ -13,4 +13,9 @@ test('change field heading', async ({ page }) => {
   await page.getByLabel('Section Heading').fill(uniqueText);
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('#format_label_3')).toContainText(uniqueText);
+  await page.getByTitle('edit indicator 3').click();
+  await page.getByLabel('Section Heading').click();
+  await page.getByLabel('Section Heading').fill("Single line text");
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('#format_label_3')).toContainText("Single line text");
 });
