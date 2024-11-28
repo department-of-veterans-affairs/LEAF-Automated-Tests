@@ -200,13 +200,13 @@ test('Update current status to Initiator to generate report with no result', asy
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
-    // Wait for the #reportStats element containing "Loading..." to be hidden
-    await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+   // Wait for the #reportStats element containing "Loading..." to be hidden
+   await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
 
-    // Verify number of records displayed in the search results
-    await page.locator('#reportStats').waitFor({ state: 'visible' });
-    const reportText = await page.locator('#reportStats').textContent();
-    expect(reportText).toBe('0 records');
+   // Verify number of records displayed in the search results
+   await page.locator('#reportStats').waitFor({ state: 'visible' });
+   const reportText = await page.locator('#reportStats').textContent();
+   expect(reportText).toBe('0 records');
 });
 
 test('Validate comment approval functionality and comment visibility on record page', async ({ page }) => {
