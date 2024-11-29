@@ -6,7 +6,6 @@ test('Validate sitemap card edit functionality', async ({ page }) => {
     const sitemapEditorButton = page.getByRole('button', { name: 'Sitemap Editor' });
     await sitemapEditorButton.click();
 
-    // First sitemap card
     const firstSitemapCard = page.locator('#sortable div').nth(0);
     await firstSitemapCard.waitFor({ state: 'visible' });
     await firstSitemapCard.click();
@@ -25,23 +24,21 @@ test('Validate sitemap card edit functionality', async ({ page }) => {
     const saveButton = page.locator('button', { hasText: 'Save Change' });
     await saveButton.click();
 
-    // Wait for the first sitemap card to reappear
-    await firstSitemapCard.waitFor({ state: 'visible' });
+    // Add timeout to complete the backend process
+    await page.waitForTimeout(1000);
 
-    // Ensure that the new title is visible on the page
+    // Ensure that the new card title is visible on the page
+    await firstSitemapCard.waitFor({ state: 'visible' });
     const firstCardHeading = firstSitemapCard.locator('h3');
     await firstCardHeading.waitFor({ state: 'visible' });
     const updatedFirstCardHeading = await firstCardHeading.textContent();
     expect(updatedFirstCardHeading).toContain('New Site Title');
 
-    // Reload the page to ensure the changes are reflected
-    await page.reload();
-
-    // Retrieve the new heading and description from the first sitemap card
-    const firstCardDescription = await firstSitemapCard.locator('p').textContent();
-
-    // Assert that the card description contains the new text
-    expect(firstCardDescription).toContain('This is the site description');
+    // Ensure that the new card description is visible on the page
+    const firstCardDescription = firstSitemapCard.locator('p');
+    await firstCardDescription.waitFor({ state: 'visible' });
+    const updatedFirstCardDescription = await firstCardDescription.textContent();
+    expect(updatedFirstCardDescription).toContain('This is the site description');
 });
 
 test('Validate sitemap card deletion', async ({ page }) => {
@@ -61,8 +58,9 @@ test('Validate sitemap card deletion', async ({ page }) => {
     const deleteSiteButton = page.getByRole('button', { name: 'Delete Site' });
     await deleteSiteButton.click();
 
-    // Add timeout to complete the backend process
-    await page.waitForTimeout(1000);
+    // Reload the page to ensure the changes are reflected
+    await secondSitemapCard.waitFor({ state: 'hidden' });
+    await page.reload();
 
     // Assert that the second sitemap card is no longer visible
     await expect(secondSitemapCard).toBeHidden();
@@ -77,7 +75,7 @@ test('Validate sitemap card creation', async ({ page }) => {
     const addSiteButton = page.getByRole('button', { name: 'Add Site' });
     await addSiteButton.click();
 
-    const addSiteDialog = page.locator('span:text("Add Site")');
+    const addSiteDialog = page.locator('span:has-text("Add Site")');
     await addSiteDialog.waitFor({ state: 'visible' });
 
     // Add site title
@@ -101,15 +99,14 @@ test('Validate sitemap card creation', async ({ page }) => {
     const saveButton = page.getByRole('button', { name: 'Save Change' });
     await saveButton.click();
 
-    await page.reload();
-
-    // Verify the new card appears with the correct title
+    // Add timeout to complete the backend process
+    await page.waitForTimeout(1000);
     const newCard = page.getByRole('heading', { name: 'Test 3', exact: true });
-    await newCard.waitFor()
-    await expect(newCard).toBeVisible();
+    await newCard.waitFor({state: 'visible'})
 
-    // Verify the card styles
+    // Verify the card background and font color
     const newCardElement = page.locator('div.leaf-sitemap-card:has(h3:has-text("Test 3"))');
+    await newCardElement.waitFor({ state: 'visible' });
     const styleAttribute = await newCardElement.getAttribute('style');
     expect(styleAttribute).toContain('background-color: #9e4747');
     expect(styleAttribute).toContain('color: #a4bd17');
