@@ -208,15 +208,14 @@ func TestFormQuery_FindTwoSteps(t *testing.T) {
 	}
 }
 
-
 /* post a new employee to an orgchart format question and then confirm expected values on orgchart property */
 func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
-		FirstName: "Ramon",
-		LastName: "Watsica",
+		FirstName:  "Ramon",
+		LastName:   "Watsica",
 		MiddleName: "Yundt",
-		Email: "Ramon.Watsica@fake-email.com",
-		UserName: "vtrycxbethany",
+		Email:      "Ramon.Watsica@fake-email.com",
+		UserName:   "vtrycxbethany",
 	}
 
 	postData := url.Values{}
@@ -243,7 +242,7 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	recData := formRes[11].S1
 
 	dataInterface := recData["id8_orgchart"]
-	orgchart := dataInterface.(map[string]interface {})
+	orgchart := dataInterface.(map[string]interface{})
 	b, _ := json.Marshal(orgchart)
 
 	var org_emp FormQuery_Orgchart_Employee
@@ -276,5 +275,43 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	want = mock_orgchart_employee.UserName
 	if !cmp.Equal(got, want) {
 		t.Errorf("userName got = %v, want = %v", got, want)
+	}
+}
+
+func TestLargeFormQuery_SmallQuery(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status","initiatorName"],"sort":{},"limit":10000,"getData":["9","8","10","4","5","7","3","6","2"]}&x-filterData=recordID,title,stepTitle,lastStatus,lastName,firstName`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if v, ok := res.Header["Leaf_large_queries"]; ok && v[0] != "pass_onto_large_query_server" {
+		t.Errorf("bad headers: %v", res.Header)
+	}
+}
+
+func TestLargeFormQuery_LargeQuery(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status","initiatorName"],"sort":{},"getData":["9","8","10","4","5","7","3","6","2"]}&x-filterData=recordID,title,stepTitle,lastStatus,lastName,firstName`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if v, ok := res.Header["Leaf_large_queries"]; ok && v[0] != "process_ran_on_large_query_server" {
+		t.Errorf("bad headers: %v", res.Header)
 	}
 }
