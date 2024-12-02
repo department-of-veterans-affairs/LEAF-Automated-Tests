@@ -292,7 +292,7 @@ func TestLargeFormQuery_SmallQuery(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if v, ok := res.Header["Leaf_large_queries"]; ok && v[0] != "pass_onto_large_query_server" {
+	if res.Header.Get("Leaf_large_queries") != "pass_onto_large_query_server" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 }
@@ -311,7 +311,8 @@ func TestLargeFormQuery_LargeQuery(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if v, ok := res.Header["Leaf_large_queries"]; ok && v[0] != "process_ran_on_large_query_server" {
+	if res.Header.Get("Leaf_large_queries") != "process_ran_on_large_query_server" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
+
 }
