@@ -168,3 +168,228 @@ func TestForm_FilterChildkeys(t *testing.T) {
 		t.Errorf("./api/form/9/data/tree?x-filterData=child.name child[4].indicatorID = %v, want = %v", m[0].Child[4].IndicatorID, "undefined")
 	}
 }
+
+func TestForm_GetProgress_ReturnValue(t *testing.T) {
+	/*
+	Setup form_7664a. 11 required questions with different formats (format influences logic).
+	19 controls 20, which has subquestions 21, 22.  visible if 19 is '2'
+	23 controls 24, which has subquestions 25, 26.  visible if 23 is >= '42'
+	27 controls 28, which has subquestion 29. visible if 27 includes 'E & "F"'
+	Format information is noted when data is posted  */
+
+	//create the new request and get the recordID for progress and domodify urls, check intial progress.
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("numform_7664a", "1")
+	postData.Set("title", "TestForm_GetProgressChecking")
+
+	res, _ := client.PostForm(RootURL + `api/form/new`, postData)
+	bodyBytes, _ := io.ReadAll(res.Body)
+	var response string
+	json.Unmarshal(bodyBytes, &response)
+	recordID := string(response)
+
+	urlGetProgress := RootURL + "api/form/" + recordID + "/progress"
+	urlPostDoModify := RootURL + "api/form/" + recordID
+
+	got, res := httpGet(urlGetProgress)
+	if !cmp.Equal(res.StatusCode, 200) {
+		t.Errorf(urlGetProgress + ", Status Code = %v, want = %v", res.StatusCode, 200)
+		return
+	}
+	want := `"0"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	//fill 3 visible required questions with values that keep subquestions hidden
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("19", "1") //dropdown 1,2,3
+	res, err := client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"33"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("23", "10") //numeric
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"67"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("27", "A & B") //checkboxes A & B, C & D, E & "F"
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"100"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+
+	//fill 19 to display 20,21,22 (3/6)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("19", "2") //dropdown 1,2,3
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"50"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	//fill new visible required questions (4/6, 5/6, 6/6)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("20", "A") //radio A, B, C
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"67"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("21", "2") //currency
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"83"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("22", "test")  //single text
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"100"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+
+	//fill 23 to display 24,25,26 (6/9)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("23", "42") //numeric
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"67"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	//fill new visible required questions (7/9, 8/9, 9/9)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("24", "1") //orgchart employee
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"78"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("25", "12/04/2024") //date
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"89"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("26", "test")  //multiline text
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"100"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	//fill 27 to display 28, 29 (9/11)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("27", `E & "F"`) //checkboxes A & B, C & D, E & "F"
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"82"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	//fill new visible required questions (10/11, 11/11)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("28", "apple") //multiselect apple, orange, banana, pineapple, avocado
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"91"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("29", "test") //checkbox, label is 'test'
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"100"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+}
