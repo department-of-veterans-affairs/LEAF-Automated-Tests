@@ -123,7 +123,8 @@ INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDes
 ('form_ce46b',	'',	'Simple form',	'',	1,	0,	1,	NULL,	1,	0,	'',	NULL,	1697476029),
 ('form_f8b95',	'',	'Multiple person designated',	'',	4,	0,	1,	NULL,	1,	0,	'',	NULL,	1698274593),
 ('leaf_devconsole',	'',	'LEAF Developer Console',	'',	-2,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
-('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0);
+('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
+('form_7664a',	'',	'IFTHEN display status progress checking',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1733265434);
 
 DROP TABLE IF EXISTS `category_count`;
 CREATE TABLE `category_count` (
@@ -6219,7 +6220,21 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (12,	'Single line text',	'text',	'',	'',	NULL,	'form_2d609',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-10-17 14:48:05',	0,	0),
 (13,	'Single line text',	'text',	'',	'',	NULL,	'form_a9b9f',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-10-17 14:59:56',	0,	0),
 (14,	'Reviewer 1',	'orgchart_employee',	'',	'',	NULL,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:24',	0,	0),
-(15,	'Reviewer 2',	'orgchart_employee',	'',	'',	14,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:33',	0,	0);
+(15,	'Reviewer 2',	'orgchart_employee',	'',	'',	14,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:33',	0,	0),
+(16,	'Section 1',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-03 22:25:44',	0,	0),
+(17,	'Section 2',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2024-12-03 22:25:50',	0,	0),
+(18,	'Section 3',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2024-12-03 22:25:57',	0,	0),
+(19,	'dropdown parent',	'dropdown\n\n1\n2\n3',	'',	'',	16,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-03 22:26:19',	0,	0),
+(20,	'radio child (show if parent 2)',	'radio\nA\nB\nC',	'',	'',	19,	'form_7664a',	NULL,	NULL,	'[{\"childIndID\":20,\"parentIndID\":19,\"selectedOp\":\"==\",\"selectedParentValue\":\"2\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"radio\",\"parentFormat\":\"dropdown\"}]',	NULL,	1,	-128,	'2024-12-03 22:26:43',	0,	0),
+(21,	'normal nested currency sub question',	'currency',	'',	'',	20,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-03 22:27:10',	0,	0),
+(22,	'normal nested text sub question',	'text',	'',	'',	20,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-127,	'2024-12-03 22:28:28',	0,	0),
+(23,	'numeric parent',	'number',	'',	'',	17,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-03 22:29:56',	0,	0),
+(24,	'orgchart employee child (show if parent >= 42)',	'orgchart_employee',	'',	'',	23,	'form_7664a',	NULL,	NULL,	'[{\"childIndID\":24,\"parentIndID\":23,\"selectedOp\":\"gte\",\"selectedParentValue\":\"42\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"orgchart_employee\",\"parentFormat\":\"number\"}]',	NULL,	1,	-128,	'2024-12-03 22:30:57',	0,	0),
+(25,	'normal nested date sub question',	'date',	'',	'',	24,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-03 22:31:16',	0,	0),
+(26,	'normal nested multitext sub question',	'textarea',	'',	'',	24,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-127,	'2024-12-03 22:31:40',	0,	0),
+(27,	'checkboxes parent',	'checkboxes\nA & B\nC & D\nE & \"F\"',	'',	'',	18,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-03 22:33:14',	0,	0),
+(28,	'multiselect child (show if parent E &amp; &quot;F&quot;)',	'multiselect\napple\norange\nbanana\npineapple\navocado',	'',	'',	27,	'form_7664a',	NULL,	NULL,	'[{\"childIndID\":28,\"parentIndID\":27,\"selectedOp\":\"==\",\"selectedParentValue\":\"E &amp; &quot;F&quot;\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"multiselect\",\"parentFormat\":\"checkboxes\"}]',	NULL,	1,	-128,	'2024-12-03 22:36:21',	0,	0),
+(29,	'normal nested checkbox child',	'checkbox\ntest',	'',	'',	28,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-03 22:37:14',	0,	0);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
