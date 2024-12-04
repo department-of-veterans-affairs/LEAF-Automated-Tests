@@ -1,22 +1,25 @@
 import { test, expect } from '@playwright/test';
 
-test('Validate group creation and an employee addition', async ({ page }) => {
+test('Create group and add an employee', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
+
+  // Generate a unique group name
+  let randNum = Math.floor(Math.random() * 10000);
+  let uniqueText = `New Test Group ${randNum}`;
 
   // Create a new group
   const createGroupButton = page.getByRole('button', { name: '+ Create group' });
   await createGroupButton.click();
 
   const groupTitle = page.getByLabel('Group Title');
-  await groupTitle.fill('New Test Group 0');
+  await groupTitle.fill(uniqueText);
 
   const saveButton = page.getByRole('button', { name: 'Save' });
   await saveButton.click();
+  await page.reload();
 
-  // Validate that the new group is successfully created and visible
-  const newGroup = page.getByRole('heading', { name: 'New Test Group 0' });
-  await newGroup.waitFor();
-  await expect(newGroup).toBeVisible();
+  const newGroup = page.getByRole('heading', { name: uniqueText });
+  await newGroup.waitFor({ state: 'visible' });
 
   // Open new group and add an employee
   await newGroup.click();
@@ -39,7 +42,7 @@ test('Validate group creation and an employee addition', async ({ page }) => {
   await expect(employeeTable).toHaveText(/Tester, Tester/);
 });
 
-test('Validate group import from another leaf site', async ({ page }) => {
+test('Import a group from another leaf site and delete it', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
 
   const importGroupButton = page.getByRole('button', { name: 'Import group' });
@@ -54,7 +57,6 @@ test('Validate group import from another leaf site', async ({ page }) => {
   await searchLabel.fill('Concrete Shoes');
 
   const group = page.getByRole('cell', { name: 'Concrete Shoes & kids' });
-  await group.waitFor();
   await group.click();
 
   const importButton = page.getByRole('button', { name: 'Import', exact: true });
@@ -63,4 +65,16 @@ test('Validate group import from another leaf site', async ({ page }) => {
   // Verify that the group has been successfully imported
   const importedGroup = page.getByRole('heading', { name: 'Concrete Shoes & Kids' });
   await expect(importedGroup).toBeVisible();
+
+  await importedGroup.click();
+
+  // Delete group
+  const deleteGroupButton = page.getByRole('button', { name: 'Delete Group' });
+
+  await deleteGroupButton.click();
+  const yesButton = page.locator('#confirm_button_save');
+  await yesButton.click();
+
+  await page.reload();
+  await expect(importedGroup).not.toBeVisible();
 });
