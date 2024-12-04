@@ -14,6 +14,7 @@ CREATE TABLE `action_history` (
   `actionTypeID` tinyint unsigned NOT NULL,
   `time` int unsigned NOT NULL,
   `comment` text,
+  `userMetadata` json DEFAULT NULL,
   PRIMARY KEY (`actionID`),
   KEY `time` (`time`),
   KEY `recordID` (`recordID`),
@@ -24,16 +25,16 @@ CREATE TABLE `action_history` (
   CONSTRAINT `fk_records_action_history_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
-INSERT INTO `action_history` (`actionID`, `recordID`, `userID`, `stepID`, `dependencyID`, `actionType`, `actionTypeID`, `time`, `comment`) VALUES
-(1,	958,	'tester',	0,	0,	'changeInitiator',	8,	1699055105,	'Initiator changed to Ollie Flatley'),
-(2,	530,	'tester',	0,	0,	'changeInitiator',	8,	1699056198,	'Initiator changed to Alysa Dare'),
-(3,	530,	'tester',	0,	0,	'move',	8,	1699056206,	'Moved to Requestor Followup step'),
-(4,	7,	'tester',	0,	0,	'move',	8,	1700253479,	'Moved to Requestor Followup step'),
-(5,	7,	'tester',	3,	-2,	'sendback',	8,	1700253822,	''),
-(6,	9,	'tester',	1,	9,	'approve',	8,	1716939853,	''),
-(7,	9,	'tester',	2,	9,	'approve',	8,	1716939855,	''),
-(8,	9,	'tester',	3,	-2,	'approve',	8,	1716939857,	''),
-(9,	9,	'tester',	4,	-3,	'approve',	8,	1716939859,	'');
+INSERT INTO `action_history` (`actionID`, `recordID`, `userID`, `stepID`, `dependencyID`, `actionType`, `actionTypeID`, `time`, `comment`, `userMetadata`) VALUES
+(1,	958,	'tester',	0,	0,	'changeInitiator',	8,	1699055105,	'Initiator changed to Ollie Flatley', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(2,	530,	'tester',	0,	0,	'changeInitiator',	8,	1699056198,	'Initiator changed to Alysa Dare', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(3,	530,	'tester',	0,	0,	'move',	8,	1699056206,	'Moved to Requestor Followup step', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(4,	7,	'tester',	0,	0,	'move',	8,	1700253479,	'Moved to Requestor Followup step', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(5,	7,	'tester',	3,	-2,	'sendback',	8,	1700253822,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(6,	9,	'tester',	1,	9,	'approve',	8,	1716939853,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(7,	9,	'tester',	2,	9,	'approve',	8,	1716939855,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(8,	9,	'tester',	3,	-2,	'approve',	8,	1716939857,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(9,	9,	'tester',	4,	-3,	'approve',	8,	1716939859,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
 
 DROP TABLE IF EXISTS `action_types`;
 CREATE TABLE `action_types` (
@@ -6077,6 +6078,7 @@ CREATE TABLE `email_templates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `email_templates` (`emailTemplateID`, `label`, `emailTo`, `emailCc`, `subject`, `body`) VALUES
+(-7, 'Cancel Notification', 'LEAF_cancel_notification_emailTo.tpl', 'LEAF_cancel_notification_emailCc.tpl', 'LEAF_cancel_notification_subject.tpl', 'LEAF_cancel_notification_body.tpl'),
 (-5,	'Automated Email Reminder',	'LEAF_automated_reminder_emailTo.tpl',	'LEAF_automated_reminder_emailCc.tpl',	'LEAF_automated_reminder_subject.tpl',	'LEAF_automated_reminder_body.tpl'),
 (-4,	'Mass Action Email Reminder Template',	'LEAF_mass_action_remind_emailTo.tpl',	'LEAF_mass_action_remind_emailCc.tpl',	'LEAF_mass_action_remind_subject.tpl',	'LEAF_mass_action_remind_body.tpl'),
 (-3,	'Notify Requestor of Completion',	'LEAF_notify_complete_emailTo.tpl',	'LEAF_notify_complete_emailCc.tpl',	'LEAF_notify_complete_subject.tpl',	'LEAF_notify_complete_body.tpl'),
@@ -13138,7 +13140,7 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`setting`, `data`) VALUES
 ('adPath',	'{}'),
-('dbversion',	'2024052000'),
+('dbversion',	'2024062000'),
 ('emailBCC',	'{}'),
 ('emailCC',	'{}'),
 ('heading',	'LEAF Test Site'),
