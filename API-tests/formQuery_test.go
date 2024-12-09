@@ -179,6 +179,13 @@ func TestFormQuery_FilterActionHistory(t *testing.T) {
 	if res[9].ActionHistory[0].ApproverName == "" {
 		t.Errorf(`Approver name should not be empty since the record contains actions, and it was requested via filter want = action_history[0].approverName is not empty`)
 	}
+
+	wantApproverName := "Tester Tester"
+	for _, history := range res[9].ActionHistory {
+		if history.ApproverName != wantApproverName {
+			t.Errorf(`approver name was not %v, got %v`, wantApproverName, history.ApproverName)
+		}
+	}
 }
 
 func TestFormQuery_DescendingIndex(t *testing.T) {
@@ -276,5 +283,29 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	want = mock_orgchart_employee.UserName
 	if !cmp.Equal(got, want) {
 		t.Errorf("userName got = %v, want = %v", got, want)
+	}
+}
+
+//change a request's initiator.  confirm first and last name have the expected values
+func TestFormQuery_InitiatorName(t *testing.T) {
+	//join will do nothing after records.userMetadata read update, but correct name should still be returned
+	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}&x-filterData=recordID,lastName,firstName`
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("initiator", "vtrigzcristal")
+	_, _ = client.PostForm(RootURL+`api/form/12/initiator`, postData)
+
+	res, _ := getFormQuery(RootURL + q)
+	gotFirstName := res[12].FirstName
+	gotLastName := res[12].LastName
+	wantFirst := "Risa"
+	wantLast := "Keebler"
+
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("First name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Last name got = %v, want = %v", gotLastName, wantLast)
 	}
 }

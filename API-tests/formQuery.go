@@ -38,6 +38,8 @@ type FormQueryRecord struct {
 	ActionHistory           []FormQueryActionHistory `json:"action_history"`
 	S1                      FormQueryData            `json:"s1"`
 	UnfilledDependencyData  UnfilledDependencyData   `json:"unfilledDependencyData"`
+	FirstName               string                   `json:"firstName"`
+	LastName                string                   `json:"lastName"`
 }
 
 type FormQueryActionHistory struct {
