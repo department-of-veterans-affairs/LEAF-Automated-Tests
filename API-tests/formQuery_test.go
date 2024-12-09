@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -208,15 +210,14 @@ func TestFormQuery_FindTwoSteps(t *testing.T) {
 	}
 }
 
-
 /* post a new employee to an orgchart format question and then confirm expected values on orgchart property */
 func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
-		FirstName: "Ramon",
-		LastName: "Watsica",
+		FirstName:  "Ramon",
+		LastName:   "Watsica",
 		MiddleName: "Yundt",
-		Email: "Ramon.Watsica@fake-email.com",
-		UserName: "vtrycxbethany",
+		Email:      "Ramon.Watsica@fake-email.com",
+		UserName:   "vtrycxbethany",
 	}
 
 	postData := url.Values{}
@@ -243,7 +244,7 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	recData := formRes[11].S1
 
 	dataInterface := recData["id8_orgchart"]
-	orgchart := dataInterface.(map[string]interface {})
+	orgchart := dataInterface.(map[string]interface{})
 	b, _ := json.Marshal(orgchart)
 
 	var org_emp FormQuery_Orgchart_Employee
@@ -277,4 +278,37 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	if !cmp.Equal(got, want) {
 		t.Errorf("userName got = %v, want = %v", got, want)
 	}
+}
+
+func TestFormQuery_Special_Characters(t *testing.T) {
+	// Setup conditions
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("numform_5ea07", "1")
+	postData.Set("title", "TestForm_Special_Characters")
+	postData.Set("3", "This is an otter 🦦 this is a smiley 😀")
+	postData.Set("8", "1")
+	postData.Set("9", "112")
+
+	// TODO: streamline this
+	res, _ := client.PostForm(RootURL+`api/form/new`, postData)
+	bodyBytes, _ := io.ReadAll(res.Body)
+	var response string
+	json.Unmarshal(bodyBytes, &response)
+	recordID, err := strconv.Atoi(string(response))
+
+	if err != nil {
+		t.Errorf("Could not create record for TestForm_NonadminCannotCancelOwnSubmittedRecord: " + err.Error())
+	}
+
+	res, _ = getFormQuery(RootURL + `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"` + string(recordID) + `","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["3"]}&x-filterData=recordID,title`)
+
+	var m FormCategoryResponse
+	err = json.Unmarshal([]byte(res), &m)
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Println(res)
+
 }
