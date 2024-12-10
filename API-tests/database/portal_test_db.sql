@@ -123,7 +123,9 @@ INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDes
 ('form_ce46b',	'',	'Simple form',	'',	1,	0,	1,	NULL,	1,	0,	'',	NULL,	1697476029),
 ('form_f8b95',	'',	'Multiple person designated',	'',	4,	0,	1,	NULL,	1,	0,	'',	NULL,	1698274593),
 ('leaf_devconsole',	'',	'LEAF Developer Console',	'',	-2,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
-('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0);
+('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
+('form_7664a',	'',	'IFTHEN display status progress checking',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1733265434),
+('form_dac2a',	'',	'Test IFTHEN staple',	'',	0,	10,	0,	NULL,	1,	0,	'',	NULL,	1733840407);
 
 DROP TABLE IF EXISTS `category_count`;
 CREATE TABLE `category_count` (
@@ -1121,6 +1123,8 @@ CREATE TABLE `category_staples` (
   CONSTRAINT `category_staples_ibfk_1` FOREIGN KEY (`categoryID`) REFERENCES `categories` (`categoryID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `category_staples` (`categoryID`, `stapledCategoryID`) VALUES
+('form_7664a',	'form_dac2a');
 
 DROP TABLE IF EXISTS `data`;
 CREATE TABLE `data` (
@@ -6219,7 +6223,24 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (12,	'Single line text',	'text',	'',	'',	NULL,	'form_2d609',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-10-17 14:48:05',	0,	0),
 (13,	'Single line text',	'text',	'',	'',	NULL,	'form_a9b9f',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-10-17 14:59:56',	0,	0),
 (14,	'Reviewer 1',	'orgchart_employee',	'',	'',	NULL,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:24',	0,	0),
-(15,	'Reviewer 2',	'orgchart_employee',	'',	'',	14,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:33',	0,	0);
+(15,	'Reviewer 2',	'orgchart_employee',	'',	'',	14,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:33',	0,	0),
+(16,	'Section 1',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-09 13:38:21',	0,	0),
+(17,	'dropdown parent',	'dropdown\r\n\r\n1\r\n2\r\n3',	'',	'',	16,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(18,	'radio child (show if parent 2)',	'radio\r\nA\r\nB\r\nC',	'',	'',	17,	'form_7664a',	'',	'',	'[{\"childIndID\":18,\"parentIndID\":17,\"selectedOp\":\"==\",\"selectedParentValue\":\"2\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"radio\",\"parentFormat\":\"dropdown\"}]',	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(19,	'normal nested currency sub question',	'currency',	'',	'',	18,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(20,	'normal nested text sub question',	'text',	'',	'',	19,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(21,	'Section 2',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2024-12-09 13:38:21',	0,	0),
+(22,	'numeric parent',	'number',	'',	'',	21,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(23,	'orgchart employee child (show if parent >= 42)',	'orgchart_employee',	'',	'',	22,	'form_7664a',	'',	'',	'[{\"childIndID\":23,\"parentIndID\":22,\"selectedOp\":\"gte\",\"selectedParentValue\":\"42\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"orgchart_employee\",\"parentFormat\":\"number\"}]',	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(24,	'normal nested date sub question',	'date',	'',	'',	23,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(25,	'normal nested multitext sub question',	'textarea',	'',	'',	23,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-127,	'2024-12-09 13:38:21',	0,	0),
+(26,	'checkboxes parent',	'checkboxes\r\nA & B\r\nC & D\r\nE & \"F\"',	'',	'',	23,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-126,	'2024-12-09 13:38:21',	0,	0),
+(27,	'multiselect child (show if parent E &amp; &quot;F&quot;)',	'multiselect\r\napple\r\norange\r\nbanana\r\npineapple\r\navocado',	'',	'',	26,	'form_7664a',	'',	'',	'[{\"childIndID\":27,\"parentIndID\":26,\"selectedOp\":\"==\",\"selectedParentValue\":\"E &amp; &quot;F&quot;\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"multiselect\",\"parentFormat\":\"checkboxes\"}]',	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(28,	'normal nested checkbox child',	'checkbox\r\ntest',	'',	'',	27,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(29,	'Header',	'',	'',	'',	NULL,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-10 14:19:05',	0,	0),
+(30,	'parent dropdown',	'dropdown\n\n1\n2\n3',	'',	'',	29,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-10 14:19:35',	0,	0),
+(31,	'child text',	'text',	'',	'',	30,	'form_dac2a',	NULL,	NULL,	'[{\"childIndID\":31,\"parentIndID\":30,\"selectedOp\":\"==\",\"selectedParentValue\":\"3\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"text\",\"parentFormat\":\"dropdown\"}]',	NULL,	1,	-128,	'2024-12-10 14:19:47',	0,	0),
+(32,	'nested sub question',	'text',	'',	'',	31,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-10 14:20:07',	0,	0);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
