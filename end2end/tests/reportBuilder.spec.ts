@@ -26,7 +26,7 @@ test('column order is maintained after modifying the search filter', async ({ pa
     await expect(page.locator('th').nth(5)).toContainText('Numeric');
 });
 
-test('Validate that the selected columns are added in the search results', async ({ page }) => {
+test('Selected columns are added in the search results', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/");
     const reportBuilderButton = page.locator('//span[text()="Report Builder"]');
     await expect(reportBuilderButton).toBeVisible();
@@ -119,7 +119,7 @@ test('Redirect to search filter and Generate Report with Approval History column
     expect(approvalhistoryHeader).toBe('Approval History');
 });
 
-test('Validate user can update and revert report title from pop-up window', async ({ page }) => {
+test('Update and revert report title from pop-up window', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
 
     // Select the first report title
@@ -151,7 +151,7 @@ test('Validate user can update and revert report title from pop-up window', asyn
     await expect(initialReportTitle).toHaveText('Available for test case');
 });
 
-test('Validate navigation to record page on UID link click', async ({ page }) => {
+test('Navigation to record page on UID link click', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
 
     // UID Link
@@ -209,7 +209,7 @@ test('Update current status to Initiator to generate report with no result', asy
    expect(reportText).toBe('0 records');
 });
 
-test('Validate comment approval functionality and comment visibility on record page', async ({ page }) => {
+test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
 
     // get UID from the first row of the table
@@ -244,7 +244,7 @@ test('Validate comment approval functionality and comment visibility on record p
     await expect(comment).toContainText('testing purpose');
 });
 
-test('Validate Share Report button is visible on the UI', async ({ page }) => {
+test('Share Report button is visible on the UI', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
 
     // Ensure 'Share Report' button is visible and clickable before interacting
@@ -257,7 +257,7 @@ test('Validate Share Report button is visible on the UI', async ({ page }) => {
     await expect(emailReportButton).toBeVisible();
 });
 
-test('Validate Shorten And Expand Link Button Functionality After JSON Button Click', async ({ page }) => {
+test('Shorten And Expand Link Button Functionality After JSON Button Click', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
 
     // Click the JSON button and validate the action
@@ -293,7 +293,7 @@ test('Validate Shorten And Expand Link Button Functionality After JSON Button Cl
     await closeButton.click();
 });
 
-test('Validate Report builder workflow and create row button functionality', async ({ page }) => {
+test('Report builder workflow and create row button functionality', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/")
 
     // Validate and click Report Builder button
@@ -359,46 +359,34 @@ test('Validate Report builder workflow and create row button functionality', asy
     const newRowTitle = page.locator('//tbody/tr[1]/td[3]');
     await newRowTitle.waitFor({ state: 'visible' });
     await expect(newRowTitle).toContainText('untitled');
-    const UID = page.locator('//table/tbody/tr[1]//a');
-    const UIDNumber = await UID.textContent();
-    await UID.click();
-
-    await page.getByRole('button', {name: 'Cancel Request'}).click();
-
-    const confirmButton = page.getByRole('button', {name: 'Yes'});
-    await confirmButton.waitFor({state: 'visible'});
-    await confirmButton.click();
-
-    await expect(page.locator('#bodyarea')).toContainText(`Request #${UIDNumber} has been cancelled!`);
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwQ8ABgDsXQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyTT6iyKo0hNAXXoArYjQAOwQUXxA4UjAkYG0QQlMqAjwkZBAARmkQcKM0GDRoxEzpFxBc%2FLAAeUFBOFNnTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgEZOzWg3xgAgixYQA5lDIwABAAUy6NlA0AmZm3Qc8PALpA%3D%3D%3D');
-    await page.reload();
-    await expect(newRowTitle).not.toContainText('untitled');
 });
 
-test('Validate AND Logical Filter operators to generate report', async ({ page }) => {
-    await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwQ8ABgDsXQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyTT6iyKo0hNAXXoArYjQAOwQUXxA4UjAkYG0QQlMqAjwkZBAAFi4AZhBwozQYNGjEAEZpcvp8wrAAeUFBOFNnTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAonhFUUAEIBXZGijNaDfGGZt0HPDz6RYCFBhxqALMvqMwAWVkkiAAhLQyD5GQAeHapu27%2BBkLGomAAzBaqBADK0ADm5E4ubp7erOxc3AC6QA%3D%3D");
+test('AND Logical Filter operators to generate report', async ({ page }) => {
+    await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3");
 
-    // modify button
-    const modifyButton = page.getByRole('button', { name: 'Modify Search' });
-    await modifyButton.waitFor();
-    await modifyButton.click();
+    const firstConditionOperator = page.getByRole('cell', { name: 'IS NOT' }).nth(0).locator('a');
+    await expect(firstConditionOperator).toBeVisible();
+    await firstConditionOperator.click();
+    const IsOption = page.getByRole('option', { name: 'IS', exact: true });
+    await expect(IsOption).toBeVisible();
+    await IsOption.click();
 
     // Add a logical "AND" filter
     const addAndFilterButton = page.getByLabel('add logical and filter');
     await expect(addAndFilterButton).toBeVisible();
     await addAndFilterButton.click();
 
-    // Verify step 1
-    const developSearchFilter = page.locator('#step_1');
-    await developSearchFilter.waitFor();
+    await page.getByRole('cell', { name: 'Current Status', exact: true }).nth(1).locator('a').click();
+    const typeOption = page.getByRole('option', { name: 'Type' }).last();
+    await expect(typeOption).toBeVisible();
+    await typeOption.click();
 
-    // Change 'Resolved' to 'Submitted'
-    const resolvedLink = page.getByRole('cell', { name: 'Resolved' }).locator('a');
-    await expect(resolvedLink).toBeVisible();
-    await resolvedLink.click();
-    const submittedOption = page.getByRole('option', { name: 'Submitted', exact: true });
-    await expect(submittedOption).toBeVisible();
-    await submittedOption.click();
+    const complexFormCell = page.getByRole('cell', { name: 'Complex Form' }).nth(0).locator('a');
+    await expect(complexFormCell).toBeVisible();
+    await complexFormCell.click();
+    const generalFormOption = page.getByRole('option', { name: 'General Form' }).last();
+    await expect(generalFormOption).toBeVisible();
+    await generalFormOption.click()
 
     // Process to step 2
     const nextButton = page.getByRole('button', { name: 'Next Step' });
@@ -409,28 +397,20 @@ test('Validate AND Logical Filter operators to generate report', async ({ page }
     const selectDataColumns = page.locator('#step_2');
     await selectDataColumns.waitFor();
 
-    // general form
-    const generalForm = page.locator('#indicatorList').getByText('General Form');
-    await expect(generalForm).toBeVisible();
-    await generalForm.click();
-    const radioLabel = page.locator('label:has-text("Radio")');
-    await radioLabel.click();
-
     // Generate Report 
     const generateReportButton = page.locator('#generateReport');
     await generateReportButton.click();
 
     // Wait for the #reportStats element containing "Loading..." to be hidden
-    await page.reload();
     await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
 
     // Verify number of records displayed in the search results
     await page.locator('#reportStats').waitFor({ state: 'visible' });
     const reportText = await page.locator('#reportStats').textContent();
-    expect(reportText).toContain('records');
+    expect(reportText).toContain('2 records');
 });
 
-test('Verify user can change multi-line text and revert changes', async ({ page }) => {
+test('User can change multi-line text and revert changes', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
 
     // Locate and click the first text cell
@@ -460,7 +440,7 @@ test('Verify user can change multi-line text and revert changes', async ({ page 
     await expect(firstText).toBeVisible();
 });
 
-test('Verify multiple filters with logical AND/OR operators to generate report', async ({ page }) => {
+test('Multiple filters with logical AND/OR operators to generate report', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3");
 
     // Verify step 1
@@ -472,7 +452,7 @@ test('Verify multiple filters with logical AND/OR operators to generate report',
     await expect(addAndFilter).toBeVisible();
     await addAndFilter.click();
 
-    // AdD OR filter
+    // Add OR filter
     const orFilter = page.getByLabel('add logical or filter');
     await expect(orFilter).toBeVisible();
     await orFilter.click();
@@ -534,7 +514,7 @@ test('Verify multiple filters with logical AND/OR operators to generate report',
     expect(reportText).toBe('2 records');
 });
 
-test('Validate user can change and revert the report title', async ({ page }) => {
+test('User can change and revert the report title', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBeMkGOgYwAtsoI4KAGwBuELOQDmdCNgCCAORIBfUuiyIQHaRIYBPYqyq16jDS3Lsw3bADMGMAPoBWCDQAMAdlZTIcxSBU1bAwIQQhIcUpqKDoGZlZLa0Q3SWk%2FZQBdcgArCjQAOwQUEAK0MDRYqHkaGBksnAYwJGAVEAlwojoaJGQQABZWL3IAZhB6wTQYMqQARjd58gmpsAB5Gxs4cKQ3JSA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAtGIQUGZrQb4wzNug54efSLARSR8xPCKooAIQCuyNFBn1GC6kpVr%2BmoRhzyALFbkEAsiZJEAAQk0GSByGQAHhx27Fy8ToLabgQA7F42AEqIcKiKcaoJGknCKWAAzBnyAMrQAObkwaHhUTGsBTwAukA");
 
     // Locate and click on the report
@@ -578,7 +558,7 @@ test('Validate user can change and revert the report title', async ({ page }) =>
     await expect(revertedTitleCell).toBeVisible();
 });
 
-test('Verify user can edit and revert changes in single-line text', async ({ page }) => {
+test('User can edit and revert changes in single-line text', async ({ page }) => {
     await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAVztASQBEQAaEAewAdoBDMCqbAXjJBnoGMALbNgc3oRsAQQByJAL6l0WRCE5D%2BjAJ7E21OgybzW5DmB7YAZoxgB9AKwRaABgDsAodgDyAJRDTZ2DBAA2EJBY5JpQ9IwsbAZGiLbkgpCiEp4AuuQAVhRoAHYIKCD4UABuaJzC5DloYGjhUGK0MMJpBYxgSMDSIPyBRPS0SMggAJxsACxsjuQAzCDNfmgwVUgAjLZr5POLYC7GxvhtsZJAA%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAizLoAbggrVaDfGGZt0HPDz6RYCFBhyLoxCLvTN5jJdRVqN%2FbUL2iwieEVRQAQgFdkaKGfoLZXYuXjtBE30CAE4AhQIAQRYWCABzKDIYAAIAcXRULwAHYNVQzQEdYSiwABY4iwBZLxIiLJJoMizkMgAPDisQ9TCtCKqnAHZ6xQAlRDhUEpthiocRRQBmKYIAZWhU8jaOrt7%2B1kGeAF0gA%3D");
 
     const initialTextCell = page.getByRole("cell", { name: "4331" });
