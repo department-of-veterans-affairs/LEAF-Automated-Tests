@@ -170,10 +170,13 @@ func TestForm_FilterChildkeys(t *testing.T) {
 }
 
 func TestForm_GetProgress_ReturnValue(t *testing.T) {
-	/* Setup form_7664a. 11 required questions with different formats (format influences logic).
+	/* Setup form_7664a, with staple form_dac2a.
+	form_7664a has 11 required questions with different formats (format influences logic).
 	17p controls 18c.  18c has subquestions 19, 20.  18 is visible if 17 is '2'
 	22p controls 23c.  23c has subquestions 24, 25, (26p, 27c, 28). 23 is visible if 22 is >= '42'
 	-26p controls 27c.  27c has subquestion 28. 27 is visible if 26 includes 'E & "F"'
+	form_dac2a has 2 required questions
+	30p (not required) controls 31c.  31c has subquestion 32.  31 is visisble if 30p is 3
 	Format information is noted when data is posted  */
 
 	//create the new request and get the recordID for progress and domodify urls, check intial progress.
@@ -376,6 +379,44 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	postData = url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("28", "test") //checkbox, label is 'test'
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"100"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+
+	//fill staple 30 to display 31c, 32 (11/13)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("30", "3") //dropdown 1,2,3
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"85"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("31", "test 31") //text
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"92"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("32", "test 32") //text
 	res, err = client.PostForm(urlPostDoModify, postData)
 	if err != nil {
 		t.Error(urlPostDoModify + "Error sending post request")
