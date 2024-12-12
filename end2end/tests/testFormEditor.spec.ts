@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+test.describe.configure({ mode: 'serial' });
+
 // Generate unique text to help ensure that fields are being filled correctly.
 let randNum = Math.random();
 let uniqueText = `New Form ${randNum}`;
@@ -81,9 +83,14 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
 test('Delete Form', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
   await page.getByRole('link', { name: 'My New Form' }).click();
+  await expect(page.getByRole('heading', { name: 'Admin  Form Browser  Form' })).toBeVisible();
   await page.getByLabel('delete this form').click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await expect(page.locator('#createFormButton')).toContainText('Create Form');
   await expect(page.getByRole('link', { name: 'My New Form' })).not.toBeVisible();
 });
+
+
+
+
 
