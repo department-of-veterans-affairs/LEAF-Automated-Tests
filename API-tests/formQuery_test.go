@@ -286,10 +286,15 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	}
 }
 
-//change a request's initiator.  confirm first and last name have the expected values
-func TestFormQuery_InitiatorName(t *testing.T) {
-	//join will do nothing after records.userMetadata read update, but correct name should still be returned
-	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}&x-filterData=recordID,lastName,firstName`
+func TestFormQuery_Initiator_UserMetadata(t *testing.T) {
+	mock_orgchart_employee := FormQuery_Orgchart_Employee{
+		FirstName: "Risa",
+		LastName: "Keebler",
+		MiddleName: "Hyatt",
+		Email: "Risá.Keebler@fake-email.com",
+		UserName: "vtrigzcristal",
+	}
+	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}&x-filterData=recordID,lastName,firstName,userMetadata`
 
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
@@ -297,15 +302,49 @@ func TestFormQuery_InitiatorName(t *testing.T) {
 	_, _ = client.PostForm(RootURL+`api/form/12/initiator`, postData)
 
 	res, _ := getFormQuery(RootURL + q)
-	gotFirstName := res[12].FirstName
-	gotLastName := res[12].LastName
-	wantFirst := "Risa"
-	wantLast := "Keebler"
+	recordID := 12
 
+	formRecord := res[recordID]
+	initiatorOrgchart := formRecord.UserMetadata
+
+	gotFirstName := res[recordID].FirstName
+	gotLastName := res[recordID].LastName
+
+	gotMetadataFirstName := initiatorOrgchart.FirstName
+	gotMetadataLastName := initiatorOrgchart.LastName
+	gotMetadataMiddle := initiatorOrgchart.MiddleName
+	gotMetadataEmail := initiatorOrgchart.Email
+	gotMetadataUserName := initiatorOrgchart.UserName
+
+	wantFirst := mock_orgchart_employee.FirstName
+	wantLast := mock_orgchart_employee.LastName
+	wantMiddle := mock_orgchart_employee.MiddleName
+	wantEmail := mock_orgchart_employee.Email
+	wantUserName := mock_orgchart_employee.UserName
+
+	//record firstName lastName fields.  These are extracted from JSON userMetadata and should also match.
 	if !cmp.Equal(gotFirstName, wantFirst) {
-		t.Errorf("First name got = %v, want = %v", gotFirstName, wantFirst)
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
 	}
 	if !cmp.Equal(gotLastName, wantLast) {
-		t.Errorf("Last name got = %v, want = %v", gotLastName, wantLast)
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+	//record userMetadata firstName lastName properties
+	if !cmp.Equal(gotMetadataFirstName, wantFirst) {
+		t.Errorf("Record userMetadata first name got = %v, want = %v", gotMetadataFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotMetadataLastName, wantLast) {
+		t.Errorf("Record userMetadata last name got = %v, want = %v", gotMetadataLastName, wantLast)
+	}
+
+	//record userMetadata middleName email and userName properties
+	if !cmp.Equal(gotMetadataMiddle, wantMiddle) {
+		t.Errorf("Last name got = %v, want = %v", gotMetadataMiddle, wantMiddle)
+	}
+	if !cmp.Equal(gotMetadataEmail, wantEmail) {
+		t.Errorf("Last name got = %v, want = %v", gotMetadataEmail, wantEmail)
+	}
+	if !cmp.Equal(gotMetadataUserName, wantUserName) {
+		t.Errorf("Last name got = %v, want = %v", gotMetadataUserName, wantUserName)
 	}
 }
