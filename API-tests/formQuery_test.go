@@ -170,7 +170,9 @@ func TestFormQuery_GroupClickedApprove(t *testing.T) {
 }
 
 func TestFormQuery_FilterActionHistory(t *testing.T) {
-	res, _ := getFormQuery(RootURL + `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"9","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["action_history"],"sort":{},"limit":10000,"limitOffset":0}&x-filterData=recordID,title,action_history.time,action_history.description,action_history.actionTextPasttense,action_history.approverName`)
+	q := `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"9","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["action_history"],"sort":{},"limit":10000,"limitOffset":0}`
+	xFilter := `&x-filterData=recordID,title,action_history.time,action_history.description,action_history.actionTextPasttense,action_history.approverName,action_history.userMetadata`
+	res, _ := getFormQuery(RootURL + q + xFilter)
 
 	if res[9].ActionHistory[0].RecordID != 0 {
 		t.Errorf(`Record ID should not exist since it wasn't requested within action_history. want = action_history[0].recordID is null`)
@@ -180,11 +182,38 @@ func TestFormQuery_FilterActionHistory(t *testing.T) {
 		t.Errorf(`Approver name should not be empty since the record contains actions, and it was requested via filter want = action_history[0].approverName is not empty`)
 	}
 
+	gotApproverName := res[9].ActionHistory[0].ApproverName
 	wantApproverName := "Tester Tester"
-	for _, history := range res[9].ActionHistory {
-		if history.ApproverName != wantApproverName {
-			t.Errorf(`approver name was not %v, got %v`, wantApproverName, history.ApproverName)
-		}
+	if !cmp.Equal(gotApproverName, wantApproverName) {
+		t.Errorf("Approver name got = %v, want = %v", gotApproverName, wantApproverName)
+	}
+
+	approverUserMetadata := res[9].ActionHistory[0].UserMetadata
+
+	gotFirst := approverUserMetadata.FirstName
+	wantFirst := "Tester"
+	if !cmp.Equal(gotFirst, wantFirst) {
+		t.Errorf("Approver first name got = %v, want = %v", gotFirst, wantFirst)
+	}
+	gotLast := approverUserMetadata.LastName
+	wantLast := "Tester"
+	if !cmp.Equal(gotLast, wantLast) {
+		t.Errorf("Approver last name got = %v, want = %v", gotLast, wantLast)
+	}
+	gotMiddle := approverUserMetadata.MiddleName
+	wantMiddle := ""
+	if !cmp.Equal(gotMiddle, wantMiddle) {
+		t.Errorf("Approver middle name got = %v, want = %v", gotMiddle, wantMiddle)
+	}
+	gotEmail := approverUserMetadata.Email
+	wantEmail := "tester.tester@fake-email.com"
+	if !cmp.Equal(gotEmail, wantEmail) {
+		t.Errorf("Approver email got = %v, want = %v", gotEmail, wantEmail)
+	}
+	gotUserName := approverUserMetadata.UserName
+	wantUserName := "tester"
+	if !cmp.Equal(gotUserName, wantUserName) {
+		t.Errorf("Last name got = %v, want = %v", gotUserName, wantUserName)
 	}
 }
 
@@ -286,7 +315,7 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	}
 }
 
-func TestFormQuery_Initiator_UserMetadata(t *testing.T) {
+func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
 		FirstName: "Risa",
 		LastName: "Keebler",
@@ -294,14 +323,15 @@ func TestFormQuery_Initiator_UserMetadata(t *testing.T) {
 		Email: "Risá.Keebler@fake-email.com",
 		UserName: "vtrigzcristal",
 	}
-	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}&x-filterData=recordID,lastName,firstName,userMetadata`
 
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("initiator", "vtrigzcristal")
 	_, _ = client.PostForm(RootURL+`api/form/12/initiator`, postData)
 
-	res, _ := getFormQuery(RootURL + q)
+	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}`
+	xFilter := `&x-filterData=recordID,lastName,firstName,userMetadata`
+	res, _ := getFormQuery(RootURL + q + xFilter)
 	recordID := 12
 
 	formRecord := res[recordID]
