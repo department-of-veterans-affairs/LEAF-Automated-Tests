@@ -323,28 +323,28 @@ func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 		Email: "Risá.Keebler@fake-email.com",
 		UserName: "vtrigzcristal",
 	}
-
+	//post new request under a username
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("initiator", "vtrigzcristal")
 	_, _ = client.PostForm(RootURL+`api/form/12/initiator`, postData)
 
+	//confirm firstName, lastName and userMetadata have expected values
 	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}`
 	xFilter := `&x-filterData=recordID,lastName,firstName,userMetadata`
 	res, _ := getFormQuery(RootURL + q + xFilter)
-	recordID := 12
 
-	formRecord := res[recordID]
-	initiatorOrgchart := formRecord.UserMetadata
+	formRecord := res[12]
+	initiatorMetadata := formRecord.UserMetadata
 
-	gotFirstName := res[recordID].FirstName
-	gotLastName := res[recordID].LastName
+	gotFirstName := formRecord.FirstName
+	gotLastName := formRecord.LastName
 
-	gotMetadataFirstName := initiatorOrgchart.FirstName
-	gotMetadataLastName := initiatorOrgchart.LastName
-	gotMetadataMiddle := initiatorOrgchart.MiddleName
-	gotMetadataEmail := initiatorOrgchart.Email
-	gotMetadataUserName := initiatorOrgchart.UserName
+	gotMetadataFirstName := initiatorMetadata.FirstName
+	gotMetadataLastName := initiatorMetadata.LastName
+	gotMetadataMiddle := initiatorMetadata.MiddleName
+	gotMetadataEmail := initiatorMetadata.Email
+	gotMetadataUserName := initiatorMetadata.UserName
 
 	wantFirst := mock_orgchart_employee.FirstName
 	wantLast := mock_orgchart_employee.LastName
@@ -352,22 +352,13 @@ func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 	wantEmail := mock_orgchart_employee.Email
 	wantUserName := mock_orgchart_employee.UserName
 
-	//record firstName lastName fields.  These are extracted from JSON userMetadata and should also match.
-	if !cmp.Equal(gotFirstName, wantFirst) {
-		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
-	}
-	if !cmp.Equal(gotLastName, wantLast) {
-		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
-	}
-	//record userMetadata firstName lastName properties
+	//record userMetadata properties
 	if !cmp.Equal(gotMetadataFirstName, wantFirst) {
 		t.Errorf("Record userMetadata first name got = %v, want = %v", gotMetadataFirstName, wantFirst)
 	}
 	if !cmp.Equal(gotMetadataLastName, wantLast) {
 		t.Errorf("Record userMetadata last name got = %v, want = %v", gotMetadataLastName, wantLast)
 	}
-
-	//record userMetadata middleName email and userName properties
 	if !cmp.Equal(gotMetadataMiddle, wantMiddle) {
 		t.Errorf("Last name got = %v, want = %v", gotMetadataMiddle, wantMiddle)
 	}
@@ -376,5 +367,48 @@ func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 	}
 	if !cmp.Equal(gotMetadataUserName, wantUserName) {
 		t.Errorf("Last name got = %v, want = %v", gotMetadataUserName, wantUserName)
+	}
+
+	//record firstName lastName fields.  These are extracted from JSON userMetadata and should also match.
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+
+	//disable the account locally and confirm first and last name are still available
+	err := DisableEmployee(RootOrgchartURL + "api/employee/11")
+	if err != nil {
+		t.Error(err)
+	}
+	res, _ = getFormQuery(RootURL + q + xFilter)
+	formRecord = res[12]
+	gotFirstName = formRecord.FirstName
+	gotLastName = formRecord.LastName
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+	//re-enable account
+	err = EnableLocalEmployee("11")
+	if err != nil {
+		t.Error(err)
+	}
+
+	//test firstName, lastName record fields for a record (#13)with empty metadata (accounts disabled prior to 12/6/2024)
+	formRecord = res[13]
+	gotFirstName = formRecord.FirstName
+	gotLastName = formRecord.LastName
+
+	wantFirst = "(inactive user)"
+	wantLast = "tester_disabled"
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
 	}
 }
