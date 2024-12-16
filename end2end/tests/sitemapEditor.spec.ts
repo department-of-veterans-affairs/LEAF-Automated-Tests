@@ -8,7 +8,7 @@ test('Edit and revert a sitemap card title', async ({ page }) => {
 
     // Capture the original site title
     const firstCardHeading = firstSitemapCard.locator('h3');
-    const originalSiteTitle = await firstCardHeading.textContent();
+    const originalSiteTitle = await firstCardHeading.innerText();
 
     // Edit the site title
     await firstSitemapCard.click();
@@ -47,26 +47,27 @@ test('Edit and revert a sitemap card title', async ({ page }) => {
 test('Inbox visibility on view combined inbox page', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
 
-    // Wait for the new page to open in a popup when clicking the "View Combined Inbox" link
-    const page1Promise = page.waitForEvent('popup');
-    const viewSitemap = page.getByRole('link', { name: 'View Combined Inbox' });
-    await viewSitemap.waitFor();
-    await viewSitemap.click();
-    const page1 = await page1Promise;
+    //  Wait for and click the "View Combined Inbox" link
+    const popup = page.waitForEvent('popup');
+    const combinedInboxLink = page.getByRole('link', { name: 'View Combined Inbox' });
+    await combinedInboxLink.click();
+    const inboxPage = await popup;
 
-    await page1.waitForLoadState('domcontentloaded');
+    await inboxPage.waitForLoadState('domcontentloaded');
 
     // Validate new page url
-    const newPageUrl = page1.url();
-    expect(newPageUrl).toBe('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_Inbox');
+    expect(inboxPage).toHaveURL('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_Inbox');
 
     // Validate if the inbox is visible on the new page
-    const inbox = page1.locator('#inbox');
+    const inbox = inboxPage.locator('#inbox');
     await inbox.waitFor({ state: 'visible' });
     await expect(inbox).toBeVisible();
 });
 
 test('Sitemap card creation, deletion, and appearance on the view sitemap page', async ({ page }) => {
+    // Generate a unique site title
+    const uniqueSiteName = `TestSite-${Math.floor(Math.random() * 10000)}`;
+
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
 
     const addSiteButton = page.getByRole('button', { name: 'Add Site' });
@@ -74,9 +75,6 @@ test('Sitemap card creation, deletion, and appearance on the view sitemap page',
 
     const addSiteDialog = page.locator('span:has-text("Add Site")');
     await addSiteDialog.waitFor({ state: 'visible' });
-
-    // Generate a unique site name
-    const uniqueSiteName = `TestSite-${Math.floor(Math.random() * 10000)}`;
 
     // Add site title
     const siteInput = page.locator('#button-title');
@@ -105,27 +103,27 @@ test('Sitemap card creation, deletion, and appearance on the view sitemap page',
     // Verify the card background and font color
     const newCardElement = page.locator('div.leaf-sitemap-card:has(h3:has-text("' + uniqueSiteName + '"))');
     await newCardElement.waitFor({ state: 'visible' });
+
     const styleAttribute = await newCardElement.getAttribute('style');
     expect(styleAttribute).toContain('background-color: #9e4747');
     expect(styleAttribute).toContain('color: #a4bd17');
 
     // Wait for the new page to open in a popup when clicking the "View Sitemap" link
-    const page1Promise = page.waitForEvent('popup');
+    const popUp = page.waitForEvent('popup');
     const viewSitemap = page.getByRole('link', { name: 'View Sitemap' });
     await viewSitemap.waitFor();
     await viewSitemap.click();
-    const page1 = await page1Promise;
+    const viewSitemapPage = await popUp;
 
-    await page1.waitForLoadState('domcontentloaded');
+    await viewSitemapPage.waitForLoadState('domcontentloaded');
 
     // Validate new page url
-    const newPageUrl = page1.url();
-    expect(newPageUrl).toBe('https://host.docker.internal/Test_Request_Portal/?a=sitemap');
+    await expect(viewSitemapPage).toHaveURL('https://host.docker.internal/Test_Request_Portal/?a=sitemap');
 
     const sitemapCard = page.locator('div.leaf-sitemap-card:has-text("' + uniqueSiteName + '")');
     await expect(sitemapCard).toBeVisible();
 
-    await page1.close();
+    await viewSitemapPage.close();
     await newCardElement.waitFor();
     await newCardElement.click();
 
@@ -140,7 +138,7 @@ test('Sitemap card creation, deletion, and appearance on the view sitemap page',
     await expect(sitemapCard).not.toBeVisible();
 });
 
-test('Change and revert sitemap card color from sidenav link', async ({ page }) => {
+test('Change and revert sitemap card color from side navbar', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
 
     const firstItem = page.locator('ul.usa-sidenav li:first-child');
@@ -177,29 +175,26 @@ test('Inbox visibility from view sitemap page', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
 
     // Wait for the popup page to open when "View Sitemap" is clicked
-    const sitemapPopup = page.waitForEvent('popup');
-    const sitemapLink = page.getByRole('link', { name: 'View Sitemap' });
-    await sitemapLink.waitFor();
-    await sitemapLink.click();
-    const sitemapPage = await sitemapPopup;
+    const popUp = page.waitForEvent('popup');
+    const viewSitemap = page.getByRole('link', { name: 'View Sitemap' });
+    await viewSitemap.click();
+    const viewSitemapPage = await popUp;
 
-    await sitemapPage.waitForLoadState('domcontentloaded');
+    await viewSitemapPage.waitForLoadState('domcontentloaded');
 
     // Validate the sitemap page URL
-    const sitemapUrl = sitemapPage.url();
-    expect(sitemapUrl).toBe('https://host.docker.internal/Test_Request_Portal/?a=sitemap');
+    await expect(viewSitemapPage).toHaveURL('https://host.docker.internal/Test_Request_Portal/?a=sitemap');
 
     // Wait for the Combined Inbox page to open when "View Combined Inbox" is clicked
-    const inboxPopup = sitemapPage.waitForEvent('popup');
-    const inboxBtn = sitemapPage.getByRole('button', { name: 'View Combined Inbox' });
+    const inboxPopup = viewSitemapPage.waitForEvent('popup');
+    const inboxBtn = viewSitemapPage.getByRole('button', { name: 'View Combined Inbox' });
     await inboxBtn.waitFor();
     await inboxBtn.click();
     const inboxPage = await inboxPopup;
 
     // Wait for the combined inbox page to load
     await inboxPage.waitForLoadState('domcontentloaded');
-    const inboxUrl = inboxPage.url();
-    expect(inboxUrl).toMatch(/https:\/\/host\.docker\.internal\/Test_Request_Portal\/report\.php\?a=leaf_inbox/i);
+    await expect(inboxPage).toHaveURL('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_Inbox')
 
     // Validate that the inbox is visible on the sitemap page
     const inbox = inboxPage.locator('#inbox');
