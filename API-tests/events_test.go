@@ -1,11 +1,12 @@
 package main
 
 import (
-	"testing"
-	"github.com/google/go-cmp/cmp"
 	"encoding/json"
 	"io"
 	"net/url"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func getEvent(url string) (WorkflowEventsResponse, error) {
@@ -84,7 +85,7 @@ func confirmEventsRecordValues(t *testing.T, expectedEvent WorkflowEvent, expect
 /*
 * Get emailTemplates records and search by eventDescription / email_templates label.
 * Confirm that a record is found and has the expected property values based on the eventID.
-*/
+ */
 func confirmEmailTemplatesRecordValues(t *testing.T, eventID string, eventDescription string) {
 	emailTemplatesResponse, err := getEmailTemplatesResponse(RootURL + `api/emailTemplates`)
 	if err != nil {
@@ -92,12 +93,12 @@ func confirmEmailTemplatesRecordValues(t *testing.T, eventID string, eventDescri
 	}
 	var newEmailTemplatesRecord EmailTemplatesRecord
 	for i := 0; i < len(emailTemplatesResponse); i++ {
-		emailTempRec := emailTemplatesResponse[i];
-		if(emailTempRec.DisplayName == eventDescription) {
+		emailTempRec := emailTemplatesResponse[i]
+		if emailTempRec.DisplayName == eventDescription {
 			newEmailTemplatesRecord = emailTempRec
 		}
 	}
-	if (newEmailTemplatesRecord.FileName == "") {
+	if newEmailTemplatesRecord.FileName == "" {
 		t.Errorf("Did not find expected email templates record")
 	} else {
 		got := newEmailTemplatesRecord.FileName
@@ -125,19 +126,19 @@ func confirmEmailTemplatesRecordValues(t *testing.T, eventID string, eventDescri
 
 /*
 * Event posts successfully and associated events and email_templates table records have expected values
-*/
+ */
 func TestEvents_NewValidCustomEmailEvent(t *testing.T) {
 	eventName := "CustomEvent_event_valid"
-	optionsIn := map[string]string {
+	optionsIn := map[string]string{
 		"data[Notify Requestor]": "true",
-		"data[Notify Next]": "true",
-		"data[Notify Group]": "203",
+		"data[Notify Next]":      "true",
+		"data[Notify Group]":     "203",
 	}
 	expectedJSON := `{"NotifyRequestor":"true","NotifyNext":"true","NotifyGroup":"203"}`
 	ev_valid := WorkflowEvent{
-		EventID: eventName,
-		EventDescription:  "test event description",
-		EventType:  "Email",
+		EventID:          eventName,
+		EventDescription: "test event description",
+		EventType:        "Email",
 	}
 	res, err := postEvent(RootURL+`api/workflow/events`, ev_valid, optionsIn)
 	if err != nil {
@@ -156,14 +157,14 @@ func TestEvents_NewValidCustomEmailEvent(t *testing.T) {
 
 func TestEvents_ReservedPrefixes_NotAllowed(t *testing.T) {
 	ev_leafsecure := WorkflowEvent{
-		EventID: "LeafSecure_prefix",
-		EventDescription:  "prefix is reserved 1",
-		EventType:  "Email",
+		EventID:          "LeafSecure_prefix",
+		EventDescription: "prefix is reserved 1",
+		EventType:        "Email",
 	}
 	ev_std_email := WorkflowEvent{
-		EventID: "std_email_prefix",
-		EventDescription:  "prefix is reserved 2",
-		EventType:  "Email",
+		EventID:          "std_email_prefix",
+		EventDescription: "prefix is reserved 2",
+		EventType:        "Email",
 	}
 
 	res, err := postEvent(RootURL+`api/workflow/events`, ev_leafsecure, map[string]string{})
@@ -189,9 +190,9 @@ func TestEvents_ReservedPrefixes_NotAllowed(t *testing.T) {
 
 func TestEvents_DuplicateDescription_NotAllowed(t *testing.T) {
 	ev_desc_dup := WorkflowEvent{
-		EventID: "CustomEvent_event_desc_dup",
-		EventDescription:  "test event description",
-		EventType:  "Email",
+		EventID:          "CustomEvent_event_desc_dup",
+		EventDescription: "test event description",
+		EventType:        "Email",
 	}
 
 	res, err := postEvent(RootURL+`api/workflow/events`, ev_desc_dup, map[string]string{})
@@ -208,19 +209,19 @@ func TestEvents_DuplicateDescription_NotAllowed(t *testing.T) {
 func TestEvents_EditValidCustomEmailEvent(t *testing.T) {
 	oldEventName := "CustomEvent_event_valid"
 	newEventName := "CustomEvent_event_valid_edited"
-	newOptionsIn := map[string]string {
+	newOptionsIn := map[string]string{
 		"data[Notify Requestor]": "false",
-		"data[Notify Next]": "false",
-		"data[Notify Group]": "101",
-		"newName": newEventName,
+		"data[Notify Next]":      "false",
+		"data[Notify Group]":     "101",
+		"newName":                newEventName,
 	}
 	newExpectedJSON := `{"NotifyRequestor":"false","NotifyNext":"false","NotifyGroup":"101"}`
 	new_ev_valid := WorkflowEvent{
-		EventID: newEventName,
-		EventDescription:  "test edited event description",
-		EventType:  "Email",
+		EventID:          newEventName,
+		EventDescription: "test edited event description",
+		EventType:        "Email",
 	}
-	res, err := postEvent(RootURL+`api/workflow/editEvent/_` + oldEventName, new_ev_valid, newOptionsIn)
+	res, err := postEvent(RootURL+`api/workflow/editEvent/_`+oldEventName, new_ev_valid, newOptionsIn)
 	if err != nil {
 		t.Error(err)
 	}
@@ -233,4 +234,27 @@ func TestEvents_EditValidCustomEmailEvent(t *testing.T) {
 	confirmEventsRecordValues(t, new_ev_valid, newExpectedJSON)
 
 	confirmEmailTemplatesRecordValues(t, new_ev_valid.EventID, new_ev_valid.EventDescription)
+}
+
+/* This is to show off what will happen if you try and use a utf8 era character in latin1*/
+func TestEvents_Special_Character(t *testing.T) {
+	this_is_a_only_a_simley_face_test := WorkflowEvent{
+		EventID:          "this_is_a_only_a_simley_face_test",
+		EventDescription: "This is a simley face 😀 Text afterwards",
+		EventType:        "Email",
+	}
+	theMorphedText := "This is a simley face ? Text afterwards"
+	_, err := postEvent(RootURL+`api/workflow/events`, this_is_a_only_a_simley_face_test, map[string]string{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	event, err := getEvent(RootURL + `api/workflow/event/_` + this_is_a_only_a_simley_face_test.EventID)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if event[0].EventDescription != theMorphedText {
+		t.Errorf(`Title %v Does not match %v.`, event[0].EventDescription, theMorphedText)
+	}
 }
