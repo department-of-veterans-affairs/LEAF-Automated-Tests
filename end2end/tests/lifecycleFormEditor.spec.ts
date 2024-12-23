@@ -103,6 +103,16 @@ test('Add Internal Use Form', async ({ page }) => {
   await expect(page1.getByLabel('Form Field:')).toContainText(uniqueText + ': ' + uniqueText + ' Section');
 });
 
+test('Export Form', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  await page.getByRole('link', { name: uniqueText }).click();
+  await expect(page.getByText(uniqueText + ' Section')).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByLabel('export form').click();
+  const download = await downloadPromise;
+  await download.saveAs('./LEAF-Automated-Tests/end2end/forms/' + uniqueText + '.txt');
+});
+
 test('Delete Form', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
   await page.getByRole('link', { name: uniqueText }).click();
