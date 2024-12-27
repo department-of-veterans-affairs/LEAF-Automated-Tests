@@ -11,10 +11,10 @@ test('Create New Form', async ({ page }) => {
   await page.getByRole('button', { name: 'Create Form' }).click();
   await page.getByLabel('Form Name (up to 50').fill(uniqueText);
   await page.getByLabel('Form Name (up to 50').press('Tab');
-  await page.getByLabel('Form Description (up to 255').fill(uniqueText + '  Description');
+  await page.getByLabel('Form Description (up to 255').fill(uniqueText + ' Description');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
-  await expect(page.getByLabel('Form description')).toHaveValue(uniqueText + '  Description');
+  await expect(page.getByLabel('Form description')).toHaveValue(uniqueText + ' Description');
   await page.getByRole('link', { name: 'Form Browser' }).click();
   await expect(page.getByRole('link', { name: uniqueText })).toBeVisible();
 });
@@ -121,4 +121,25 @@ test('Delete Form', async ({ page }) => {
   await page.getByRole('button', { name: 'Yes' }).click();
   await expect(page.locator('#createFormButton')).toContainText('Create Form');
   await expect(page.getByRole('link', { name: uniqueText })).not.toBeVisible();
+});
+
+test('Import Form', async ({ page }) => {
+
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  await page.getByRole('button', { name: 'Import Form' }).click();
+
+  // Get the form to import
+  const fileChooser = await page.locator('#formPacket');
+  fileChooser.setInputFiles('./LEAF-Automated-Tests/end2end/forms/' + uniqueText + '.txt');
+  
+  // await expect(fileChooser).toHaveValue(uniqueText + '.txt');
+  // Click on the Import button
+  await page.getByRole('button', { name: 'Import', exact: true }).click();
+
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText + ' (Copy)');
+
+  // Delete newly imported form to avoid confusion in future tests
+  await page.getByLabel('delete this form').click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+
 });
