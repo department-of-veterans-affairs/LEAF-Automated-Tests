@@ -110,7 +110,7 @@ test('Export Form', async ({ page }) => {
   const downloadPromise = page.waitForEvent('download');
   await page.getByLabel('export form').click();
   const download = await downloadPromise;
-  await download.saveAs('./LEAF-Automated-Tests/end2end/forms/' + uniqueText + '.txt');
+  await download.saveAs('./forms/' + uniqueText + '.txt');
 });
 
 test('Delete Form', async ({ page }) => {
@@ -130,7 +130,7 @@ test('Import Form', async ({ page }) => {
 
   // Get the form to import
   const fileChooser = await page.locator('#formPacket');
-  fileChooser.setInputFiles('./LEAF-Automated-Tests/end2end/forms/' + uniqueText + '.txt');
+  fileChooser.setInputFiles('./forms/' + uniqueText + '.txt');
   
   // await expect(fileChooser).toHaveValue(uniqueText + '.txt');
   // Click on the Import button
