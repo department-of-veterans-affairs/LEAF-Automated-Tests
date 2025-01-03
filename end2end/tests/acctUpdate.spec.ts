@@ -4,6 +4,7 @@ test.use({
   ignoreHTTPSErrors: true
 });
 
+//Test the old user do not have any groups and positions and everything works correctly
 test('noGroupsOrPositions', async ({ page }, testInfo) => {
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
