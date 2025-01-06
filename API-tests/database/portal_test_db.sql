@@ -126,7 +126,8 @@ INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDes
 ('leaf_devconsole',	'',	'LEAF Developer Console',	'',	-2,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
 ('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
 ('form_7664a',	'',	'IFTHEN display status progress checking',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1733265434),
-('form_dac2a',	'',	'Test IFTHEN staple',	'',	0,	10,	0,	NULL,	1,	0,	'',	NULL,	1733840407);
+('form_dac2a',	'',	'Test IFTHEN staple',	'',	0,	10,	0,	NULL,	1,	0,	'',	NULL,	1733840407),
+('form_512fa',	'',	'Input Formats',	'For testing the direct behavior and display of indictor format types',	1,	0,	0,	0,	1,	0,	'',	NULL,	1736121124);
 
 DROP TABLE IF EXISTS `category_count`;
 CREATE TABLE `category_count` (
@@ -1101,7 +1102,11 @@ INSERT INTO `category_count` (`recordID`, `categoryID`, `count`) VALUES
 (955,	'form_5ea07',	1),
 (956,	'form_5ea07',	1),
 (957,	'form_5ea07',	1),
-(958,	'form_5ea07',	1);
+(958,	'form_5ea07',	1),
+(959,	'form_512fa',	1),
+(960,	'form_512fa',	1),
+(961,	'form_512fa',	1),
+(962,	'form_512fa',	1);
 
 DROP TABLE IF EXISTS `category_privs`;
 CREATE TABLE `category_privs` (
@@ -5455,7 +5460,16 @@ INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `ti
 (958,	3,	1,	'4331',	NULL,	1699044434,	'tester'),
 (958,	4,	1,	'44850',	NULL,	1699044434,	'tester'),
 (958,	5,	1,	'49128',	NULL,	1699044434,	'tester'),
-(958,	9,	1,	'107',	NULL,	1699044497,	'tester');
+(958,	9,	1,	'107',	NULL,	1699044497,	'tester'),
+(959,	49,	1,	'1',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}',	1736122925,	'tester'),
+(959,	50,	1,	'53',	NULL,	1736122925,	'tester'),
+(959,	51,	1,	'33',	NULL,	1736122925,	'tester'),
+(960,	49,	1,	'',	NULL,	1736122925,	'tester'),
+(960,	50,	1,	'',	NULL,	1736122925,	'tester'),
+(960,	51,	1,	'',	NULL,	1736122925,	'tester'),
+(961,	49,	1,	'9999',	'{\"email\": \"\", \"lastName\": \"\", \"userName\": \"\", \"firstName\": \"\", \"middleName\": \"\"}',	1736122925,	'tester'),
+(961,	50,	1,	'9999',	NULL,	1736122925,	'tester'),
+(961,	51,	1,	'9999',	NULL,	1736122925,	'tester');
 
 DROP TABLE IF EXISTS `data_action_log`;
 CREATE TABLE `data_action_log` (
@@ -6243,7 +6257,27 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (29,	'Header',	'',	'',	'',	NULL,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-10 14:19:05',	0,	0),
 (30,	'parent dropdown',	'dropdown\n\n1\n2\n3',	'',	'',	29,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-10 14:19:35',	0,	0),
 (31,	'child text',	'text',	'',	'',	30,	'form_dac2a',	NULL,	NULL,	'[{\"childIndID\":31,\"parentIndID\":30,\"selectedOp\":\"==\",\"selectedParentValue\":\"3\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"text\",\"parentFormat\":\"dropdown\"}]',	NULL,	1,	-128,	'2024-12-10 14:19:47',	0,	0),
-(32,	'nested sub question',	'text',	'',	'',	31,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-10 14:20:07',	0,	0);
+(32,	'nested sub question',	'text',	'',	'',	31,	'form_dac2a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-10 14:20:07',	0,	0),
+(33,	'Basic input types',	'',	'',	'',	NULL,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-01-05 23:52:03',	0,	0),
+(34,	'single line text',	'text',	'',	'',	33,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-01-05 23:52:03',	0,	0),
+(35,	'multi-line text',	'textarea',	'',	'',	33,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-01-05 23:52:03',	0,	0),
+(36,	'numeric',	'number',	'',	'',	33,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:03',	0,	0),
+(37,	'currency',	'currency',	'',	'',	33,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-125,	'2025-01-05 23:52:03',	0,	0),
+(38,	'file attachment',	'fileupload',	'',	'',	33,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-124,	'2025-01-05 23:52:03',	0,	0),
+(39,	'image attachment',	'image',	'',	'',	33,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-123,	'2025-01-05 23:52:03',	0,	0),
+(40,	'Plugin and style-modified input types',	'',	'',	'',	NULL,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-01-05 23:52:04',	0,	0),
+(41,	'date (jQuery date picker)',	'date',	'',	'',	40,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-01-05 23:52:04',	0,	0),
+(42,	'dropdown (jQuery Chosen)',	'dropdown\r\n\r\n1\r\n2\r\n3 & 4',	'',	'',	40,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-01-05 23:52:04',	0,	0),
+(43,	'multi-select dropdown (JavaScript Choices-JS)',	'multiselect\r\na\r\nb\r\nc & d',	'',	'',	40,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0),
+(44,	'checkbox (LEAF-check with custom label)',	'checkbox\r\ncustom label',	'',	'',	40,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-125,	'2025-01-05 23:52:04',	0,	0),
+(45,	'checkboxes (LEAF-check)',	'checkboxes\r\n5\r\n6\r\n7 & 8',	'',	'',	40,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-124,	'2025-01-05 23:52:04',	0,	0),
+(46,	'radio (LEAF-check)',	'radio\r\nE\r\nF\r\nG & H',	'',	'',	40,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-123,	'2025-01-05 23:52:04',	0,	0),
+(47,	'LEAF-specific input types<br />\n(LEAF types involving more than simple styling) ',	'',	'',	'',	NULL,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0),
+(48,	'grid (LEAF-table)',	'grid\r\n[{\"id\":\"col_2872\",\"name\":\"single line cell\",\"type\":\"text\"},{\"id\":\"col_ff50\",\"name\":\"multi-line cell\",\"type\":\"textarea\"},{\"id\":\"col_8d19\",\"name\":\"date cell\",\"type\":\"date\"},{\"id\":\"col_58bf\",\"name\":\"dropdown cell\",\"type\":\"dropdown\",\"options\":[\"1\",\"2\",\"3\"]}]',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-01-05 23:52:04',	0,	0),
+(49,	'orgchart employee (LEAF-orgchart, employee)',	'orgchart_employee',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-01-05 23:52:04',	0,	0),
+(50,	'orgchart group (LEAF-orgchart, group)',	'orgchart_group',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0),
+(51,	'orgchart position (LEAF-orgchart, position)',	'orgchart_position',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-125,	'2025-01-05 23:52:04',	0,	0),
+(52,	'custom widget (LEAF-raw data)',	'raw_data',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-124,	'2025-01-05 23:52:04',	0,	0);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
@@ -7253,7 +7287,11 @@ INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `prio
 (955,	1699044434,	0,	'tester',	'Available for test case',	0,	'Submitted',	1699044448,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (956,	1699044434,	0,	'tester',	'Available for test case',	0,	'Submitted',	1699044448,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (957,	1699044434,	0,	'tester',	'Available for test case',	0,	'Submitted',	1699044448,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(958,	1699044434,	0,	'VTRNCOJANINA',	'Tester should not have access in non-admin mode',	0,	'Submitted',	1699044448,	0,	0,	1,	'{\"email\": \"Ollie.Flatley@fake-email.com\", \"lastName\": \"Flatley\", \"userName\": \"vtrncojanina\", \"firstName\": \"Ollie\", \"middleName\": \"Schultz\"}');
+(958,	1699044434,	0,	'VTRNCOJANINA',	'Tester should not have access in non-admin mode',	0,	'Submitted',	1699044448,	0,	0,	1,	'{\"email\": \"Ollie.Flatley@fake-email.com\", \"lastName\": \"Flatley\", \"userName\": \"vtrncojanina\", \"firstName\": \"Ollie\", \"middleName\": \"Schultz\"}'),
+(959,	1699044434,	0,	'tester',	'Orgchart formats - Entry Found',	0,	NULL,	0,	0,	1,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(960,	1699044434,	0,	'tester',	'Orgchart formats - Entry Empty',	0,	NULL,	0,	0,	1,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(961,	1699044434,	0,	'tester',	'Orgchart formats - Entry Not Found',	0,	NULL,	0,	0,	1,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(962,	1699044434,	0,	'tester',	'Formats - No Data Record',	0,	NULL,	0,	0,	1,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
 
 DROP TABLE IF EXISTS `records_dependencies`;
 CREATE TABLE `records_dependencies` (
