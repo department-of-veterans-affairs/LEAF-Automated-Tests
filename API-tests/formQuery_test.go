@@ -315,6 +315,87 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	}
 }
 
+/* test query S1[idIndicator] API values of orgchart format types */
+func TestFormQuery_Orgchart_Formats__idIndicator_Has_Expected_Values(t *testing.T) {
+	q := `q={"terms":[{"id":"categoryID","operator":"=","match":"form_512fa","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["49","50","51"]}`
+	xFilter := `&x-filterData=recordID`
+
+	recDataFound := 959
+	recDataEmpty := 960
+	recDataNotFound := 961
+	recNoDataRecord := 962
+	keyEmp := "id49"
+	keyGrp := "id50"
+	keyPos := "id51"
+
+	res, _ := getFormQuery(RootURL + `api/form/query/?` + q + xFilter)
+
+	//data.data value exists and is associated with an existing orgchart employee, group, position
+	got := res[recDataFound].S1[keyEmp] //Firstname Lastname derived from correspond metadata (which is based on lookup of data.data at time of entry)
+	want := "Tester Tester"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id49 valid employee, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataFound].S1[keyGrp]  //Group Title - derived by group lookup of data.data
+	want = "Aluminum Books"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id50 valid group, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataFound].S1[keyPos]  //Posistion Title (PayPlan-Series-PayGrade) - derived by position lookup of data.data and supsequent orgchart position_data
+	want = "Accountability Officer (GS-0343-14)"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id51 valid position, id value got = %v, want = %v", got, want)
+	}
+
+	//data record exists, but the data.data value is empty
+	got = res[recDataEmpty].S1[keyEmp]
+	want = ""
+	if !cmp.Equal(got, want) {
+		t.Errorf("id49 empty employee data, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataEmpty].S1[keyGrp]
+	want = ""
+	if !cmp.Equal(got, want) {
+		t.Errorf("id50 empty group data, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataEmpty].S1[keyPos]
+	want = ""
+	if !cmp.Equal(got, want) {
+		t.Errorf("id51 empty position data, id value got = %v, want = %v", got, want)
+	}
+
+	//data.data value exists but is not associated with a current orgchart employee, group, position AND no metadata exists
+	got = res[recDataNotFound].S1[keyEmp]
+	want = "Employee #9999 no longer available"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id49 outdated employee, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataNotFound].S1[keyGrp]
+	want = "Group #9999 no longer available"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id50 outdated group, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataNotFound].S1[keyPos]
+	want = "Position #9999 no longer available"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id51 outdated position, id value got = %v, want = %v", got, want)
+	}
+
+	//id values should be null if no data record exists
+	got = res[recNoDataRecord].S1[keyEmp]
+	if(got != nil) {
+		t.Errorf("id49 no employee data (null), id value got = %v", got)
+	}
+	got = res[recNoDataRecord].S1[keyGrp]
+	if(got != nil) {
+		t.Errorf("id50 no group data (null), id value got = %v", got)
+	}
+	got = res[recNoDataRecord].S1[keyPos]
+	if(got != nil) {
+		t.Errorf("id49 no position data (null), id value got = %v", got)
+	}
+}
+
 func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
 		FirstName: "Risa",
