@@ -141,9 +141,8 @@ const eventAdded = await page.screenshot();
 
  });
 
-console.log = (await eventMatch.allTextContents());
 
 
  await page.getByRole('button', { name: 'Close' }).click();
-
+ 
 });
