@@ -10,11 +10,11 @@ test.beforeAll(async ({workflowData})=>{
   workflowData.uniqueText = `New Event ${randNum}`;
   workflowData.uniqueDescr = `Adding description ${randNum}`;
 
-})
+});
 
 //Create a New Event
 test ('CreateEvent', async ({ page, workflowData}, testinfo) => {
- await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow');
+
  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
  
 //Click on the Requestor 
@@ -31,7 +31,6 @@ test ('CreateEvent', async ({ page, workflowData}, testinfo) => {
     await page.getByRole('button', { name: 'Create Event' }).click();
     
   //Enter Data for New Event
-
 
     //await page.getByRole('button', { name: 'Create Event' }).click();
     await page.getByLabel('Event Name:').click();
@@ -53,16 +52,18 @@ test ('CreateEvent', async ({ page, workflowData}, testinfo) => {
   let eventTitle = `Email - ${workflowData.uniqueDescr}`;
   await expect(page.locator('#stepInfo_3')).toContainText(eventTitle);
 
+  //Add Screenshot
+  const newEventscreenshot = await page.screenshot();
+  await testinfo.attach('New Event', { body: newEventscreenshot, contentType: 'image/png' });
+ 
   await page.getByLabel('Close Modal').click();
+  });
 
-  const screenshot = await page.screenshot()
-  await testinfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-})
-//End of 1st Test (Create New Event)
+// End of 1st Test (Create New Event)
 
 // Select Newly Created Event from dropdown
 test('Add Event from ddown', async ({ page, workflowData }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow');
+
  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
   await page.locator('#jsPlumb_1_51').click();
   await page.getByRole('button', { name: 'Add Event' }).click();
@@ -82,21 +83,18 @@ test('Add Event from ddown', async ({ page, workflowData }, testInfo) => {
  await expect(page.getByRole('button', { name: 'Remove Action' })).toBeVisible();
  await page.getByText(eventTitle).click();
 
+ const eventAdded = await page.screenshot();
+  await testInfo.attach('Event Added', { body: eventAdded, contentType: 'image/png' });
  //Close the modal and return
  await page.getByLabel('Close Modal').click();
-
-  const screenshot = await page.screenshot()
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
   
 });
 //End of select from ddrown
 
 //Add Event From Side Bar 
 test ('Add Event from side bar', async ({ page , workflowData }, testInfo) => {
-
 //Load Page
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow');
+ 
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
   //Update the unique values
 
@@ -115,17 +113,37 @@ let uniqueDescr = `new ${workflowData.uniqueDescr}`;
   await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
   await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
   await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
+ 
+ //Screehshot before Save
+ const newEvent = await page.screenshot();
+  await testInfo.attach('New Event Created', { body: newEvent, contentType: 'image/png' });
+  //SAVE
   await page.getByRole('button', { name: 'Save' }).click();
 
-  await page.getByLabel('List of Events').click();
-//Verify new  event is added
- // await page.getByRole('row', { name: uniqueDescr }).locator('#Email').click();
- // await page.getByRole('button', { name: 'Close' }).click();
+ //Verify new  event is added
 
- //Close popup
+ await expect(page.locator('#ui-id-1')).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+
+ //Screentshot
+
+const eventAdded = await page.screenshot();
+  await testInfo.attach('Event Added', { body: eventAdded, contentType: 'image/png' });
+
+ // Verify
+ const table = page.locator("#events");
+ const rows = table.locator("tbody tr");
+ const cols = rows.first().locator("td");
+
+ const eventMatch = rows.filter({
+    has: page.locator("td"),
+    hasText: uniqueText
+
+ });
+
+console.log = (await eventMatch.allTextContents());
+
+
  await page.getByRole('button', { name: 'Close' }).click();
 
-
- const screenshot = await page.screenshot();
- await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 });
