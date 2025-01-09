@@ -16,7 +16,6 @@ test('Create group and add an employee', async ({ page }) => {
 
   const saveButton = page.getByRole('button', { name: 'Save' });
   await saveButton.click();
-  await page.reload();
 
   const newGroup = page.getByRole('heading', { name: uniqueText });
   await newGroup.waitFor({ state: 'visible' });
