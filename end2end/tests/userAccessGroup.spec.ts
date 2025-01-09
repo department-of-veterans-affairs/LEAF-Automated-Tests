@@ -78,3 +78,46 @@ test('Import a group from another leaf site and delete it', async ({ page }) => 
   await page.reload();
   await expect(importedGroup).not.toBeVisible();
 });
+
+test('System admin search', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
+
+  const systemAdminsLink = page.getByRole('link', { name: 'System administrators' });
+  await systemAdminsLink.click();
+
+  const searchBox = page.getByLabel('Filter by group or user name');
+  await searchBox.fill('sysa');
+  await page.keyboard.press('Enter');
+
+  // Verify the system admin exists
+  const sysAdminGroup = page.locator('#groupTitle1');
+  await expect(sysAdminGroup).toBeVisible();
+  await expect(sysAdminGroup).toContainText('sysadmin');
+
+  // Verify primary admin not found in search results
+  const otherGroup = page.locator('#groupTitle2');
+  await expect(otherGroup).not.toBeVisible();
+});
+
+test('View user group history', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
+
+  // Open group
+  const group = page.getByRole('heading', { name: 'Iron Games' });
+  await group.click();
+
+  const viewHistoryButton = page.getByRole('button', { name: 'View History' });
+  await viewHistoryButton.waitFor();
+  await viewHistoryButton.click();
+
+  // Verify the group name in the history
+  const historyName = page.locator('#historyName');
+  await historyName.waitFor();
+  await expect(historyName).toContainText('Group Name: Iron Games');
+
+  const closeHistoryButton = page.getByLabel('Group history').getByRole('button', { name: 'Close' });
+  await closeHistoryButton.click();
+
+  const closeButton = page.getByRole('button', { name: 'Close' });
+  await closeButton.click();
+});
