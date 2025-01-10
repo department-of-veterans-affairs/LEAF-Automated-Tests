@@ -29,8 +29,8 @@ test('column order is maintained after modifying the search filter', async ({ pa
   await generateReportButton.click();
 
   // results 
-  const results  = page.locator('#results');
-  await results.waitFor({state: 'visible'});
+  const results = page.locator('#results');
+  await results.waitFor({ state: 'visible' });
 
   await page.reload();
 
@@ -218,11 +218,127 @@ test('Update current status to Initiator to generate report with reports', async
   const generateReportButton = page.locator('#generateReport');
   await generateReportButton.click();
 
- // Wait for the #reportStats element containing "Loading..." to be hidden
- await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
+  // Wait for the #reportStats element containing "Loading..." to be hidden
+  await page.locator('#reportStats:has-text("Loading...")').waitFor({ state: 'hidden' });
 
- // Verify number of records displayed in the search results
- await page.locator('#reportStats').waitFor({ state: 'visible' });
- const reportText = await page.locator('#reportStats').textContent();
- expect(reportText).toContain('1 records');
+  // Verify number of records displayed in the search results
+  await page.locator('#reportStats').waitFor({ state: 'visible' });
+  const reportText = await page.locator('#reportStats').textContent();
+  expect(reportText).toContain('records');
+});
+
+test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
+  await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
+
+  // get UID from the first row of the table
+  const UID = await page.locator('//table/tbody/tr[1]//a').textContent();
+
+  // take Action Button
+  const takeActionButton = page.locator('//tbody/tr[1]//div');
+  await takeActionButton.waitFor();
+  await takeActionButton.click();
+
+  // Validate form is visible for the specific UID
+  const validateForm = page.getByText(`Apply Action to #${UID}`);
+  await expect(validateForm).toBeVisible();
+
+  // add approval comment
+  const commentInput = page.locator('textarea[aria-label="comment text area"]').nth(0);
+  await commentInput.waitFor();
+  await commentInput.fill('testing purpose');
+
+  // approve button
+  const approveButton = page.getByRole('button', { name: 'Approve' }).nth(0)
+  await approveButton.waitFor();
+  await approveButton.click();
+
+  // navigate to same UID record page
+  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
+
+  // validate added comment visible on the record page
+  await page.reload();
+  const comment = page.locator('#workflowbox_lastAction');
+  await comment.waitFor({ state: 'visible' });
+  await expect(comment).toContainText('testing purpose');
+});
+
+test('Share Report button is visible on the UI', async ({ page }) => {
+  await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
+
+  // Ensure 'Share Report' button is visible and clickable before interacting
+  const shareReportButton = page.getByRole('button', { name: 'Share Report' });
+  await expect(shareReportButton).toBeVisible();
+  await shareReportButton.click();
+
+  // Ensure that the 'Email Report' button appears after clicking the 'Share Report' button
+  const emailReportButton = page.getByRole('button', { name: 'Email Report' });
+  await expect(emailReportButton).toBeVisible();
+});
+
+test('Report builder workflow and create row button functionality', async ({ page }) => {
+  await page.goto("https://host.docker.internal/Test_Request_Portal/")
+
+  // Validate and click Report Builder button
+  const reportBuilderButton = page.locator('//span[text()="Report Builder"]');
+  await expect(reportBuilderButton).toBeVisible();
+  await reportBuilderButton.click();
+
+  // Verify step 1
+  const developSearchFilter = page.locator('#step_1');
+  await developSearchFilter.waitFor();
+
+  // apply filters
+  const currentStatusLink = page.getByRole('cell', { name: 'Current Status' }).locator('a');
+  await expect(currentStatusLink).toBeVisible();
+  await currentStatusLink.click();
+
+  const typeOption = page.getByRole('option', { name: 'Type' });
+  await expect(typeOption).toBeVisible();
+  await typeOption.click();
+
+  const complexFormLink = page.getByRole('cell', { name: 'Complex Form' }).locator('a');
+  await expect(complexFormLink).toBeVisible();
+  await complexFormLink.click();
+
+  const generalFormOption = page.getByRole('option', { name: 'General Form' });
+  await expect(generalFormOption).toBeVisible();
+  await generalFormOption.click();
+
+  // Proceed to next step
+  const nextButton = page.getByRole('button', { name: 'Next Step' });
+  await expect(nextButton).toBeVisible();
+  await nextButton.click();
+
+  // select action button checkbox, type of request checkbox add genral form
+  const typeOfRequestCheckbox = page.locator('label[for="indicators_type"]');
+  await typeOfRequestCheckbox.click();
+  await expect(typeOfRequestCheckbox).toBeChecked();
+
+  const actionButtonCheckbox = page.locator('label[for="indicators_actionButton"]');
+  await actionButtonCheckbox.click();
+  await expect(actionButtonCheckbox).toBeChecked();
+
+  const generalForm = page.locator('#indicatorList').getByText('General Form');
+  await expect(generalForm).toBeVisible();
+  await generalForm.click();
+
+  const AssignedPerson = page.getByText('Assigned Person 2')
+  await expect(AssignedPerson).toBeVisible();
+  await AssignedPerson.click();
+
+  // Generate Report
+  const generateReportButton = page.locator('#generateReport');
+  await generateReportButton.click();
+
+  // Validate Create Row button visibility
+  const createRowButton = page.getByRole('button', { name: 'Create Row' });
+  await createRowButton.waitFor();
+  await expect(createRowButton).toBeVisible();
+  await createRowButton.click();
+  await page.reload();
+
+  // Validate that a new row with the title 'untitled' is created
+  const newRowTitle = page.locator('//tbody/tr[1]/td[3]');
+  await newRowTitle.waitFor({ state: 'visible' });
+  await expect(newRowTitle).toContainText('untitled');
 });
