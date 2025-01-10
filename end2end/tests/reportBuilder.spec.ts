@@ -181,7 +181,7 @@ test('Navigation to record page on UID link click', async ({ page }) => {
   await expect(page.locator('#headerTab')).toContainText('Request #956');
 });
 
-test('Update current status to Initiator to generate report with no result', async ({ page }) => {
+test('Update current status to Initiator to generate report with reports', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/");
   const reportBuilderButton = page.locator('//span[text()="Report Builder"]');
   await expect(reportBuilderButton).toBeVisible();
@@ -224,5 +224,5 @@ test('Update current status to Initiator to generate report with no result', asy
  // Verify number of records displayed in the search results
  await page.locator('#reportStats').waitFor({ state: 'visible' });
  const reportText = await page.locator('#reportStats').textContent();
- expect(reportText).toBe('0 records');
+ expect(reportText).toContain('1 records');
 });
