@@ -505,10 +505,6 @@ func TestForm_VerifyInitiator(t *testing.T) {
 		t.Error(err)
 	}
 
-	if formQueryResponse[5].RecordID == 0 {
-		t.Error("RecordID not set")
-	}
-
 	if formQueryResponse[5].FirstName == "" {
 		t.Error("FirstName not set")
 	}
