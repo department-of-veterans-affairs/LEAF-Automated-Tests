@@ -21,7 +21,8 @@ test('oldAcctGroupsAndPosition', async ({ page }, testInfo) => {
   const page1 = await page1Promise;
 
 //Verify the Sync Service was completed
-await expect(page1.getByText('Syncing services from Org Chart... Syncing has finished. You are set to go.')).toBeVisible();
+ await expect(page1.getByText('Syncing services from Org Chart... Syncing has finished. You are set to go.')).toBeVisible();
+
 
 //Return the the Admin page
  await page1.getByLabel('admin submenu').click();
