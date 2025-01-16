@@ -245,7 +245,6 @@ func TestFormQuery_FindTwoSteps(t *testing.T) {
 	}
 }
 
-
 /* post a new employee to an orgchart format question and then confirm expected values on orgchart property */
 func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
@@ -253,8 +252,8 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 		FirstName: "Ramon",
 		LastName: "Watsica",
 		MiddleName: "Yundt",
-		Email: "Ramon.Watsica@fake-email.com",
-		UserName: "vtrycxbethany",
+		Email:      "Ramon.Watsica@fake-email.com",
+		UserName:   "vtrycxbethany",
 	}
 
 	postData := url.Values{}
@@ -281,7 +280,7 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	recData := formRes[11].S1
 
 	dataInterface := recData["id8_orgchart"]
-	orgchart := dataInterface.(map[string]interface {})
+	orgchart := dataInterface.(map[string]interface{})
 	b, _ := json.Marshal(orgchart)
 
 	var org_emp FormQuery_Orgchart_Employee
@@ -343,12 +342,12 @@ func TestFormQuery_Orgchart_Formats__idIndicator_Has_Expected_Values(t *testing.
 	if !cmp.Equal(got, want) {
 		t.Errorf("id49 valid employee, id value got = %v, want = %v", got, want)
 	}
-	got = res[recDataFound].S1[keyGrp]  //Group Title - derived by group lookup of data.data
+	got = res[recDataFound].S1[keyGrp] //Group Title - derived by group lookup of data.data
 	want = "Aluminum Books"
 	if !cmp.Equal(got, want) {
 		t.Errorf("id50 valid group, id value got = %v, want = %v", got, want)
 	}
-	got = res[recDataFound].S1[keyPos]  //Posistion Title (PayPlan-Series-PayGrade) - derived by position lookup of data.data and supsequent orgchart position_data
+	got = res[recDataFound].S1[keyPos] //Posistion Title (PayPlan-Series-PayGrade) - derived by position lookup of data.data and supsequent orgchart position_data
 	want = "Accountability Officer (GS-0343-14)"
 	if !cmp.Equal(got, want) {
 		t.Errorf("id51 valid position, id value got = %v, want = %v", got, want)
@@ -390,26 +389,26 @@ func TestFormQuery_Orgchart_Formats__idIndicator_Has_Expected_Values(t *testing.
 
 	//id values should be null if no data record exists
 	got = res[recNoDataRecord].S1[keyEmp]
-	if(got != nil) {
+	if got != nil {
 		t.Errorf("id49 no employee data (null), id value got = %v", got)
 	}
 	got = res[recNoDataRecord].S1[keyGrp]
-	if(got != nil) {
+	if got != nil {
 		t.Errorf("id50 no group data (null), id value got = %v", got)
 	}
 	got = res[recNoDataRecord].S1[keyPos]
-	if(got != nil) {
+	if got != nil {
 		t.Errorf("id49 no position data (null), id value got = %v", got)
 	}
 }
 
 func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
-		FirstName: "Risa",
-		LastName: "Keebler",
+		FirstName:  "Risa",
+		LastName:   "Keebler",
 		MiddleName: "Hyatt",
-		Email: "Risá.Keebler@fake-email.com",
-		UserName: "vtrigzcristal",
+		Email:      "Risá.Keebler@fake-email.com",
+		UserName:   "vtrigzcristal",
 	}
 	//post new request under a username
 	postData := url.Values{}
@@ -498,5 +497,30 @@ func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
 	}
 	if !cmp.Equal(gotLastName, wantLast) {
 		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+}
+
+func TestForm_VerifyInitiator(t *testing.T) {
+
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"5","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}&x-filterData=recordID,lastName,firstName,userName`
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	err := json.Unmarshal(b, &formQueryResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if formQueryResponse[5].FirstName == "" {
+		t.Error("FirstName not set")
+	}
+
+	if formQueryResponse[5].LastName == "" {
+		t.Error("LastName not set")
+	}
+
+	if formQueryResponse[5].UserName == "" {
+		t.Error("UserName not set")
 	}
 }
