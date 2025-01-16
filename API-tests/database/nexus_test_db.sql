@@ -3729,6 +3729,10 @@ CREATE TABLE `position_data` (
   KEY `indicatorID` (`indicatorID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `position_data` (`positionID`, `indicatorID`, `data`, `author`, `timestamp`) VALUES
+(33,	2,	'GS',	'tester',	1736188465),
+(33,	13,	'0343',	'tester',	1736188458),
+(33,	14,	'14',	'tester',	1736188443);
 
 DROP TABLE IF EXISTS `position_data_history`;
 CREATE TABLE `position_data_history` (

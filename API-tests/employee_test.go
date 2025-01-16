@@ -59,7 +59,14 @@ func postEmployee(postUrl string, data Employee) (string, error) {
 	return c, nil
 }
 
-func disableEmployee(postUrl string) error {
+func EnableLocalEmployee(empUID string) error {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	_, err := client.PostForm(RootOrgchartURL+`api/employee/` + empUID + `/activate`, postData)
+	return err
+}
+
+func DisableEmployee(postUrl string) error {
 
 	data := url.Values{}
 	data.Set("CSRFToken", CsrfToken)
@@ -271,7 +278,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	}
 
 	// delete remote employee
-	err = disableEmployee(fmt.Sprintf("%sapi/employee/%s", NationalOrgchartURL, natEmployeeKey))
+	err = DisableEmployee(fmt.Sprintf("%sapi/employee/%s", NationalOrgchartURL, natEmployeeKey))
 	if err != nil {
 		t.Error(err)
 	}
