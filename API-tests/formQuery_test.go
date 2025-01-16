@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -248,6 +249,7 @@ func TestFormQuery_FindTwoSteps(t *testing.T) {
 /* post a new employee to an orgchart format question and then confirm expected values on orgchart property */
 func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
+		EmpUID: 201,
 		FirstName: "Ramon",
 		LastName: "Watsica",
 		MiddleName: "Yundt",
@@ -312,6 +314,11 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	want = mock_orgchart_employee.UserName
 	if !cmp.Equal(got, want) {
 		t.Errorf("userName got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(org_emp.EmpUID)
+	want = strconv.Itoa(mock_orgchart_employee.EmpUID)
+	if !cmp.Equal(got, want) {
+		t.Errorf("empUID got = %v, want = %v", got, want)
 	}
 }
 

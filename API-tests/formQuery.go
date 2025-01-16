@@ -10,6 +10,7 @@ type FormQuery_Orgchart_Employee struct {
 	MiddleName        string  `json:"middleName"`
 	Email             string  `json:"email"`
 	UserName          string  `json:"userName"`
+	EmpUID            int     `json:"empUID"`
 }
 
 type FormQueryRecord struct {
