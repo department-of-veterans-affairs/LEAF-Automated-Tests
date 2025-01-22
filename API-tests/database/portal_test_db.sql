@@ -6343,7 +6343,7 @@ INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `prio
 (11,	1694021465,	0,	'tester',	'TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (12,	1694021465,	0,	'tester',	'TestFormQuery_InitiatorName',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (13,	1694021465,	0,	'tester_disabled',	'TestFormQuery_Initiator_Disabled__Empty_Metadata',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"\", \"lastName\": \"\", \"userName\": \"\", \"firstName\": \"\", \"middleName\": \"\"}'),
-(14,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(14,	1694021465,	0,	'tester',	'Workflow Form Fields',	0,	'Approved',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (15,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (16,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (17,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
@@ -12117,7 +12117,7 @@ INSERT INTO `records_workflow_state` (`recordID`, `stepID`, `blockingStepID`, `l
 (11,	1,	0,	'2023-09-06 17:31:25',	0),
 (12,	1,	0,	'2023-09-06 17:31:25',	0),
 (13,	1,	0,	'2023-09-06 17:31:25',	0),
-(14,	1,	0,	'2023-09-06 17:31:25',	0),
+(14,	2,	0,	'2023-09-06 17:31:25',	0),
 (15,	1,	0,	'2023-09-06 17:31:25',	0),
 (16,	1,	0,	'2023-09-06 17:31:25',	0),
 (17,	1,	0,	'2023-09-06 17:31:25',	0),
@@ -13303,6 +13303,8 @@ CREATE TABLE `step_modules` (
   UNIQUE KEY `stepID_moduleName` (`stepID`,`moduleName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `step_modules` (`stepID`, `moduleName`, `moduleConfig`) VALUES
+(2,	'LEAF_workflow_indicator',	'{\"indicatorID\":3}');
 
 DROP TABLE IF EXISTS `tags`;
 CREATE TABLE `tags` (
