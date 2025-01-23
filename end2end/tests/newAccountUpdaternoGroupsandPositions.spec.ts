@@ -1,11 +1,8 @@
 import { test, expect, Locator } from '@playwright/test';
 
-test.use({
-  ignoreHTTPSErrors: true
-});
 
 //Test the old user do not have any groups and positions and everything works correctly
-test('noGroupsOrPositions', async ({ page }, testInfo) => {
+test('validate User does not have any Groups Or Positions', async ({ page }, testInfo) => {
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
   //Open the New Account Update Page
