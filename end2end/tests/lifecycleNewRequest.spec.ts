@@ -155,7 +155,6 @@ test('Verify New Request Page', async ({ page }) => {
 
     test('Previous Value Still Available to Request After Restoring Question', async ({ page }) => {
 
-        test.slow();
         // Restore the Reviewer 2 field
         await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
         await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
@@ -163,7 +162,6 @@ test('Verify New Request Page', async ({ page }) => {
         // Verify the 'Multiple person designated' form loaded
         await expect(page.getByLabel('Form name (24)')).toHaveValue('Multiple person designated');
         await page.getByRole('link', { name: 'Restore Fields' }).click();
-        await page.reload();
         await page.getByRole('button', { name: 'Restore this field' }).click();
         
         // Verify the Reviewer 2 field is no longer on the 'Restore Fields' page 
