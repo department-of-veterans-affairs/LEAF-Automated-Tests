@@ -104,6 +104,8 @@ test('Verify New Request Page', async ({ page }) => {
         // Verify the correct users were found
         await expect(page.getByTitle('87 - VTRSHHZOFIA')).toContainText('Bauch, Adam Koelpin');
         await expect(page.getByTitle('25 - VTRUXEJAMIE')).toContainText('Balistreri, Dorian Dickens');
+
+        // Ensure page has completely loaded before clicking the Next Question button
         await expect(page.locator('#loadingIndicator_15')).not.toBeVisible();
         await page.locator('#nextQuestion2').click();
         
