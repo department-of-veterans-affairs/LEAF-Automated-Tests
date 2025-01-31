@@ -156,7 +156,7 @@ test('Copy workflow', async ({ page }) => {
     // Click the 'Copy Workflow' button to start the copy process
     await page.reload();
     const copyWorkflowButton = page.locator('#btn_duplicateWorkflow');
-    await copyWorkflowButton.waitFor({state: 'visible'});
+    await copyWorkflowButton.waitFor({ state: 'visible' });
     await copyWorkflowButton.click();
 
     // Wait for the "Duplicate Workflow" dialog to appear
