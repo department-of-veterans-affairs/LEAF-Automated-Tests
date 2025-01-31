@@ -1,11 +1,8 @@
 import { test, expect, Locator } from '@playwright/test';
 
-test.use({
-  ignoreHTTPSErrors: true
-});
 
 //Test the old user do not have any groups and positions and everything works correctly
-test('noGroupsOrPositions', async ({ page }, testInfo) => {
+test('validate User does not have any Groups Or Positions', async ({ page }, testInfo) => {
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
   //Open the New Account Update Page
@@ -19,7 +16,7 @@ test('noGroupsOrPositions', async ({ page }, testInfo) => {
   const page1 = await page1Promise;
 
 //Verify the Sync Service was completed
-  await expect(page1.getByText('Syncing has finished. You are')).toBeInViewport();
+  await expect(page1.getByText('Syncing services from Org Chart... Syncing has finished. You are set to go.')).toBeVisible();
 
 //Return the the Admin page
  await page1.getByLabel('admin submenu').click();
