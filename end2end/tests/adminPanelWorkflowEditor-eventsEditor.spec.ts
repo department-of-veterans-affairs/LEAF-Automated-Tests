@@ -57,8 +57,8 @@ test ('Create a New Event', async ({ page}, testinfo) => {
 
 // End of 1st Test (Create New Event)
 
-// Select Newly Created Event from dropdown
-test('Add Event from ddown', async ({ page }, testInfo) => {
+// Select Newly Created Event from Icon
+test('Add Event from Action Icon', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
   await page.locator('#jsPlumb_1_51').click();
@@ -87,21 +87,17 @@ test('Add Event from ddown', async ({ page }, testInfo) => {
 });
 //End of select from ddrown
 
-//Add Event From Side Bar and check for duplicates
-test ('Add Event from side bar', async ({ page }, testInfo) => {
+//Check for duplicates
+test ('Verify Duplicate Event Name & Description are not Allowed', async ({ page }, testInfo) => {
 //Load Page
  
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-  //Update the unique values
 
   //Add New Event
   await page.getByRole('button', { name: 'Edit Events' }).click();
   await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
-
-  
-
+ 
 //Enter Data
-
   await page.getByRole('button', { name: 'Create a new Event' }).click();
   await page.getByLabel('Event Name:').click();
   await page.getByLabel('Event Name:').fill(uniqueText);
@@ -128,51 +124,63 @@ test ('Add Event from side bar', async ({ page }, testInfo) => {
   //SAVE
   await page.getByRole('button', { name: 'Save' }).click();
 
-  //Add non duplicate event
-    
-    //Add New Event
-    await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
-    await page.getByRole('button', { name: 'Create a new Event' }).click();
-  
-  //Enter Data
-  
-  let uniqueText2 = `Event2 - ${uniqueText}`;
-  let uniqueDescr2 = `Description2 - ${uniqueDescr}`;
-
- 
-    await page.getByLabel('Event Name:').click();
-    await page.getByLabel('Event Name:').fill(uniqueText2);
-  
-    await page.getByLabel('Short Description: Notify').fill(uniqueDescr2);
-    await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-    await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
-    await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
-
-    await page.getByRole('button', { name: 'Save' }).click(); 
- //Verify new  event is added
-
- await expect(page.locator('#ui-id-1')).toBeVisible();
- await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
-
- //Screentshot
-
-  const eventAdded = await page.screenshot();
-  await testInfo.attach('Event Added', { body: eventAdded, contentType: 'image/png' });
-
- // Verify
- const table = page.locator("#events");
- const rows = table.locator("tbody tr");
- const cols = rows.first().locator("td");
-
- const eventMatch = rows.filter({
-    has: page.locator("td"),
-    hasText: uniqueText
-
- });
-
- await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
  
 });
+
+//Add Event From Side Bar 
+test ('Add Event from Side Navigation', async ({ page }, testInfo) => {
+  //Load Page
+   
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
+    await page.getByRole('button', { name: 'Edit Events' }).click();
+
+   
+    //Add New Event
+      await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+      await page.getByRole('button', { name: 'Create a new Event' }).click();
+    
+    //Enter Data
+    
+    let uniqueText2 = `Event2 - ${uniqueText}`;
+    let uniqueDescr2 = `Description2 - ${uniqueDescr}`;
+  
+   
+      await page.getByLabel('Event Name:').click();
+      await page.getByLabel('Event Name:').fill(uniqueText2);
+    
+      await page.getByLabel('Short Description: Notify').fill(uniqueDescr2);
+      await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
+      await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
+      await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
+  
+      await page.getByRole('button', { name: 'Save' }).click(); 
+   //Verify new  event is added
+  
+   await expect(page.locator('#ui-id-1')).toBeVisible();
+   await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+  
+   //Screentshot
+  
+    const eventAdded = await page.screenshot();
+    await testInfo.attach('Event Added', { body: eventAdded, contentType: 'image/png' });
+  
+   // Verify
+   const table = page.locator("#events");
+   const rows = table.locator("tbody tr");
+   const cols = rows.first().locator("td");
+  
+   const eventMatch = rows.filter({
+      has: page.locator("td"),
+      hasText: uniqueText
+  
+   });
+  
+   await page.getByRole('button', { name: 'Close' }).click();
+   
+  });
+
 
 //Edit Workflow event using the workflow Editor
 test('Edit Event ', async ({ page }, testInfo) => {
@@ -219,7 +227,7 @@ test('Edit Event ', async ({ page }, testInfo) => {
 });
 //End of Edit Event
 
-//Remove Event
+//Remove Event 
 test('Remove Event ', async ({ page }, testInfo) => {
 
 //Open Page
@@ -266,19 +274,29 @@ await page.getByRole('button', { name: 'Edit Events' }).click();
   await testInfo.attach('Event Added', { body: eventLocate, contentType: 'image/png' });
  await page.getByRole('button', { name: 'Close' }).click();
 
- //Verify Event is not attached to the workflow
- //Click on the Requestor 
- await expect(page.getByText('Return to Requestor')).toBeVisible();
- await page.getByText('Return to Requestor').click();
- let eventTitle = `Email - ${uniqueDescr}`;
- await expect(page.getByText(eventTitle)).not.toBeVisible();
-
-   //Screenshot
-   const eventLocate2 = await page.screenshot();
-   await testInfo.attach('Event Added', { body: eventLocate2, contentType: 'image/png' });
-
- 
-
- await page.getByLabel('Close Modal').click();
-
 });
+//Remove Event
+
+//Verify Event Removed from Workflow Action
+test('Verifiy Event Removed from Workflow Action', async ({ page }, testInfo) => {
+
+  //Open Page
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+  
+ 
+    //Verify Event is not attached to the workflow
+   //Click on the Requestor 
+   await expect(page.getByText('Return to Requestor')).toBeVisible();
+   await page.getByText('Return to Requestor').click();
+   let eventTitle = `Email - ${uniqueDescr}`;
+   await expect(page.getByText(eventTitle)).not.toBeVisible();
+  
+     //Screenshot
+     const eventLocate2 = await page.screenshot();
+     await testInfo.attach('Event Added', { body: eventLocate2, contentType: 'image/png' });
+   
+  
+   await page.getByLabel('Close Modal').click();
+  
+  });
+  
