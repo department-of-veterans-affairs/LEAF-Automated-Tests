@@ -10,7 +10,7 @@ test('Create a new workflow and add step', async ({ page }) => {
 
     // Wait for the "Create new workflow" dialog to be visible
     const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await workflowCreateDialog.waitFor({ state: 'visible' });
+    await expect(workflowCreateDialog).toBeVisible();
 
     await page.locator('#description').fill(workflowTitle);
 
@@ -25,7 +25,7 @@ test('Create a new workflow and add step', async ({ page }) => {
 
     // Wait for the "Create new Step" dialog to be visible
     const stepCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new Step")');
-    await stepCreateDialog.waitFor({ state: 'visible' });
+    await expect(stepCreateDialog).toBeVisible();
 
     const stepTitle = 'step1';
     await page.locator('#stepTitle').fill(stepTitle);
@@ -53,7 +53,7 @@ test('Create a new workflow and add step', async ({ page }) => {
 
     // Wait for the "Create New Workflow Action" dialog and save the action
     const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
-    await actionDialog.waitFor({ state: 'visible' });
+    await expect(actionDialog).toBeVisible();
 
     // Save the workflow action and verify its visibility
     await saveButton.click();
@@ -71,7 +71,7 @@ test('Rename workflow', async ({ page }) => {
 
     // Wait for the "Create new workflow" dialog to be visible
     const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await workflowCreateDialog.waitFor({ state: 'visible' });
+    await expect(workflowCreateDialog).toBeVisible();
 
     await page.locator('#description').fill(initialWorkflowTitle);
 
@@ -86,7 +86,7 @@ test('Rename workflow', async ({ page }) => {
 
     // Wait for the "Rename Workflow" dialog to be visible
     const renameWorkflowDialog = page.locator('span.ui-dialog-title:has-text("Rename Workflow")');
-    await renameWorkflowDialog.waitFor({ state: 'visible' });
+    await expect(renameWorkflowDialog).toBeVisible();
 
     // Fill in the new workflow name
     const renameInput = page.locator('#workflow_rename');
@@ -107,7 +107,7 @@ test('View workflow history', async ({ page }) => {
 
     // Wait for the "Create new workflow" dialog to be visible
     const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await workflowCreateDialog.waitFor({ state: 'visible' });
+    await expect(workflowCreateDialog).toBeVisible();
 
     await page.locator('#description').fill(workflowTitle);
 
@@ -121,7 +121,7 @@ test('View workflow history', async ({ page }) => {
 
     // Wait for the Workflow History dialog to become visible
     const workflowHistoryDialog = page.locator('span.ui-dialog-title:has-text("Workflow History")');
-    await workflowHistoryDialog.waitFor({ state: 'visible' });
+    await expect(workflowHistoryDialog).toBeVisible();
 
     // Verify if the new workflow name appears in the history
     await expect(page.locator('#historyName')).toContainText(workflowTitle);
@@ -139,7 +139,7 @@ test('Copy workflow', async ({ page }) => {
 
     // Wait for the "Create new workflow" dialog to be visible
     const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await workflowCreateDialog.waitFor({ state: 'visible' });
+    await expect(workflowCreateDialog).toBeVisible();
     await page.locator('#description').fill(originalWorkflowTitle);
 
     // Save the new workflow and assert its visibility
@@ -156,12 +156,12 @@ test('Copy workflow', async ({ page }) => {
     // Click the 'Copy Workflow' button to start the copy process
     await page.reload();
     const copyWorkflowButton = page.locator('#btn_duplicateWorkflow');
-    await copyWorkflowButton.waitFor({ state: 'visible' });
+    await expect(copyWorkflowButton).toBeVisible();
     await copyWorkflowButton.click();
 
     // Wait for the "Duplicate Workflow" dialog to appear
     const duplicateWorkflowDialog = page.locator('span.ui-dialog-title:has-text("Duplicate current workflow")');
-    await duplicateWorkflowDialog.waitFor({ state: 'visible' });
+    await expect(duplicateWorkflowDialog).toBeVisible();
     await page.locator('#description').fill(copiedWorkflowTitle);
 
     // Confirm that the copied workflow appears in the list
