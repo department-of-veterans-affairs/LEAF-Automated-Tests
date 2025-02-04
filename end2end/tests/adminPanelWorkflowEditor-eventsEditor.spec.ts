@@ -278,7 +278,7 @@ await page.getByRole('button', { name: 'Edit Events' }).click();
 //Remove Event
 
 //Verify Event Removed from Workflow Action
-test('Verifiy Event Removed from Workflow Action', async ({ page }, testInfo) => {
+test('Verify Event Removed from Workflow Action', async ({ page }, testInfo) => {
 
   //Open Page
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
