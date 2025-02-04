@@ -13304,6 +13304,7 @@ CREATE TABLE `step_modules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `step_modules` (`stepID`, `moduleName`, `moduleConfig`) VALUES
+(1,	'LEAF_workflow_indicator',	'{\"indicatorID\":3}'),
 (2,	'LEAF_workflow_indicator',	'{\"indicatorID\":3}');
 
 DROP TABLE IF EXISTS `tags`;
