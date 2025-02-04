@@ -18,7 +18,7 @@ test('Create group and add an employee', async ({ page }) => {
   await saveButton.click();
 
   const newGroup = page.getByRole('heading', { name: uniqueText });
-  await newGroup.waitFor({ state: 'visible' });
+  await expect(newGroup).toBeVisible();
 
   // Open new group and add an employee
   await newGroup.click();
@@ -28,7 +28,7 @@ test('Create group and add an employee', async ({ page }) => {
   const employeeToAdd = page.getByRole('cell', { name: 'Tester, Tester Product Liaison' });
   await employeeToAdd.click();
   const removeButton = page.getByRole('button', { name: 'Remove' });
-  await removeButton.waitFor();
+  await expect(removeButton).toBeVisible()
   await saveButton.click();
 
   // Reload the page to ensure the changes are reflected
@@ -37,7 +37,7 @@ test('Create group and add an employee', async ({ page }) => {
 
   // Validate that the employee appears in the group’s employee table
   const employeeTable = page.locator('#employee_table');
-  await employeeTable.waitFor();
+  await expect(employeeTable).toBeVisible();
   await expect(employeeTable).toHaveText(/Tester, Tester/);
 });
 
@@ -48,11 +48,11 @@ test('Import a group from another leaf site and delete it', async ({ page }) => 
   await importGroupButton.click();
 
   const importGroupDialog = page.locator('[aria-describedby="import_dialog"]');
-  await importGroupDialog.waitFor();
+  await expect(importGroupDialog).toBeVisible();
 
   // Import the group
   const searchLabel = page.getByLabel('Search for user to add as');
-  await searchLabel.waitFor();
+  await expect(searchLabel).toBeVisible();
   await searchLabel.fill('Concrete Shoes');
 
   const group = page.getByRole('cell', { name: 'Concrete Shoes & kids' });
@@ -106,12 +106,12 @@ test('View user group history', async ({ page }) => {
   await group.click();
 
   const viewHistoryButton = page.getByRole('button', { name: 'View History' });
-  await viewHistoryButton.waitFor();
+  await expect(viewHistoryButton).toBeVisible();
   await viewHistoryButton.click();
 
   // Verify the group name in the history
   const historyName = page.locator('#historyName');
-  await historyName.waitFor();
+  await expect(historyName).toBeVisible();
   await expect(historyName).toContainText('Group Name: Iron Games');
 
   const closeHistoryButton = page.getByLabel('Group history').getByRole('button', { name: 'Close' });
