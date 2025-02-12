@@ -32,6 +32,7 @@ test('Create a new workflow and add step', async ({ page }) => {
     await saveButton.click();
 
     // Verify that the new step is visible
+    await page.reload();
     const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
     await expect(stepElement).toBeInViewport();
 
@@ -167,4 +168,13 @@ test('Copy workflow', async ({ page }) => {
     // Confirm that the copied workflow appears in the list
     await saveButton.click();
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).toBeVisible();
+
+    const deleteButton = page.locator('#btn_deleteWorkflow');
+    await expect(deleteButton).toBeVisible();
+    await deleteButton.click();
+
+    await expect(page.getByText('Confirmation required')).toBeVisible();
+    await page.locator('#confirm_button_save').click();
+    await page.reload();
+    await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).not.toBeVisible();
 });
