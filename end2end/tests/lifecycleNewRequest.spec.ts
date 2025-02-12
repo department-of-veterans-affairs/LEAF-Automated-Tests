@@ -1,6 +1,12 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial'});
+
+let page: Page;
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
 
 // Generate unique text to help ensure that fields are being filled correctly.
 let randNum = Math.random();
@@ -9,7 +15,7 @@ let uniqueText = `My New Request ${randNum}`;
 /**
  *  Verify the New Request page loads correctly
  */
-test('Verify New Request Page', async ({ page }) => {
+test('Verify New Request Page', async () => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
     
     // Click on New Request button
@@ -21,10 +27,10 @@ test('Verify New Request Page', async ({ page }) => {
 });
 
 /**
- * Verify a form with a status of 'Available' is available
- * to be selected when creating a new request
+ *  Verify a form with a status of 'Available' is available
+ *  to be selected when creating a new request
  */
-test('Available Form is Visible to New Request', async ({ page }) => {
+test('Available Form is Visible to New Request', async () => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
     await page.getByRole('link', { name: 'Simple form', exact: true }).click();
 
@@ -39,10 +45,10 @@ test('Available Form is Visible to New Request', async ({ page }) => {
 });
  
 /**
- * Verify a new request can be edited 
- * before being submitted
+ *  Verify a new request can be edited 
+ *  before being submitted
  */
-test('Edit a New Request', async ({ page }) => {
+test('Edit a New Request', async () => {
     // Create a new request
     await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
     await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
@@ -69,28 +75,41 @@ test('Edit a New Request', async ({ page }) => {
     await expect(page.locator('#data_11_1')).toContainText('New Text');
 });
 
-test('Request With Available Form Can Be Copied', async ({ page }) => {
+/**
+ *   Verify a request using a form whose status is
+ *  'Available' can be copied
+ */
+test('Request With Available Form Can Be Copied', async () => {
+
+    // Set the status of the 'Simple Form' to Available
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
     await page.getByRole('link', { name: 'Simple form' }).click();
     await expect(page.getByLabel('Status:')).toHaveValue('1');
+
+    // Copy the request created in 'Edit a New Request'
     await page.getByRole('link', { name: 'Home' }).click();
     await page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' }).click();
     await page.getByRole('button', { name: 'Copy Request' }).click();
     await page.getByRole('button', { name: 'Save Change' }).click();
+
+    // Change the value of 'single line text' in the copied request
     await page.getByLabel('single line text').click();
     await page.getByLabel('single line text').fill('New Text Available');
     await page.locator('#nextQuestion2').click();
+
+    // Verify 'New Text Available' is displayed
     await expect(page.locator('#data_11_1')).toContainText('New Text Available');
     await page.getByRole('link', { name: 'Home' }).click();
+
     // Verify there are 2 requests with the name uniqueText + ' to Edit, Copy, and Cancel'
     await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(2);
 });
 
 /**
- *     Verify a form with a status of 'Unpublished' is not available
- *     to be selected when creating a new request
+ *  Verify a form with a status of 'Unpublished' is not available
+ *  to be selected when creating a new request
  */
-test('Unpublished Form Not Visible to New Request', async ({ page }) => {
+test('Unpublished Form Not Visible to New Request', async () => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
     await page.getByRole('link', { name: 'Simple form', exact: true }).click();
 
@@ -105,7 +124,7 @@ test('Unpublished Form Not Visible to New Request', async ({ page }) => {
   });
 
 
-test("Request with Unpublished Form Cannot Be Copied", async ({ page }) => {
+test("Request with Unpublished Form Cannot Be Copied", async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
     await page.getByRole('link', { name: 'Simple form' }).click();
     await expect(page.getByLabel('Status:')).toHaveValue('-1');
@@ -117,10 +136,10 @@ test("Request with Unpublished Form Cannot Be Copied", async ({ page }) => {
 })
   
 /**
- * Verify a form with a status of 'Hidden' is not available
- * to be selected when creating a new request 
+ *  Verify a form with a status of 'Hidden' is not available
+ *  to be selected when creating a new request 
  */
-test('Hidden Form Not Visible to New Request', async ({ page }) => {
+test('Hidden Form Not Visible to New Request', async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
   await page.getByRole('link', { name: 'Simple form', exact: true }).click();
 
@@ -134,7 +153,7 @@ test('Hidden Form Not Visible to New Request', async ({ page }) => {
   await expect(page.getByText('Simple form')).not.toBeVisible();
 });
 
-test("Request with Hidden Form Can Be Copied", async ({ page }) => {
+test("Request with Hidden Form Can Be Copied", async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
   await page.getByRole('link', { name: 'Simple form' }).click();
   await expect(page.getByLabel('Status:')).toHaveValue('0');
@@ -154,7 +173,7 @@ test("Request with Hidden Form Can Be Copied", async ({ page }) => {
 /**
  *  Verify copied request in can be cancelled
  */
-test('Cancel Requests', async ({ page }) => {
+test('Cancel Requests', async () => {
 
   // Select previously created request
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -196,8 +215,12 @@ test.describe('Archive and Restore Question',() => {
   // Subsequent tests will make changes that will cause previous tests 
   // to fail so no retries
   test.describe.configure({ retries: 0});
-    
-  test('Create and Submit Request', async ({ page }) => {
+  
+  /**
+   *  Create and submit the initial request
+   *  with data in the field that is going to be archived
+   */
+  test('Create and Submit Request', async () => {
       
     // Create a new request with the form "Multiple Person Designated"
     await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
@@ -231,7 +254,12 @@ test.describe('Archive and Restore Question',() => {
     await expect(page.locator('#workflowbox_dep-1')).toContainText('Pending action from Adam Bauch');
   });
 
-  test('Archived Question Not Visible to New Request', async ({ page }) => {
+  /**
+   *  After archiving the form question, 
+   *  verify the data is no longer visible on the 
+   *  original request
+   */
+  test('Archived Question Not Visible to New Request', async () => {
         
     // Archive the Reviewer 2 field
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
@@ -248,7 +276,12 @@ test.describe('Archive and Restore Question',() => {
      await expect(page.getByText('Reviewer 2', { exact: true })).not.toBeVisible();
   });
 
-  test('Value Still Visible in Report After Archiving Question', async ({ page }) => {
+  /**
+   *  Show that despite the data of the archived question 
+   *  not being visible in the original request, it is still 
+   *  visible in a report.
+   */
+  test('Value Still Visible in Report After Archiving Question', async () => {
         
     // Create a new report containing the created request
     await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
@@ -268,7 +301,12 @@ test.describe('Archive and Restore Question',() => {
     await expect(page.locator('[data-indicator-id="15"]')).toContainText('Dorian Balistreri');
   });
 
-  test('Previous Value Still Available to Request After Restoring Question', async ({ page }) => {
+  /**
+   *  After restoring the form question, verify
+   *  that the value is once again visible on the 
+   *  original request.
+   */
+  test('Previous Value Still Available to Request After Restoring Question', async () => {
 
     // Restore the Reviewer 2 field
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
@@ -295,4 +333,23 @@ test.describe('Archive and Restore Question',() => {
     await expect(page.locator('#data_15_1')).toContainText('Dorian Balistreri');
   });
 });
+
+test.afterAll(async () => {
+
+    // Set status of Simple Form back to 'Available'
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+    await page.getByRole('link', { name: 'Simple form', exact: true }).click();
+    await page.getByLabel('Status:').selectOption('1');
+
+    // Cancel created form
+    await page.getByRole('link', { name: 'Home' }).click();
+    await page.getByRole('link', { name: uniqueText + ' to Create' }).click();
+    await page.getByRole('button', { name: 'Cancel Request' }).click();
+    await page.getByPlaceholder('Enter Comment').click();
+    await page.getByPlaceholder('Enter Comment').fill('No longer needed');
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+    // Close the page
+    await page.close();
+  });
 
