@@ -148,8 +148,8 @@ func TestEmployee_AvoidPhantomIncrements(t *testing.T) {
 
 	// ensure userNames are spelled the same but with different cases in
 	// national and local
-	var localEmployeeKey int
-	var natEmployeeKey int
+	var localEmployeeKey string
+	var natEmployeeKey string
 
 	natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testingusers`)
 
@@ -245,8 +245,8 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 		t.Error("no user id returned")
 	}
 
-	var localEmployeeKey int
-	var natEmployeeKey int
+	var localEmployeeKey string
+	var natEmployeeKey string
 
 	natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testuser`)
 
@@ -278,7 +278,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	}
 
 	// delete remote employee
-	err = DisableEmployee(fmt.Sprintf("%sapi/employee/%d", NationalOrgchartURL, natEmployeeKey))
+	err = DisableEmployee(fmt.Sprintf("%sapi/employee/%s", NationalOrgchartURL, natEmployeeKey))
 	if err != nil {
 		t.Error(err)
 	}
@@ -289,7 +289,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	gotId := fmt.Sprintf("%d", res[natEmployeeKey].EmployeeId)
 	wantId := natEmployeeKey
 	if cmp.Equal(gotId, wantId) {
-		t.Errorf("User was not disabled on national - got = %s, want = %d", gotId, wantId)
+		t.Errorf("User was not disabled on national - got = %s, want = %s", gotId, wantId)
 	}
 
 	// make sure the local is not disabled
@@ -298,7 +298,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	gotId = fmt.Sprintf("%d", res[localEmployeeKey].EmployeeId)
 	wantId = localEmployeeKey
 	if !cmp.Equal(gotId, wantId) {
-		t.Errorf("User was disabled on local - got = %s, want = %d", gotId, wantId)
+		t.Errorf("User was disabled on local - got = %s, want = %s", gotId, wantId)
 	}
 
 	// run script again, make sure it deletes locally
@@ -325,13 +325,11 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 
 func TestEmployee_UpdateNationalEmployee(t *testing.T) {
 	// mock auth server saving data to national orgchart
-	fmt.Println("After DB setup.")
 	updateNOfromAD()
-	fmt.Println("After adding AD data.")
 
 	// check for employees that should have data that will change and those that should
 	// become disabled after running the scripts
-	var natEmployeeKey int
+	var natEmployeeKey string
 
 	//natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testuser`)
 	res, _ := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRBFTMINA`)
@@ -469,7 +467,6 @@ func TestEmployee_UpdateNationalEmployee(t *testing.T) {
 
 	// run the updateNationalOrgchartEmployees.php
 	// need to figure out how to run this from the fpm container
-	fmt.Println("orgchart url: "+RootOrgchartURL)
 	err := updateEmployees(RootOrgchartURL + `scripts/updateNationalOrgchart.php`)
 
 	if err != nil {
@@ -611,4 +608,6 @@ func TestEmployee_UpdateNationalEmployee(t *testing.T) {
 	if !cmp.Equal(gotTitle, wantTitle) {
 		t.Errorf("Title was different from what was expected - got = %s, want = %s", gotTitle, wantTitle)
 	}
+
+	//setupTestDB()
 }

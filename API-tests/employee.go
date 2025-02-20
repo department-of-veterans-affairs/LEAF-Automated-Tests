@@ -1,6 +1,6 @@
 package main
 
-type EmployeeResponse map[int]Employee
+type EmployeeResponse map[string]Employee
 type EmployeeQueryData map[int]EmployeeData
 
 type Employee struct {
