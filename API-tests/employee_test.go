@@ -148,8 +148,8 @@ func TestEmployee_AvoidPhantomIncrements(t *testing.T) {
 
 	// ensure userNames are spelled the same but with different cases in
 	// national and local
-	var localEmployeeKey string
-	var natEmployeeKey string
+	var localEmployeeKey int
+	var natEmployeeKey int
 
 	natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testingusers`)
 
@@ -245,8 +245,8 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 		t.Error("no user id returned")
 	}
 
-	var localEmployeeKey string
-	var natEmployeeKey string
+	var localEmployeeKey int
+	var natEmployeeKey int
 
 	natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testuser`)
 
@@ -278,7 +278,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	}
 
 	// delete remote employee
-	err = DisableEmployee(fmt.Sprintf("%sapi/employee/%s", NationalOrgchartURL, natEmployeeKey))
+	err = DisableEmployee(fmt.Sprintf("%sapi/employee/%d", NationalOrgchartURL, natEmployeeKey))
 	if err != nil {
 		t.Error(err)
 	}
@@ -289,7 +289,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	gotId := fmt.Sprintf("%d", res[natEmployeeKey].EmployeeId)
 	wantId := natEmployeeKey
 	if cmp.Equal(gotId, wantId) {
-		t.Errorf("User was not disabled on national - got = %s, want = %s", gotId, wantId)
+		t.Errorf("User was not disabled on national - got = %s, want = %d", gotId, wantId)
 	}
 
 	// make sure the local is not disabled
@@ -298,7 +298,7 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 	gotId = fmt.Sprintf("%d", res[localEmployeeKey].EmployeeId)
 	wantId = localEmployeeKey
 	if !cmp.Equal(gotId, wantId) {
-		t.Errorf("User was disabled on local - got = %s, want = %s", gotId, wantId)
+		t.Errorf("User was disabled on local - got = %s, want = %d", gotId, wantId)
 	}
 
 	// run script again, make sure it deletes locally
@@ -321,4 +321,294 @@ func TestEmployee_CheckNationalEmployee(t *testing.T) {
 		t.Error("User Exists on local")
 	}
 
+}
+
+func TestEmployee_UpdateNationalEmployee(t *testing.T) {
+	// mock auth server saving data to national orgchart
+	fmt.Println("After DB setup.")
+	updateNOfromAD()
+	fmt.Println("After adding AD data.")
+
+	// check for employees that should have data that will change and those that should
+	// become disabled after running the scripts
+	var natEmployeeKey int
+
+	//natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testuser`)
+	res, _ := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRBFTMINA`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotLName := fmt.Sprintf("%s", res[natEmployeeKey].LastName)
+	wantLName := "Tromp";
+	gotEmail := fmt.Sprintf("%s", res[natEmployeeKey].Email)
+	wantEmail := "Marjory.Tromp@fake-email.com"
+
+	if !cmp.Equal(gotLName, wantLName) {
+		t.Errorf("User Last Name was not as expected - got = %s, want = %s", gotLName, wantLName)
+	}
+
+	if !cmp.Equal(gotEmail, wantEmail) {
+		t.Errorf("User Email was not as expected - got = %s, want = %s", gotEmail, wantEmail)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRBBICELINA`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotId := fmt.Sprintf("%d", res[natEmployeeKey].Deleted)
+	wantId := 0;
+	myId, _ := strconv.Atoi(gotId)
+
+	if (myId > 0) {
+		t.Errorf("User was already deleted - got = %s, want = %d", gotId, wantId)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRCFNYUONNE`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotId = fmt.Sprintf("%d", res[natEmployeeKey].Deleted)
+	wantId = 0;
+	myId, _ = strconv.Atoi(gotId)
+
+	if (myId > 0) {
+		t.Errorf("User was already deleted - got = %s, want = %d", gotId, wantId)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRAZRELLEN`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotId = fmt.Sprintf("%d", res[natEmployeeKey].Deleted)
+	wantId = 0;
+	myId, _ = strconv.Atoi(gotId)
+
+	if (myId > 0) {
+		t.Errorf("User was already deleted - got = %s, want = %d", gotId, wantId)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRHXDLIZ`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotAddress := fmt.Sprintf("%s", res[natEmployeeKey].Data[8].Data)
+	wantAddress := "Mosciskiport, Idaho";
+
+	if !cmp.Equal(gotAddress, wantAddress) {
+		t.Errorf("Address was not what was expected - got = %s, want = %s", gotAddress, wantAddress)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRPAZMICKIE`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotPhone := fmt.Sprintf("%s", res[natEmployeeKey].Data[5].Data)
+	wantPhone := "1-706-722-8380";
+	gotMobile := fmt.Sprintf("%s", res[natEmployeeKey].Data[16].Data)
+	wantMobile := "295-356-6010";
+
+	if !cmp.Equal(gotPhone, wantPhone) {
+		t.Errorf("Phone was different from what was expected - got = %s, want = %s", gotPhone, wantPhone)
+	}
+
+	if !cmp.Equal(gotMobile, wantMobile) {
+		t.Errorf("Mobile was different from what was expected - got = %s, want = %s", gotMobile, wantMobile)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRHLQJanetH`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotPhone = fmt.Sprintf("%s", res[natEmployeeKey].Data[5].Data)
+	wantPhone = "1-621-512-0990";
+	gotMobile = fmt.Sprintf("%s", res[natEmployeeKey].Data[16].Data)
+	wantMobile = "277-670-8183";
+
+	if !cmp.Equal(gotPhone, wantPhone) {
+		t.Errorf("Phone was different from what was expected - got = %s, want = %s", gotPhone, wantPhone)
+	}
+
+	if !cmp.Equal(gotMobile, wantMobile) {
+		t.Errorf("Mobile was different from what was expected - got = %s, want = %s", gotMobile, wantMobile)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRYUYDEVONA`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotTitle := fmt.Sprintf("%s", res[natEmployeeKey].Data[23].Data)
+	wantTitle := "Advertising Associate";
+
+	if !cmp.Equal(gotTitle, wantTitle) {
+		t.Errorf("Title was different from what was expected - got = %s, want = %s", gotTitle, wantTitle)
+	}
+
+	// run the updateNationalOrgchartEmployees.php
+	// need to figure out how to run this from the fpm container
+	fmt.Println("orgchart url: "+RootOrgchartURL)
+	err := updateEmployees(RootOrgchartURL + `scripts/updateNationalOrgchart.php`)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	// check those same employees for the data that should have changed and also make sure the
+	// employees that should be disabled are disabled.
+	//natEmpoyeeRes, err := getEmployee(NationalOrgchartURL + `api/employee/search?q=username:testuser`)
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRBFTMINA`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotLName = fmt.Sprintf("%s", res[natEmployeeKey].LastName)
+	wantLName = "Trump";
+	gotEmail = fmt.Sprintf("%s", res[natEmployeeKey].Email)
+	wantEmail = "Marjory.Trump@fake-email.com"
+
+	if !cmp.Equal(gotLName, wantLName) {
+		t.Errorf("User Last Name was not as expected - got = %s, want = %s", gotLName, wantLName)
+	}
+
+	if !cmp.Equal(gotEmail, wantEmail) {
+		t.Errorf("User Email was not as expected - got = %s, want = %s", gotEmail, wantEmail)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRBBICELINA`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotId = fmt.Sprintf("%d", res[natEmployeeKey].Deleted)
+	wantId = 0;
+	myId, _ = strconv.Atoi(gotId)
+
+	if !cmp.Equal(myId, wantId) {
+		t.Errorf("User was already deleted - got = %s, want = %d", gotId, wantId)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRCFNYUONNE`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotId = fmt.Sprintf("%d", res[natEmployeeKey].Deleted)
+	wantId = 0;
+	myId, _ = strconv.Atoi(gotId)
+
+	if !cmp.Equal(myId, wantId) {
+		t.Errorf("User was already deleted - got = %s, want = %d", gotId, wantId)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRAZRELLEN`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotId = fmt.Sprintf("%d", res[natEmployeeKey].Deleted)
+	wantId = 0;
+	myId, _ = strconv.Atoi(gotId)
+
+	if !cmp.Equal(myId, wantId) {
+		t.Errorf("User was already deleted - got = %s, want = %d", gotId, wantId)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRHXDLIZ`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotAddress = fmt.Sprintf("%s", res[natEmployeeKey].Data[8].Data)
+	wantAddress = "Boise, Idaho";
+
+	if !cmp.Equal(gotAddress, wantAddress) {
+		t.Errorf("Address was not what was expected - got = %s, want = %s", gotAddress, wantAddress)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRPAZMICKIE`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotPhone = fmt.Sprintf("%s", res[natEmployeeKey].Data[5].Data)
+	wantPhone = "555-222-8380";
+	gotMobile = fmt.Sprintf("%s", res[natEmployeeKey].Data[16].Data)
+	wantMobile = "222-123-6010";
+
+	if !cmp.Equal(gotPhone, wantPhone) {
+		t.Errorf("Phone was different from what was expected - got = %s, want = %s", gotPhone, wantPhone)
+	}
+
+	if !cmp.Equal(gotMobile, wantMobile) {
+		t.Errorf("Mobile was different from what was expected - got = %s, want = %s", gotMobile, wantMobile)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRHLQJanetH`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotPhone = fmt.Sprintf("%s", res[natEmployeeKey].Data[5].Data)
+	wantPhone = "555-222-0990";
+	gotMobile = fmt.Sprintf("%s", res[natEmployeeKey].Data[16].Data)
+	wantMobile = "";
+
+	if !cmp.Equal(gotPhone, wantPhone) {
+		t.Errorf("Phone was different from what was expected - got = %s, want = %s", gotPhone, wantPhone)
+	}
+
+	if !cmp.Equal(gotMobile, wantMobile) {
+		t.Errorf("Mobile was different from what was expected - got = %s, want = %s", gotMobile, wantMobile)
+	}
+
+	res, _ = getEmployee(NationalOrgchartURL + `api/employee/search?q=username:VTRYUYDEVONA`)
+
+	 for key := range res {
+		natEmployeeKey = key
+		break
+	}
+
+	gotTitle = fmt.Sprintf("%s", res[natEmployeeKey].Data[23].Data)
+	wantTitle = "Testing Title";
+
+	if !cmp.Equal(gotTitle, wantTitle) {
+		t.Errorf("Title was different from what was expected - got = %s, want = %s", gotTitle, wantTitle)
+	}
 }
