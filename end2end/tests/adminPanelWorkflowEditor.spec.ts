@@ -343,3 +343,140 @@ test('Remove Workflow Action', async ({ page }) => {
     await confirmRemoveButton.click();
     await expect(actionButton).not.toBeVisible();
 });
+
+test('Add email reminder to a step by specific days', async ({ page }) => {
+    // Generate unique workflow title
+    const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const stepTitle = 'step1';
+    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
+    const stepCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new Step")');
+    const saveButton = page.locator('#button_save');
+    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
+    const stepConnector = page.locator('.jtk-endpoint').nth(0);
+    const requestorConnector = page.locator('.jtk-endpoint').nth(1);
+    const endConnector = page.locator('.jtk-endpoint').nth(2);
+    const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
+    const emailReminderButton = page.getByRole('button', { name: 'Email Reminder' });
+
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.locator('#btn_newWorkflow').click();
+    await expect(workflowCreateDialog).toBeVisible();
+    await page.locator('#description').fill(workflowTitle);
+    await saveButton.click();
+    await expect(page.locator('a').filter({ hasText: workflowTitle })).toBeVisible();
+
+    await page.locator('#btn_createStep').click();
+    await expect(stepCreateDialog).toBeVisible();
+    await page.locator('#stepTitle').fill(stepTitle);
+    await saveButton.click();
+
+    await page.reload();
+    await expect(stepElement).toBeInViewport();
+    await stepElement.hover();
+    await page.mouse.down();
+    await page.mouse.move(300, 300);
+    await page.mouse.up();
+
+    await requestorConnector.dragTo(stepConnector);
+    await expect(page.getByText('Submit')).toBeInViewport();
+    await stepConnector.dragTo(endConnector);
+
+    await expect(actionDialog).toBeVisible();
+    await saveButton.click();
+    await expect(page.getByText('Approve')).toBeInViewport();
+
+    await stepElement.click();
+    await expect(page.getByText(`Step: ${stepTitle}`)).toBeVisible();
+    await emailReminderButton.click();
+
+    await expect(page.getByLabel('Email Reminder')).toBeVisible();
+    await page.locator('#edit_email_check').click();
+    await page.locator('#reminder_days').fill('5');
+    await page.locator('#reminder_days_additional').fill('10');
+    await saveButton.click();
+
+    const altText = `Email reminders will be sent after 5 Days of inactivity`;
+    const reminderImage = stepElement.locator(`img[src*="appointment.svg"][alt="${altText}"]`);
+
+    await expect(reminderImage).toBeVisible();
+});
+
+test('Create a new action and add it to a step', async ({ page }) => {
+    // Variables
+    const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const action = 'Log in';
+    const actionPastTense = 'Logged In';
+    const stepTitle = 'step1';
+
+    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
+    const saveButton = page.locator('#button_save');
+    const workflowDropdown = page.locator('#workflows_chosen');
+    const actionInput = page.locator('#actionText');
+    const actionPastTenseInput = page.locator('#actionTextPasttense');
+    const stepCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new Step")');
+    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
+    const selectActionDialog = page.getByRole('dialog');
+
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+
+    // Create a new workflow
+    await page.locator('#btn_newWorkflow').click();
+    await expect(workflowCreateDialog).toBeVisible();
+
+    await page.locator('#description').fill(uniqueWorkflowName);
+    await saveButton.click();
+
+    // Verify the newly created workflow appears in the dropdown
+    await expect(workflowDropdown).toContainText(uniqueWorkflowName);
+
+    // Add new Action
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    await page.getByRole('button', { name: 'Create a new Action' }).click();
+
+    // Add new action credentials
+    await actionInput.fill(action);
+    await actionPastTenseInput.fill(actionPastTense);
+    await page.locator('#actionSortNumber').fill((0).toString());
+    await saveButton.click();
+
+    // Validating newly created action
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+
+    const row = page.locator('table#actions tr', {
+        has: page.locator(`td:has-text("${action}")`),
+        has: page.locator(`td:has-text("${actionPastTense}")`),
+    });
+
+    await expect(row).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // Create a new step
+    await page.locator('#btn_createStep').click();
+    await expect(stepCreateDialog).toBeVisible();
+
+    await page.locator('#stepTitle').fill(stepTitle);
+    await saveButton.click();
+
+    // Verify that the new step is visible
+    await expect(stepElement).toBeInViewport();
+
+    // Hover over the new step and drag it to the desired position
+    await stepElement.hover();
+    await page.mouse.down();
+    await page.mouse.move(300, 300);
+    await page.mouse.up();
+
+    // Locate connectors and drag them to connect steps
+    const stepConnector = page.locator('.jtk-endpoint').nth(0);
+    const endConnector = page.locator('.jtk-endpoint').nth(2);
+
+    await stepConnector.dragTo(endConnector);
+
+    // Select newly created action
+    await expect(selectActionDialog).toBeInViewport();
+    await page.locator('#actionType_chosen').click();
+    await page.getByRole('option', { name: action }).click();
+    await saveButton.click();
+
+    await expect(page.locator(`text=${action}`)).toBeVisible();
+});
