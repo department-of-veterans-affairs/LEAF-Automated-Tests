@@ -202,6 +202,57 @@ test('Cancel Requests', async () => {
   await expect(page.getByText('New Request', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(0);
 });
+
+/**
+ *  Test for 4665
+ *  Verify that a negative amount is allowed for currency
+ *  in a new request
+ */
+test('Negative Currency Allowed in New Request', async () => {
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
+    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
+    await page.getByRole('option', { name: 'Concrete Music' }).click();
+    await page.getByLabel('Title of Request').click();
+    await page.getByLabel('Title of Request').fill(uniqueText + ' to Test Negative Currency');
+
+    // Choose the Input Formats form
+    await page.locator('label').filter({ hasText: 'Input Formats (For testing' }).locator('span').click();
+    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+    await page.getByLabel('currency').click();
+
+    // Fill in a negative number for the currency
+    await page.getByLabel('currency').fill('-300');
+
+    // After saving, verify the negative number is still visible 
+    await page.locator('#save_indicator').click();
+    await expect(page.getByLabel('currency')).toHaveValue('-300.00');
+
+    // Verify negative number is still visible after the request is created
+    await page.getByRole('button', { name: 'Show single page' }).click();
+    await expect(page.locator('#data_37_1')).toContainText('-$300.00');
+});
+
+/**
+ *  Test for 4665
+ *  Verify that a negative amount is allowed for currency
+ *  when editing a request
+ */
+test("Negative Currency Allowed When Editing a Request", async () => {
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
+    await page.getByLabel('currency').click();
+    await page.getByLabel('currency').click();
+
+    // Change the currency amount to -50
+    await page.getByLabel('currency').fill('-50');
+
+    // Save the changes and verify the amount has changed to -50
+    await page.getByRole('button', { name: 'Save Change' }).click();
+    await expect(page.locator('#data_37_1')).toContainText('-$50.00');
+})
  
 /**
  *    Set of tests which do the following:
@@ -273,7 +324,7 @@ test.describe('Archive and Restore Question',() => {
     // Verify the Reviewer 1 field is visible but the Reviewer 2 field is not in the created request
     await page.getByRole('link', { name: uniqueText + ' to Create' }).click();
     await expect(page.getByText('Reviewer 1', { exact: true })).toBeVisible();
-     await expect(page.getByText('Reviewer 2', { exact: true })).not.toBeVisible();
+    await expect(page.getByText('Reviewer 2', { exact: true })).not.toBeVisible();
   });
 
   /**
@@ -347,6 +398,13 @@ test.afterAll(async () => {
     await page.getByRole('button', { name: 'Cancel Request' }).click();
     await page.getByPlaceholder('Enter Comment').click();
     await page.getByPlaceholder('Enter Comment').fill('No longer needed');
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
+
+    // Cancel the form used for testing negative currency
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    await page.getByRole('button', { name: 'Cancel Request' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
 
     // Close the page
