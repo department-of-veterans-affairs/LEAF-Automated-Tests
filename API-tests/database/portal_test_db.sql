@@ -6229,7 +6229,7 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (1,	'Test',	'text',	'',	'',	NULL,	'form_548f8',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-08-17 15:48:04',	0,	1),
 (2,	'Grid',	'grid\n[{\"name\":\"Col 1\",\"id\":\"col_7664\",\"type\":\"text\"},{\"name\":\"Col 2\",\"id\":\"col_15d5\",\"type\":\"text\"},{\"name\":\"Col 3\",\"id\":\"col_c80a\",\"type\":\"text\"}]',	'',	'',	NULL,	'form_47236',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-08-28 21:32:52',	0,	0),
 (3,	'Single line text',	'text',	'',	'',	NULL,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-06 17:30:22',	0,	0),
-(4,	'Multi line text',	'textarea',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	'[{\"childIndID\":4,\"parentIndID\":7,\"selectedOp\":\"==\",\"selectedParentValue\":\"A\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"textarea\",\"parentFormat\":\"radio\"}]',	NULL,	0,	0,	'2023-09-06 17:30:30',	0,	0),
+(4,	'Multi line text',	'textarea',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-06 17:30:30',	0,	0),
 (5,	'Numeric',	'number',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-06 17:30:36',	0,	0),
 (6,	'Single line text B',	'text',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-07 15:17:50',	0,	0),
 (7,	'Radio',	'radio\nA\nB\nC',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-07 15:18:45',	0,	0),
