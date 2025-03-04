@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// get all the portal import tags for the given orgchart
 func getOrgchartImportTags(url string) PlatformResponse {
 	res, _ := client.Get(url)
 	b, _ := io.ReadAll(res.Body)
@@ -23,6 +24,9 @@ func getOrgchartImportTags(url string) PlatformResponse {
 	return m
 }
 
+// this test gets all the portals for the given orgchart and makes sure that
+// the correct correct number of portals are returned, and that the correct
+// tag is returned for the first portal
 func TestPlatform_getOrgchartTags(t *testing.T) {
 	portals := getOrgchartImportTags(RootOrgchartURL + `api/platform/portal/_LEAF_Nexus`)
 

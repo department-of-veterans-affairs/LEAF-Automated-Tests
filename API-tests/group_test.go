@@ -70,6 +70,7 @@ func postNewGroup() string {
 	return c
 }
 
+// postNewTag creates a new tag for the given groupID
 func postNewTag(groupID string, tag string) string {
 	postData := url.Values{}
 	if tag != "" {
@@ -100,6 +101,8 @@ func importGroup(groupID string) string {
 	return c
 }
 
+// changed this method so that it could be used more universally, with the url being passed in
+// more variables could be needed to go with the url
 func removeFromNexus(postUrl string, tag string) error {
 
 	data := url.Values{}
@@ -226,6 +229,7 @@ func TestGroup_syncServices(t *testing.T) {
 	}
 }
 
+// A test to remove a tag from the nexus group
 func TestGroup_removeTag(t *testing.T) {
 	// add a tag to a group
 	id := "34"
