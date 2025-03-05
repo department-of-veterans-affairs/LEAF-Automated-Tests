@@ -234,10 +234,14 @@ test('Remove Event ', async ({ page }, testInfo) => {
 await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
 
 //Open Edit Events
+await page.getByRole('button', { name: 'Edit Events' }).isVisible();
 await page.getByRole('button', { name: 'Edit Events' }).click();
 
 //Locate Event
    
+await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+
+
    const table = page.locator("#events");
    const rows = table.locator("tbody tr");
    const cols = rows.first().locator("td");
@@ -259,6 +263,8 @@ await page.getByRole('button', { name: 'Edit Events' }).click();
   
   
  // Verify removed from Event List
+ await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+
  const table1 = page.locator("#events");
  const rows1 = table.locator("tbody tr");
  const cols1 = rows.first().locator("td");
