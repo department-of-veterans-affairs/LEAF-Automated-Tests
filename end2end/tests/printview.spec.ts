@@ -15,3 +15,10 @@ test('workflow form fields load after subsequent getWorkflow() executions', asyn
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 });
+
+test('links in user content are visible', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=15');
+  await expect(page.getByRole('link', { name: 'https://va.gov' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'https://va.gov' }).nth(3)).toBeVisible();
+  await expect(page.locator('#data_4_1')).toContainText('<a href="https://va.gov">va.gov</a>');
+});
