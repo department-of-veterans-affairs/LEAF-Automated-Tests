@@ -28,7 +28,7 @@ func getOrgchartImportTags(url string) PlatformResponse {
 // the correct correct number of portals are returned, and that the correct
 // tag is returned for the first portal
 func TestPlatform_getOrgchartTags(t *testing.T) {
-	portals := getOrgchartImportTags(RootOrgchartURL + `api/platform/portal/_LEAF_Nexus`)
+	portals := getOrgchartImportTags(RootOrgchartURL + `api/platform/portal`)
 
 	count := len(portals)
 	retrieved := 1
@@ -44,7 +44,7 @@ func TestPlatform_getOrgchartTags(t *testing.T) {
 	}
 
 	received := portals[0].Site_path
-	wanted := "/LEAF_Request_Portal"
+	wanted := "/Test_Request_Portal"
 	if !cmp.Equal(received, wanted) {
 		t.Errorf("Site Path = %v, want = %v", received, wanted)
 	}
