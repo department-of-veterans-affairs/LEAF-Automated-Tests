@@ -342,3 +342,42 @@ test('Report builder workflow and create row button functionality', async ({ pag
   await newRowTitle.waitFor({ state: 'visible' });
   await expect(newRowTitle).toContainText('untitled');
 });
+
+/**
+ *  Test for 4665
+ *  Verify that a negative currency is 
+ *  allowed to be added to a report
+ */
+test('Report Allows Negative Currency', async ({ page}) => {
+
+  // Create a new report
+  await page.goto("https://host.docker.internal/Test_Request_Portal/")
+  await page.getByText('Report Builder Create custom').click();
+  await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+  await page.getByRole('option', { name: 'Type' }).click();
+
+  // Choose reports which use the Input Formats form
+  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('option', { name: 'Input Formats' }).click();
+  await page.getByRole('button', { name: 'Next Step' }).click();
+  await page.locator('#indicatorList').getByText('Input Formats').click();
+
+  // Choose currency as one of the columns
+  await page.getByText('currency', { exact: true }).click();
+  await page.getByRole('button', { name: 'Generate Report' }).click();
+  await page.locator('[data-record-id="962"]').click();
+
+  // Input a negative currency 
+  await page.getByRole('textbox', { name: 'currency' }).click();
+  await page.getByRole('textbox', { name: 'currency' }).fill('-200');
+  await page.getByRole('button', { name: 'Save Change' }).click();
+
+  // Verify the negative currency is displayed
+  await expect(page.locator('[data-record-id="962"]')).toContainText('-200.00');
+
+  // Clear out the currency value as to not affect other tests
+  await page.locator('[data-record-id="962"]').click();
+  await page.getByRole('textbox', { name: 'currency' }).click();
+  await page.getByRole('textbox', { name: 'currency' }).fill('');
+  await page.getByRole('button', { name: 'Save Change' }).click();
+})
