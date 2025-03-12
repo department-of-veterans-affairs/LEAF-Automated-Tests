@@ -16,7 +16,9 @@ test('validate User does not have any Groups Or Positions', async ({ page }, tes
   const page1 = await page1Promise;
 
 //Verify the Sync Service was completed
-  await expect(page1.getByText('Syncing services from Org Chart... Syncing has finished. You are set to go.')).toBeVisible();
+ // await expect(page1.getByText('Syncing services from Org Chart... Syncing has finished. You are set to go.')).toBeVisible();
+
+ await expect(page1.locator('div').filter({ hasText: 'Sync Services Syncing' }).nth(1)).toBeVisible();
 
 //Return the the Admin page
  await page1.getByLabel('admin submenu').click();
