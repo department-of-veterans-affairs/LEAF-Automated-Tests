@@ -24,7 +24,10 @@ func TestLogin_DeactivatedLocalUser(t *testing.T) {
 
 	// Manually mark local employee as inactive
 	db.Exec("USE " + testNexusDbName)
-	db.Exec(`UPDATE employee SET deleted=1 WHERE userName="tester"`)
+	_, err = db.Exec(`UPDATE employee SET deleted=1 WHERE userName="tester"`)
+	if err != nil {
+		t.Errorf("Error setting up test condition, want = no error")
+	}
 
 	// Attempt to load homepage
 	req, _ := http.NewRequest("GET", RootURL, nil)
