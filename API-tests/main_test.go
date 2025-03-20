@@ -41,6 +41,9 @@ var client = &http.Client{
 // In dev, the current username is set via REMOTE_USER docker environment
 func TestMain(m *testing.M) {
 
+	// Show source code line numbers relating to log messages
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	setupTestDB()
 
 	updateTestDBSchema()
