@@ -41,6 +41,7 @@ go test -run="^$" -bench=. -count=3
 
 Prerequisite:
 ```
+go get golang.org/x/perf/cmd/benchstat
 go install golang.org/x/perf/cmd/benchstat
 ```
 
