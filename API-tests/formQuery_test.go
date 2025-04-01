@@ -626,5 +626,26 @@ func TestFormQuery_RoleBasedInbox_PersonDesginated(t *testing.T) {
 	got = formRes[88].UnfilledDependencyData["-1"].ApproverName
 	if !strings.Contains(got, "NEEDS REASSIGNMENT") {
 		t.Errorf(`ApproverName got = %v, want = contains "NEEDS REASSIGNMENT"`, got)
+  }
+}
+    
+// Report Builder Step 2: Enable Current Status
+func TestForm_QueryJoinStatus(t *testing.T) {
+
+	url := RootURL + `api/form/query?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status"],"sort":{},"limit":1000,"limitOffset":0}&x-filterData=recordID,title,stepTitle,lastStatus`
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	err := json.Unmarshal(b, &formQueryResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, v := range formQueryResponse {
+		if v.StepTitle == "" {
+			t.Error("TestForm_BasicStatusQuery want = stepTitle is not empty, got = stepTitle is empty")
+		}
+		break
 	}
 }
