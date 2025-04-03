@@ -566,8 +566,8 @@ func TestFormQuery_Special_Characters(t *testing.T) {
 	}
 }
 
-// Check Role-Based Inbox for accurate Person Designated assignments
-func TestFormQuery_RoleBasedInbox_PersonDesginated(t *testing.T) {
+// Check Role-Based Admin Inbox for accurate Person Designated and Requestor Followup assignments
+func TestFormQuery_RoleBasedInbox_PersonDesginatedAndFollowup(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
 		FirstName: "Ramon",
 		LastName:  "Watsica",
@@ -620,12 +620,47 @@ func TestFormQuery_RoleBasedInbox_PersonDesginated(t *testing.T) {
 		Email:     "Hilary.Zboncak@fake-email.com",
 	}
 	if _, exists := formRes[88]; !exists {
-		t.Errorf("Record 12 should be actionable")
+		t.Errorf("Record 88 should be actionable")
 	}
 
 	got = formRes[88].UnfilledDependencyData["-1"].ApproverName
 	if !strings.Contains(got, "NEEDS REASSIGNMENT") {
 		t.Errorf(`ApproverName got = %v, want = contains "NEEDS REASSIGNMENT"`, got)
+	}
+
+	// Check Requestor Followup
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Charlie",
+		LastName:  "Anderson",
+		Email:     "Charlie.Anderson@fake-email.com",
+	}
+	if _, exists := formRes[506]; !exists {
+		t.Errorf("Record 506 should be actionable")
+	}
+
+	got = formRes[506].UnfilledDependencyData["-2"].ApproverName
+	want = mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[506].UnfilledDependencyData["-2"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+
+	// Check Requestor Followup where the Initiator has an inactive/disabled account
+	got = formRes[509].UnfilledDependencyData["-2"].ApproverName
+	want = "(Inactive User)"
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[509].UnfilledDependencyData["-2"].ApproverUID
+	want = "VTRPAZMICKIE0"
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverUID got = %v, want = %v", got, want)
 	}
 }
 
