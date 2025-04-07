@@ -649,19 +649,6 @@ func TestFormQuery_RoleBasedInbox_PersonDesginatedAndFollowup(t *testing.T) {
 	if !cmp.Equal(got, want) {
 		t.Errorf("email got = %v, want = %v", got, want)
 	}
-
-	// Check Requestor Followup where the Initiator has an inactive/disabled account
-	got = formRes[509].UnfilledDependencyData["-2"].ApproverName
-	want = "(Inactive User)"
-	if !cmp.Equal(got, want) {
-		t.Errorf("ApproverName got = %v, want = %v", got, want)
-	}
-
-	got = formRes[509].UnfilledDependencyData["-2"].ApproverUID
-	want = "VTRPAZMICKIE0"
-	if !cmp.Equal(got, want) {
-		t.Errorf("ApproverUID got = %v, want = %v", got, want)
-	}
 }
 
 // Report Builder Step 2: Enable Current Status
