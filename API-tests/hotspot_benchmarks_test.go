@@ -18,6 +18,13 @@ func BenchmarkInbox_nonAdminActionable(b *testing.B) {
 	}
 }
 
+// Inbox, Non-Admin, Organized by roles
+func BenchmarkInbox_nonAdminActionableRoles(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		httpGet(RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["service","categoryName","status","unfilledDependencies"],"sort":{},"limit":1000,"limitOffset":0}&x-filterData=recordID,categoryIDs,categoryNames,date,title,service,submitted,priority,stepID,blockingStepID,lastStatus,stepTitle,action_history.time,unfilledDependencyData&masquerade=nonAdmin`)
+	}
+}
+
 // Inbox, Admin, Organized by roles
 func BenchmarkInbox_adminActionableRoles(b *testing.B) {
 	for i := 0; i < b.N; i++ {
