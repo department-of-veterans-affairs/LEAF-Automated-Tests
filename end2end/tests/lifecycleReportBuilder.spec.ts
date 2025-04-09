@@ -255,8 +255,9 @@ test('Add a New Row and Populate', async ({ page }) => {
   await dataCell.click();
 
   expect(page.locator('#confirm_loadIndicator')).not.toBeVisible();
-  await page.locator('label').filter({ hasText: '5' }).locator('span').click();
-  await page.locator('label').filter({ hasText: '6' }).locator('span').click();
+  //await page.locator('label').filter({ hasText: '5' }).locator('span').click();
+  await page.locator('label').getByText('5', { exact: true}).locator('span').click();
+  await page.locator('label').getByText('6', { exact: true}).locator('span').click();
   await page.getByRole('button', { name: 'Save Change' }).click();
 
   // Verify the values in the new row contain '5, 6'
