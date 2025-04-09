@@ -381,3 +381,16 @@ test('Report Allows Negative Currency', async ({ page}) => {
   await page.getByRole('textbox', { name: 'currency' }).fill('');
   await page.getByRole('button', { name: 'Save Change' }).click();
 })
+
+test('Hashtag/Pound/number sign in query', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+  await page.getByRole('option', { name: 'Data Field' }).click();
+  await page.getByRole('cell', { name: 'CONTAINS' }).locator('a').click();
+  await page.getByRole('option', { name: '=' }).click();
+  await page.getByLabel('text', { exact: true }).click();
+  await page.getByLabel('text', { exact: true }).fill('test#203948609130');
+  await page.getByRole('button', { name: 'Next Step' }).click();
+  await page.getByRole('button', { name: 'Generate Report' }).click();
+  await expect(page.locator('#reportStats')).toContainText('0 records');
+});
