@@ -22,6 +22,12 @@ test('Inbox Organized by Role, Custom Column', async ({ page }) => {
   await page.getByRole('button', { name: 'Adell Douglas View' }).click();
   await expect(page.locator('[id *= "_434_5"]')).toContainText('81354');
 
+  // Custom column should not be visible in the "Assigned to an individual" section
+  // because the column should only show up when all form types in the section are the same
+  await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_Inbox&organizeByRole&adminView&combineIndividuals');
+  await page.getByRole('button', { name: '* Assigned to an individual *' }).click();
+  await expect(page.getByRole('columnheader', { name: 'Numeric' })).not.toBeVisible();
+
   // Clean up
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
   await page.getByRole('heading', { name: 'Temp Title' }).click();
