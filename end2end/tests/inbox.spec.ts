@@ -13,6 +13,12 @@ test('Inbox Organized by Role, Custom Column', async ({ page }) => {
   await page.locator('#button-title').click();
   await page.locator('#button-title').fill(`Temp ${randNum}`);
   await page.getByRole('button', { name: 'Save Change' }).click();
+  await expect(page.getByRole('heading', { name: `Temp ${randNum}` })).toBeVisible();
+
+  // get the unique ID of the new sitemap element
+  let sitemapID = (await page.getByRole('heading', { name: `Temp ${randNum}` }).getAttribute('id'))?.split('_')[2];
+
+  console.log(sitemapID);
 
   // Setup precondition: Add custom column
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_combined_inbox');
