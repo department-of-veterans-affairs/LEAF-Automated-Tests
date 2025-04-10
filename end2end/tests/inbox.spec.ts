@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test('Inbox Organized by Role, Custom Column', async ({ page }) => {
+  let randNum = Math.random();
+
   // Setup precondition: Add site into sitemap
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
   await page.getByRole('button', { name: '+ Add Site' }).click();
   await page.locator('#button-target').click();
   await page.locator('#button-target').fill('https://host.docker.internal/Test_Request_Portal/');
   await page.locator('#button-title').click();
-  await page.locator('#button-title').fill('Temp Title');
+  await page.locator('#button-title').fill(`Temp ${randNum}`);
   await page.getByRole('button', { name: 'Save Change' }).click();
 
   // Setup precondition: Add custom column
@@ -30,6 +32,7 @@ test('Inbox Organized by Role, Custom Column', async ({ page }) => {
 
   // Clean up
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
-  await page.getByRole('heading', { name: 'Temp Title' }).click();
+  await page.getByRole('heading', { name: `Temp ${randNum}` }).click();
   await page.getByRole('button', { name: 'Delete Site' }).click();
+  await expect(page.getByText('Sitemap updated')).toBeVisible();
 });
