@@ -1,8 +1,8 @@
 import { test, expect, Locator } from '@playwright/test';
 
 //Run test in order
-
 test.describe.configure({ mode: 'serial' });
+
 
 //View Organizational Chart
 test ('View Organizational Charts', async ({ page}, testinfo) => {
@@ -23,6 +23,7 @@ test ('View Organizational Charts', async ({ page}, testinfo) => {
 });
 // End of Organizational Chart
 
+
 //View Organization Details
 test ('View Organization Details', async ({ page}, testinfo) => {
 
@@ -35,8 +36,6 @@ test ('View Organization Details', async ({ page}, testinfo) => {
     //View Organizational Charts
     await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible();
     await page.getByRole('button', { name: 'Assistant Director', exact: true }).click();
-
-    
     await page.getByRole('button', { name: 'Assistant Director', exact: true }).hover();
  
   //View Cheif of Staff Director Details Page
@@ -60,9 +59,10 @@ test ('View Organization Details', async ({ page}, testinfo) => {
 });
 //View Card Details
 
+
 //Relocate cards
 test ('Relocate Cards', async ({ page}, testinfo) => {
-    await page.goto('https://host.docker.internal/Test_Nexus/');
+ await page.goto('https://host.docker.internal/Test_Nexus/');
 
    //Wait for page to Load
   await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
@@ -73,69 +73,34 @@ test ('Relocate Cards', async ({ page}, testinfo) => {
   await page.getByRole('button', { name: 'Edit Orgchart' }).click();
 
     //Verify you are able to move
-    
     await page.getByRole('button', { name: 'Zoom Out' }).click();
     await page.getByRole('button', { name: 'Zoom In' }).click();
     
     //Move card across the screen
     await page.getByRole('button', { name: 'AD, Patient Services' }).click();
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
-    
-        //Verify text displays to identify how to move cards
 
+   //loop through to move the cards across the screen
+
+   //Set the counter for Arror Right
+   let numberArray = [].constructor(51);
+   let currentIndex = 0;
+
+   for (let _ of numberArray) {      
+   //Move Right
+   await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowRight');
+    currentIndex++;
+    }
+
+   //reset counter for Arror Up
+   numberArray = [].constructor(15);
+   currentIndex = 0;
+   for (let _ of numberArray) { 
+    // Move Up
+    await page.getByRole('button', { name: 'AD, Patient Services' }).press('ArrowUp');
+     currentIndex++;
+     }
+ 
+  //Verify text displays to identify how to move cards
     await expect(page.getByText('You are moving the AD,')).toBeVisible(); 
 
     //Verify Card has been relocated
@@ -144,6 +109,7 @@ test ('Relocate Cards', async ({ page}, testinfo) => {
 
   });
 //End of Relocating Card
+
 
 // Add Subordinate
 test ('Add Subordinate', async ({ page}, testinfo) => {
@@ -161,6 +127,7 @@ test ('Add Subordinate', async ({ page}, testinfo) => {
 
   //Select a card
   await expect(page.getByRole('button', { name: 'Zoom In' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Chief of Everything' })).toBeVisible();
   await page.getByRole('button', { name: 'Chief of Everything' }).hover();
   await page.getByRole('button', { name: 'Add Subordinate' }).click();
 
@@ -180,8 +147,8 @@ test ('Add Subordinate', async ({ page}, testinfo) => {
 });
 // New Subordinate
 
-// Remove Position
 
+// Remove Position
 test ('Remove Position', async ({ page}, testinfo) => {
 
   await page.goto('https://host.docker.internal/Test_Nexus/');
