@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 
+// Todo: make this work with repeatEach > 1
 test('Inbox Organized by Role, Custom Column', async ({ page }) => {
   let randNum = Math.random();
 
@@ -32,6 +33,10 @@ test('Inbox Organized by Role, Custom Column', async ({ page }) => {
 
   // Clean up
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_sitemaps_template');
+
+  // Issue: The sitemap probably shouldn't be doing this right after opening
+  await expect(page.getByText('Sitemap updated')).not.toBeVisible();
+
   await page.getByRole('heading', { name: `Temp ${randNum}` }).click();
   await page.getByRole('button', { name: 'Delete Site' }).click();
   await expect(page.getByText('Sitemap updated')).toBeVisible();
