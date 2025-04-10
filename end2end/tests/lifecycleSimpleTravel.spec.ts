@@ -208,10 +208,7 @@ test('navigate to Homepage, create and submit a travel request', async ({ page }
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 });
 
-test('navigate to Inbox, review and approve the travel request', async ({ browser }, testInfo) => {
-  // Workaround for potential cache issue?
-  const page = await browser.newPage();
-
+test('navigate to Inbox, review and approve the travel request', async ({ page }, testInfo) => {
   // Navigate to the request portal
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 

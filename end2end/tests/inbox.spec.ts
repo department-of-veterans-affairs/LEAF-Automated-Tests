@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// Todo: make this work with repeatEach > 1
+// TODO: Resolve compatibility with repeatEach > 1
+// Issue is because the current locators only expect one reference to exist
 test('Inbox Organized by Role, Custom Column', async ({ page }) => {
   let randNum = Math.random();
 
