@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// TODO: Resolve compatibility with repeatEach > 1
-// Issue is because the current locators only expect one reference to exist
 test('Inbox Organized by Role, Custom Column', async ({ page }) => {
   let randNum = Math.random();
 
@@ -18,12 +16,12 @@ test('Inbox Organized by Role, Custom Column', async ({ page }) => {
   // get the unique ID of the new sitemap element
   let sitemapID = (await page.getByRole('heading', { name: `Temp ${randNum}` }).getAttribute('id'))?.split('_')[2];
 
-  console.log(sitemapID);
-
   // Setup precondition: Add custom column
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_combined_inbox');
-  await page.getByLabel('Select a form to add specific').selectOption('form_5ea07');
-  await page.getByPlaceholder('Click to search. Limit 7').click();
+  await page.locator(`#form_select_${sitemapID}`).selectOption('form_5ea07');
+  // Hacky way to select the option using sibling selector.
+  // Probably need to be updated when the Combined Inbox Editor is updated
+  await page.locator(`#choice-${sitemapID} ~ input`).click();
   await page.getByRole('option', { name: 'General Form: Numeric (ID: 5' }).click();
   await expect(page.getByText('General Form: Numeric (ID: 5)Remove item')).toBeVisible();
 
