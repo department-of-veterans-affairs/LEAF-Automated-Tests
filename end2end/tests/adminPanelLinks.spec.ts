@@ -121,7 +121,7 @@ test('Go to Sitemap Search', async ({ page }) => {
 
 test('Go to Combined Inbox Editor', async ({ page }) => {
   await page.getByRole('button', { name: 'Combined Inbox Editor Edit' }).click();
-  await expect(page.locator('#LEAF_combined_inbox_editor')).toContainText('Cards can be created in the Sitemap Editor');
+  await expect(page.getByRole('heading', { name: 'Combined Inbox Editor' })).toBeVisible();
 });
 
 test('Go to Grid Splitter', async ({ page }) => {
