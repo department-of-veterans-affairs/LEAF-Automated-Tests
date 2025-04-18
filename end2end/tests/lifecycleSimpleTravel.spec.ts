@@ -194,7 +194,6 @@ test('navigate to Homepage, create and submit a travel request', async ({ page }
   await page.getByRole('button', { name: 'Next Question', exact: true }).first().click();
 
   // Verify 'Submit Request' button is visible
-  await page.reload();
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeInViewport();
 
   // Submit the request
@@ -214,16 +213,12 @@ test('navigate to Inbox, review and approve the travel request', async ({ page }
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
   // Open the Inbox review section
-  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
 
   // View the request as an admin
-  await page.getByRole('button', { name: 'View as Admin' }).waitFor({ state: 'visible' });
   await page.getByRole('button', { name: 'View as Admin' }).click();
 
   // Verify the request is present in the inbox
-  await (page.locator('#inbox')).waitFor({ state: 'visible' });
-  await expect(page.locator('#inbox')).toBeVisible();
   await expect(page.locator('#inbox')).toContainText(uniqueText);
 
   // Open the specific request

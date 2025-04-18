@@ -3,28 +3,37 @@ package main
 type FormWorkflowResponse map[int]FormWorkflowDependency
 
 type FormWorkflowDependency struct {
-	DependencyID                     int      `json:"dependencyID"`
-	RecordID                         int      `json:"recordID"`
-	StepID                           int      `json:"stepID"`
-	StepTitle                        string   `json:"stepTitle"`
-	BlockingStepID                   int      `json:"blockingStepID"`
-	WorkflowID                       int      `json:"workflowID"`
-	ServiceID                        int      `json:"serviceID"`
-	Filled                           int      `json:"filled"`
-	StepBgColor                      string   `json:"stepBgColor"`
-	StepFontColor                    string   `json:"stepFontColor"`
-	StepBorder                       string   `json:"stepBorder"`
-	Description                      string   `json:"description"`
-	IndicatorID_for_assigned_empUID  int      `json:"indicatorID_for_assigned_empUID"`
-	IndicatorID_for_assigned_groupID int      `json:"indicatorID_for_assigned_groupID"`
-	JsSrc                            string   `json:"jsSrc"`
-	UserID                           string   `json:"userID"`
-	RequiresDigitalSignature         bool     `json:"requiresDigitalSignature"`
-	IsActionable                     bool     `json:"isActionable"`
-	ApproverName                     *string  `json:"approverName"` // some function(s) rely on this having an undefined state
-	ApproverUID                      *string  `json:"approverUID"`  // some function(s) rely on this having an undefined state
-	DependencyActions                []Action `json:"dependencyActions"`
-	HasAccess                        bool     `json:"hasAccess"`
+	DependencyID                     int                       `json:"dependencyID"`
+	RecordID                         int                       `json:"recordID"`
+	StepID                           int                       `json:"stepID"`
+	StepTitle                        string                    `json:"stepTitle"`
+	BlockingStepID                   int                       `json:"blockingStepID"`
+	WorkflowID                       int                       `json:"workflowID"`
+	ServiceID                        int                       `json:"serviceID"`
+	Filled                           int                       `json:"filled"`
+	StepBgColor                      string                    `json:"stepBgColor"`
+	StepFontColor                    string                    `json:"stepFontColor"`
+	StepBorder                       string                    `json:"stepBorder"`
+	Description                      string                    `json:"description"`
+	IndicatorID_for_assigned_empUID  int                       `json:"indicatorID_for_assigned_empUID"`
+	IndicatorID_for_assigned_groupID int                       `json:"indicatorID_for_assigned_groupID"`
+	JsSrc                            string                    `json:"jsSrc"`
+	UserID                           string                    `json:"userID"`
+	UserMetadata                     FormWorkflow_UserMetadata `json:"userMetadata"`
+	RequiresDigitalSignature         bool                      `json:"requiresDigitalSignature"`
+	IsActionable                     bool                      `json:"isActionable"`
+	ApproverName                     *string                   `json:"approverName"` // some function(s) rely on this having an undefined state
+	ApproverUID                      *string                   `json:"approverUID"`  // some function(s) rely on this having an undefined state
+	DependencyActions                []Action                  `json:"dependencyActions"`
+	HasAccess                        bool                      `json:"hasAccess"`
+}
+
+type FormWorkflow_UserMetadata struct {
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	MiddleName string `json:"middleName"`
+	Email      string `json:"email"`
+	UserName   string `json:"userName"`
 }
 
 type Action struct {

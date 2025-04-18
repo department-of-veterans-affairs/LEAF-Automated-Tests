@@ -565,3 +565,109 @@ func TestFormQuery_Special_Characters(t *testing.T) {
 		}
 	}
 }
+
+// Check Role-Based Admin Inbox for accurate Person Designated and Requestor Followup assignments
+func TestFormQuery_RoleBasedInbox_PersonDesginatedAndFollowup(t *testing.T) {
+	mock_orgchart_employee := FormQuery_Orgchart_Employee{
+		FirstName: "Ramon",
+		LastName:  "Watsica",
+		Email:     "Ramon.Watsica@fake-email.com",
+	}
+
+	formRes, _ := getFormQuery(RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["service","categoryName","status","unfilledDependencies"],"sort":{},"limit":1000,"limitOffset":0}&x-filterData=recordID,categoryIDs,categoryNames,date,title,service,submitted,priority,stepID,blockingStepID,lastStatus,stepTitle,action_history.time,unfilledDependencyData`)
+	if _, exists := formRes[11]; !exists {
+		t.Errorf("Record 11 should be actionable")
+	}
+
+	got := formRes[11].UnfilledDependencyData["-1"].ApproverName
+	want := mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[11].UnfilledDependencyData["-1"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+
+	// Check another record
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Hilary",
+		LastName:  "Zboncak",
+		Email:     "Hilary.Zboncak@fake-email.com",
+	}
+	if _, exists := formRes[12]; !exists {
+		t.Errorf("Record 12 should be actionable")
+	}
+
+	got = formRes[12].UnfilledDependencyData["-1"].ApproverName
+	want = mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[12].UnfilledDependencyData["-1"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+
+	// Check record with blank assigned person
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Hilary",
+		LastName:  "Zboncak",
+		Email:     "Hilary.Zboncak@fake-email.com",
+	}
+	if _, exists := formRes[88]; !exists {
+		t.Errorf("Record 88 should be actionable")
+	}
+
+	got = formRes[88].UnfilledDependencyData["-1"].ApproverName
+	if !strings.Contains(got, "NEEDS REASSIGNMENT") {
+		t.Errorf(`ApproverName got = %v, want = contains "NEEDS REASSIGNMENT"`, got)
+	}
+
+	// Check Requestor Followup
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Charlie",
+		LastName:  "Anderson",
+		Email:     "Charlie.Anderson@fake-email.com",
+	}
+	if _, exists := formRes[506]; !exists {
+		t.Errorf("Record 506 should be actionable")
+	}
+
+	got = formRes[506].UnfilledDependencyData["-2"].ApproverName
+	want = mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[506].UnfilledDependencyData["-2"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+}
+
+// Report Builder Step 2: Enable Current Status
+func TestForm_QueryJoinStatus(t *testing.T) {
+
+	url := RootURL + `api/form/query?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status"],"sort":{},"limit":1000,"limitOffset":0}&x-filterData=recordID,title,stepTitle,lastStatus`
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	err := json.Unmarshal(b, &formQueryResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, v := range formQueryResponse {
+		if v.StepTitle == "" {
+			t.Error("TestForm_BasicStatusQuery want = stepTitle is not empty, got = stepTitle is empty")
+		}
+		break
+	}
+}
