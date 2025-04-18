@@ -480,3 +480,184 @@ test('Create a new action and add it to a step', async ({ page }) => {
 
     await expect(page.locator(`text=${action}`)).toBeVisible();
 });
+
+/**
+ *  Test for LEAF 4716 verifying the following:
+ *  1.  Workflow action bubbles/buttons display and can be used as expected
+ *  2.  When 2 steps in a workflow have multiple customs actions, the actions are displayed 
+ *      and interacted with as expected
+ *  3.  Clicking on a step opens a step info modal
+ *  4.  Clicking on an action opens an action modal
+ *  5.  Routes going from any step back to the requestor have the 'Email - Send Back Notification for Requestor'
+ *      as the non-removable even
+ */
+test('Workflow editor UX improvements - 4716', async ({ page }) => {
+
+    // Create a unique workflow name
+    const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+  
+    // Go to the Workflow Builder and create a new workflow
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.getByRole('button', { name: 'New Workflow' }).click();
+    await page.getByLabel('Workflow Title:').fill(workflowTitle);
+    await page.getByRole('button', { name: 'Save' }).click();
+  
+    // Add a new custom action 'Deny'
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    await page.getByRole('button', { name: 'Create a new Action' }).click();
+    await page.getByLabel('Action *Required').click();
+    await page.getByLabel('Action *Required').fill('Deny');
+    await page.getByLabel('Action *Required').press('Tab');
+    await page.getByLabel('Action Past Tense *Required').fill('Denied');
+    await page.getByLabel('Does this action represent').selectOption('-1');
+    await page.getByRole('button', { name: 'Save' }).click();
+  
+    // Add a second custom action 'Reply'
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    await page.getByRole('button', { name: 'Create a new Action' }).click();
+    await page.getByLabel('Action *Required').fill('Reply');
+    await page.getByLabel('Action *Required').press('Tab');
+    await page.getByLabel('Action Past Tense *Required').fill('Replied');
+    await page.getByRole('button', { name: 'Save' }).click();
+  
+    // Add a final custom action 'Backlog' 
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    await page.getByRole('button', { name: 'Create a new Action' }).click();
+    await page.getByLabel('Action *Required').fill('Backlog');
+    await page.getByLabel('Action *Required').press('Tab');
+    await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
+    await page.getByRole('button', { name: 'Save' }).click();
+  
+    // Create a new step
+    await page.getByRole('button', { name: 'New Step' }).click();
+    await page.getByLabel('Step Title:').fill('Step 1');
+    await page.getByRole('button', { name: 'Save' }).click();
+  
+    // Reload the page and verify the new step is visible
+    await page.reload();
+    const step1 = page.getByLabel('workflow step: Step 1');
+    await expect(step1).toBeVisible();
+    
+    // Hover over the new step and drag it to the desired position
+    await step1.hover();
+    await page.mouse.down();
+    await page.mouse.move(400, 300);
+    await page.mouse.up();
+  
+    // Close the Step modal that appears
+    await page.getByLabel('Close Modal').click();
+  
+    // Do the same for a second step
+    await page.getByRole('button', { name: 'New Step' }).click();
+    await page.getByLabel('Step Title:').fill('Step 2');
+    await page.getByRole('button', { name: 'Save' }).click();
+    
+    const step2 = page.getByLabel('workflow step: Step 2');
+    await expect(step2).toBeVisible();
+    
+    await step2.hover();
+    await page.mouse.down();
+    await page.mouse.move(800, 400);
+    await page.mouse.up();
+  
+    await page.getByLabel('Close Modal').click();
+  
+    // Move the End step to align with Step 2
+    const endStep = page.getByLabel('Workflow End');
+    await expect(endStep).toBeVisible();
+  
+    await endStep.hover();
+    await page.mouse.down();
+    await page.mouse.move(800, 600);
+    await page.mouse.up();
+  
+    const requestorConnector = await page.locator('rect').nth(2);
+    const step1Connector = await page.locator('rect').first();
+    const step2Connector = await page.locator('rect').nth(1);
+    const endConnector = await page.locator('rect').nth(3);
+  
+    // Connect the Requestor to Step 1 and verify the action 'Submit'
+    // is visible
+    await requestorConnector.dragTo(step1Connector);
+    await expect(page.getByText('Submit')).toBeVisible();
+  
+    // Connect Step 1 back to the Requestor and verify it has
+    // action "Return to Requestor"
+    await step1Connector.dragTo(requestorConnector);
+    await expect(page.getByText('Return to Requestor')).toBeVisible();
+  
+    // Connect Step 1 to Step 2 and give it the custom action "Reply"
+    await step1Connector.dragTo(step2Connector);
+    await page.getByLabel('Create New Workflow Action').locator('a').click();
+    await page.getByRole('option', { name: 'Reply' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Reply')).toBeVisible();
+  
+    // Add another connector from Step 1 to Step 2 and give it the 
+    // action "Backlog"
+    await step1Connector.dragTo(step2Connector);
+    await page.getByLabel('Create New Workflow Action').locator('a').click();
+    await page.getByRole('option', { name: 'Backlog' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Backlog')).toBeVisible();
+  
+    // Connect Step 2 to Step 1 and add the custom action "Deny"
+    await step2Connector.dragTo(step1Connector);
+    await page.getByLabel('Create New Workflow Action').locator('a').click();
+    await page.getByRole('option', { name: 'Deny' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Deny')).toBeVisible();
+  
+    // Connect Step 2 to the End and verify the "Approve"
+    // action is added
+    await step2Connector.dragTo(endConnector);
+    await page.getByLabel('Create New Workflow Action').locator('a').click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Approve')).toBeVisible();
+  
+    // Click on Step 1 and verify the modal is displayed
+    await step1.click();
+    await expect(page.getByRole('button', { name: 'Add Requirement' })).toBeVisible();
+    await page.getByLabel('Close Modal').click();
+  
+    // Click on the "Return to Requestor" action and verify that it contains 
+    // the event "Email - Send Back Notification for Requestor"
+    await page.getByText('Return to Requestor').click();
+    const listItem = await page.getByText("Triggers these events").locator('ul').locator('li').first();
+    await expect(listItem).toHaveText("Email - Send Back Notification for Requestor");
+    await page.getByLabel('Close Modal').click();
+  
+    // Delete Step 1
+    await step1.click();
+    await page.getByLabel('Remove Step').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+  
+    // Delete Step 2
+    await step2.click();
+    await page.getByLabel('Remove Step').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+  
+    // Delete the workflow
+    await page.getByRole('button', { name: 'Delete Workflow' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+  
+    // Delete the custom actions that were added
+    const yesButton = page.getByRole('button', { name: 'Yes' });
+    
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+   
+    await page.locator('#editor_Backlog').getByRole('button', { name: 'Delete' }).click();
+    await yesButton.click();
+    await expect(page.locator('#editor_Backlog')).not.toBeVisible();
+  
+    await page.locator('#editor_Deny').getByRole('button', { name: 'Delete' }).click();
+    await yesButton.click();
+    await expect(page.locator('#editor_Deny')).not.toBeVisible();
+    
+    await page.locator('#editor_Reply').getByRole('button', { name: 'Delete' }).click();
+    await yesButton.click();
+    await expect(page.locator('#editor_Reply')).not.toBeVisible();
+  
+    await page.getByRole('button', { name: 'Close' }).click();
+  
+  });
