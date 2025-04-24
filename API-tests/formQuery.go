@@ -5,12 +5,12 @@ type FormQueryResponse map[int]FormQueryRecord
 type FormQueryData map[string]any
 
 type FormQuery_Orgchart_Employee struct {
-	FirstName         string  `json:"firstName"`
-	LastName          string  `json:"lastName"`
-	MiddleName        string  `json:"middleName"`
-	Email             string  `json:"email"`
-	UserName          string  `json:"userName"`
-	EmpUID            int     `json:"empUID"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	MiddleName string `json:"middleName"`
+	Email      string `json:"email"`
+	UserName   string `json:"userName"`
+	EmpUID     int    `json:"empUID"`
 }
 
 type FormQueryRecord struct {
@@ -25,24 +25,25 @@ type FormQueryRecord struct {
 	Deleted                 int                         `json:"deleted"`
 	IsWritableUser          int                         `json:"isWritableUser"`
 	IsWritableGroup         int                         `json:"isWritableGroup"`
-	Service                 string                      `json:"service"`
-	AbbreviatedService      string                      `json:"abbreviatedService"`
-	GroupID                 int                         `json:"groupID"`
-	StepID                  int                         `json:"stepID"`
-	BlockingStepID          int                         `json:"blockingStepID"`
-	LastNotified            string                      `json:"lastNotified"`
-	InitialNotificationSent int                         `json:"initialNotificationSent"`
-	StepTitle               string                      `json:"stepTitle"`
-	CategoryNames           []string                    `json:"categoryNames"`
-	CategoryIDs             []string                    `json:"categoryIDs"`
-	DestructionAge          int                         `json:"destructionAge"`
-	ActionHistory           []FormQueryActionHistory    `json:"action_history"`
-	S1                      FormQueryData               `json:"s1"`
-	UnfilledDependencyData  UnfilledDependencyData      `json:"unfilledDependencyData"`
 	UserMetadata            FormQuery_Orgchart_Employee `json:"userMetadata"`
-	FirstName               string                      `json:"firstName"`
-	LastName                string                      `json:"lastName"`
 	UserName                string                      `json:"userName"`
+	Service                 string                      `json:"service,omitempty"`
+	AbbreviatedService      string                      `json:"abbreviatedService,omitempty"`
+	GroupID                 int                         `json:"groupID,omitempty"`
+	StepID                  int                         `json:"stepID,omitempty"`
+	StepType                int                         `json:"stepType,omitempty"` // 1 = Review, 2 = Holding
+	BlockingStepID          int                         `json:"blockingStepID,omitempty"`
+	LastNotified            string                      `json:"lastNotified,omitempty"`
+	InitialNotificationSent int                         `json:"initialNotificationSent,omitempty"`
+	StepTitle               string                      `json:"stepTitle,omitempty"`
+	CategoryNames           []string                    `json:"categoryNames,omitempty"`
+	CategoryIDs             []string                    `json:"categoryIDs,omitempty"`
+	DestructionAge          int                         `json:"destructionAge,omitempty"`
+	ActionHistory           []FormQueryActionHistory    `json:"action_history,omitempty"`
+	S1                      FormQueryData               `json:"s1,omitempty"`
+	UnfilledDependencyData  UnfilledDependencyData      `json:"unfilledDependencyData,omitempty"`
+	FirstName               string                      `json:"firstName,omitempty"`
+	LastName                string                      `json:"lastName,omitempty"`
 }
 
 type FormQueryActionHistory struct {
