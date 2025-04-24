@@ -119,7 +119,7 @@ func TestFormWorkflow_currentStepRequestorFollowupNonAdmin(t *testing.T) {
 	res = getFormWorkflow(RootURL + `api/formWorkflow/509/currentStep?masquerade=nonAdmin`)
 
 	got = *res[-2].ApproverName
-	want = "(Inactive User)"
+	want = "Tracy O'Hane"
 	if !cmp.Equal(got, want) {
 		t.Errorf("Description = %v, want = %v", got, want)
 	}
