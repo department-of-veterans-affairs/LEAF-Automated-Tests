@@ -687,7 +687,7 @@ func TestForm_QueryActionableAgent(t *testing.T) {
 	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}&masquerade=nonAdmin`, nil)
 
 	// Login as the agent
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("AGENT_TOKEN"))
+	req.Header.Set("Authorization", os.Getenv("AGENT_TOKEN"))
 	res, err := client.Do(req)
 	if err != nil {
 		t.Error(err)
