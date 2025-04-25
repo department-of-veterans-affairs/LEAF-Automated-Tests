@@ -4,10 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -669,5 +673,35 @@ func TestForm_QueryJoinStatus(t *testing.T) {
 			t.Error("TestForm_BasicStatusQuery want = stepTitle is not empty, got = stepTitle is empty")
 		}
 		break
+	}
+}
+
+func TestForm_QueryActionableAgent(t *testing.T) {
+	cookieJar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   time.Second * 5,
+		Jar:       cookieJar,
+	}
+
+	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}&masquerade=nonAdmin`, nil)
+
+	// Login as the agent
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("AGENT_TOKEN"))
+	res, err := client.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+
+	b, _ := io.ReadAll(res.Body)
+
+	var formRes FormQueryResponse
+	err = json.Unmarshal(b, &formRes)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if _, exists := formRes[16]; !exists {
+		t.Errorf("Record 16 should be actionable by the LEAF Agent")
 	}
 }

@@ -39,6 +39,12 @@ func setupTestDB() {
 	}
 	importNexusSql := string(f)
 
+	f, err = os.ReadFile("database/portal_agent_db.sql")
+	if err != nil {
+		log.Fatal("Couldn't open the file: ", err.Error())
+	}
+	importPortalAgentSql := string(f)
+
 	db.Exec("USE national_leaf_launchpad")
 
 	// Get original DB config
@@ -63,6 +69,11 @@ func setupTestDB() {
 	db.Exec("CREATE DATABASE " + testNexusDbName)
 	db.Exec("USE " + testNexusDbName)
 	db.Exec(importNexusSql)
+
+	db.Exec("DROP DATABASE leaf_agent")
+	db.Exec("CREATE DATABASE leaf_agent")
+	db.Exec("USE leaf_agent")
+	db.Exec(importPortalAgentSql)
 
 	// Switch to test DB
 	db.Exec("USE national_leaf_launchpad")
@@ -103,6 +114,12 @@ func updateTestDBSchema() {
 		log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
 	}
 	fmt.Println("OK")
+
+	// Update DB Schema: Portal Agent
+	res, _ = httpGet(HostURL + `/platform/agent/scripts/updateDatabase.php`)
+	if strings.Contains(res, `Db Update failed`) {
+		log.Fatal(`Could not update Platform Agent schema: ` + res)
+	}
 }
 
 // teardownTestDB reroutes the standard LEAF dev environment back to the original configuration
