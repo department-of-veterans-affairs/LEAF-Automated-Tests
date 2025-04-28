@@ -359,3 +359,33 @@ test('Go to UID Link', async ({ page }) => {
   // contains 'This is an otter'
   await expect(page.locator('#data_3_1')).toContainText('This is an otter');
 });
+
+test('verify the newly created row is highlighted and contains "untitled"', async ({ page }) => {
+  // 1) Navigate & build the report…
+  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+  await page.getByRole('option', { name: 'Type' }).click();
+  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('option', { name: 'Input Formats' }).click();
+  await page.getByRole('button', { name: 'Next Step' }).click();
+  await page.locator('#indicatorList').getByText('Input Formats').click();
+  await page.getByTitle('indicatorID: 45\ncheckboxes (LEAF-check)').locator('span').click();
+  await page.getByRole('button', { name: 'Generate Report' }).click();
+  await expect(page.locator('#reportStats')).toContainText('records');
+  await page.waitForSelector('table tbody tr');
+
+  // 2) Create the new row
+  await page.getByRole('button', { name: /Create Row/i }).click();
+
+  // 3) Target the yellow-highlighted "untitled" row
+  const highlightedRow = page.locator(
+    'table tbody tr[style*="background-color"]',
+    { hasText: 'untitled' }
+  );
+
+  // 4) Wait for it and assert
+  await expect(highlightedRow).toBeVisible();
+  await expect(highlightedRow).toContainText('untitled');
+});
+
+
