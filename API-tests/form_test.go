@@ -49,7 +49,7 @@ func TestForm_NonadminCannotEditData(t *testing.T) {
 	}
 
 	if res.StatusCode != 401 {
-		t.Errorf("Non-admin got = status code %v, want = %v", res.StatusCode, 401)
+		t.Errorf("Non-admin got status code = %v, want = %v", res.StatusCode, 401)
 	}
 }
 
