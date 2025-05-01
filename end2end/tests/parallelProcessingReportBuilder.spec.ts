@@ -268,6 +268,7 @@ await page.locator('#indicator_selector').selectOption(ddOptions);
   await page.locator('#btn78').click();
   await page.locator('#btn19').click();
 
+  
    //**Add a check */
   page.once('dialog', dialog => {
     console.log(`Dialog message: ${dialog.message()}`);
