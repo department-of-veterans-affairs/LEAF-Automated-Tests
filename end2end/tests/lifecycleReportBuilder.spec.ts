@@ -352,3 +352,62 @@ test('Go to UID Link', async ({ page }) => {
   // contains 'This is an otter'
   await expect(page.locator('#data_3_1')).toContainText('This is an otter');
 });
+
+/**
+ *  Test for LEAF 4801
+ *  Verify the newly added row is placed in the 
+ *  correct location after sorting
+ */
+
+test('New Row Added in Correct Place After Sorting', async ({ page }) => {
+  
+  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwBGAEyC8XQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyQAGeosiqNITQF16AK2I0ADsEFD8QOFIwJGBtEEJTKgJ5FBAAFnEQCKM0GDQYxElnEvpc%2FLAAeUFBOFMXTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgBYArM1oN8YeAAsy8ANYAjVAA8yLAAQAKADIBRAIIAxALSLlKgJTM26Dnh4BdIA%3D%3D');
+  
+  // Add a new row
+  const createRowButton =  await page.getByRole('button', { name: 'Create Row' });
+  createRowButton.click();
+
+  // Get row that has highlight
+  const highlightedRow = await page.locator(
+    'table tbody tr[style*="background-color"]',
+    { hasText: 'untitled' }
+  );
+ 
+  // Wait for row to be highlighted
+  await expect(highlightedRow).toBeVisible();
+  await expect(highlightedRow).toContainText('untitled');
+
+  // Sort the report by title and then UID
+  await page.getByLabel('Sort by Title').click();
+  await page.getByLabel('Sort by unique ID').click();
+  
+  // Add another row - row should be added to the bottomw
+  createRowButton.click();
+
+  // Wait for row to be highlighted
+  await expect(highlightedRow).toBeVisible();
+  await expect(highlightedRow).toContainText('untitled');
+
+  // Get the UID of the new row
+  const newestUID = await createRowButton.getAttribute('data-newest-row-id');
+
+  // Get an array of all the UIDs
+  const UIDs = await page.locator('table tbody tr td:first-child').allTextContents();
+  
+  // Confirm that the new row/s UID is not the first UID in the array
+  await expect(UIDs[0]).not.toEqual(newestUID);
+
+  // Delete the new requests that were created
+
+  // Delete the newest request from the report
+  await page.getByRole('link', { name: `${newestUID}` }).click();
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+
+  // Delete the second newest from the list of requests on the home page
+  await page.getByRole('link', { name: 'Home' }).click();
+  await page.getByRole('link', { name: 'untitled' }).click();
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  
+});
