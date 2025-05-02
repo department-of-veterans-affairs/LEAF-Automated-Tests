@@ -166,16 +166,16 @@ test('Change Report Title', async ({ page }) => {
   await expect(page.getByPlaceholder('Untitled Report')).toHaveValue('Default Options Report');
 });
 
-// Generate unique text to help ensure that fields are being filled correctly.
-let randNum = Math.random();
-let uniqueText = `My New Request ${randNum}`;
-
 /**
  *  Add a new row to the generated report, change 
  *  the title, and add data.
  *  Afterwards, cancel the new request
  */
 test('Add a New Row and Populate', async ({ page }) => {
+
+  // Generate unique text to help ensure that fields are being filled correctly.
+  let randNum = Math.random();
+  let uniqueText = `My New Request ${randNum}`;
 
   // Go to Report Builder page
   await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
@@ -197,14 +197,22 @@ test('Add a New Row and Populate', async ({ page }) => {
   
   // Get the number of rows in the original report
   const initialRows = await page.locator('table tbody tr').count();
-  
-  // Click 'Create Row' button
-  await page.getByRole('button', { name: 'Create Row' }).click();
 
-  // Wait until the "Stop and show results button" appears and dissappears
-  await expect(page.getByRole('button', { name: 'Stop and show results'})).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Stop and show results'})).not.toBeVisible();
+  // Click 'Create Row' button
+  const createRowButton = page.getByRole('button', { name: 'Create Row' })
+  await createRowButton.click();
   
+  // Find the row that has the background-color style set
+  const highlightedRow = await page.locator(
+    'table tbody tr[style*="background-color"]',
+    { hasText: 'untitled' }
+  );
+ 
+  // 4) Wait for it and assert
+  await expect(highlightedRow).toBeVisible();
+  await expect(highlightedRow).toContainText('untitled');
+  
+
   // Get the rows for the new table after adding a row
   const newTable = await page.getByRole('table');
   const tableBody = await newTable.locator('tbody');
@@ -220,28 +228,11 @@ test('Add a New Row and Populate', async ({ page }) => {
   // of expected rows
   await expect(numNewRows).toEqual(expectedRows);
 
-  // Find the maximum UID
-  // Get all the cells that contain UIDs
-  const uidCells = await tableBody.locator('tr td:first-child').all();
-
-  // Assume the new row is the first row and the max UID is the first element in uidCells
-  let rowAdded = await newRows.first();
-  let maxUID = Number( await uidCells[0].innerText());
-  
-  // For each UID in the UID array, if the number in the array is bigger than the
-  // previous UID, set the max UID to that number and set the new row to the 
-  // corresponding row in the report
-  for(let i = 1; i < uidCells.length; i++) {
-    let numCompare = Number(await uidCells[i].textContent());
-
-    if(numCompare > maxUID) {
-      maxUID = numCompare;
-      rowAdded = await newRows.nth(i);
-    }
-  }
-  
+  // Get the UID of the newly added row
+  const addedRowUID = await createRowButton.getAttribute('data-newest-row-id');
+    
   // Update the title of the added row to the uniqueText
-  const titleCell = await rowAdded.locator('td').nth(1);
+  const titleCell = page.locator(`[id$="_${addedRowUID}_title"]`);
   await titleCell.click();
   await page.getByLabel('Report Title').click();
   await page.getByLabel('Report Title').fill(uniqueText);
@@ -251,11 +242,13 @@ test('Add a New Row and Populate', async ({ page }) => {
   await expect(titleCell).toContainText(uniqueText);
   
   // Check the values 5 and 6 in the 'checkboxes (LEAF-check)'
-  const dataCell = await rowAdded.locator('td').nth(2);
+  const dataCell = page.locator(`[id$="_${addedRowUID}_45"]`);
   await dataCell.click();
 
+  // Wait for the window to load
   expect(page.locator('#confirm_loadIndicator')).not.toBeVisible();
-  //await page.locator('label').filter({ hasText: '5' }).locator('span').click();
+  
+  // Choose 5 and 6 from the checkbox options
   await page.locator('label').getByText('5', { exact: true}).locator('span').click();
   await page.locator('label').getByText('6', { exact: true}).locator('span').click();
   await page.getByRole('button', { name: 'Save Change' }).click();
