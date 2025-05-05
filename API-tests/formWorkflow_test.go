@@ -80,6 +80,24 @@ func TestFormWorkflow_ApplyAction(t *testing.T) {
 	if res.StatusCode != http.StatusConflict {
 		t.Errorf("api/formWorkflow/8/apply ('page is out of date') StatusCode = %v, want = %v", res.StatusCode, http.StatusConflict)
 	}
+
+	// Test "valid action with stepID"
+	postData.Set("dependencyID", "-2")
+	postData.Set("stepID", "3")
+	postData.Set("actionType", "Note")
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/504/apply`, postData)
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("api/formWorkflow/504/apply ('valid action with stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusOK)
+	}
+
+	// Test "invalid action with wrong stepID"
+	postData.Set("dependencyID", "-2")
+	postData.Set("stepID", "1")
+	postData.Set("actionType", "Note")
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/504/apply`, postData)
+	if res.StatusCode != http.StatusConflict {
+		t.Errorf("api/formWorkflow/504/apply ('invalid action with wrong stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusConflict)
+	}
 }
 
 func TestFormWorkflow_currentStepRequestorFollowupNonAdmin(t *testing.T) {
