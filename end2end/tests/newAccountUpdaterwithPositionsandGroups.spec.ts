@@ -17,9 +17,10 @@ test('check User Account', async ({ page }, testInfo) => {
   //Search Nexus for the user account
   await page.getByLabel('Search', { exact: true }).click();
   await page.keyboard.type('username.disabled:vtrfaufelecia');
+  await expect(page.locator('#employeeBody')).toBeVisible();
   await page.getByRole('link', { name: 'Schultz, Phuong Boyer.' }).click();
   await expect(page.locator('#maincontent')).toBeVisible();
-
+ 
 
  //Verify user have positions assigned
  await expect(page.getByText('Position Assignments Chief of')).toBeVisible();
@@ -159,7 +160,7 @@ const previewChange:Locator = page1.getByRole('button', {name: 'Preview Changes'
 await previewChange.hover();
 await previewChange.click ();
 
-//Old Account with Groups & Positions Veirfy Goups and Positions have value
+//Old Account with Groups & Positions Verify Goups and Positions have value
 
 //Group
 await expect(page1.getByText('Export Group NameCurrent')).toBeVisible();
