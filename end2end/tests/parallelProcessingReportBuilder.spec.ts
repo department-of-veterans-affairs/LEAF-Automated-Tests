@@ -83,7 +83,11 @@ test ('Create a New Form', async ({ page}, testinfo) => {
     await expect(page.getByLabel('Field Name')).toContainText(spanTxt);
     await page.getByRole('button', { name: 'Save' }).click();
 
-    
+  //Preview Form
+  await page.getByRole('button', { name: 'Preview this Form' }).click();
+
+
+
   //Screenshot of NewForm
   const newForm = await page.screenshot();
   await testinfo.attach('New Form', { body: newForm, contentType: 'image/png' });
@@ -135,10 +139,13 @@ test('Create Workflow', async ({ page}, testinfo) => {
    await page.mouse.move(300, 300);
    await page.mouse.up();
 
+
+
+
     // Locate connectors and drag them to connect steps
     const stepConnector = page.locator('.jtk-endpoint').nth(0);
     const endConnector = page.locator('.jtk-endpoint').nth(2);
-      await stepConnector.dragTo(endConnector);
+    await stepConnector.dragTo(endConnector);
 
  // Select newly created action
  const selectActionDialog = page.getByRole('dialog');
@@ -190,12 +197,16 @@ test('Update Form', async ({ page}, testInfo) => {
     await page.getByRole('link', { name: 'Admin Panel' }).click();
 
    //Locate the Form
+    await expect(page.getByRole('button', { name: ' Form Editor Create and' })).toBeVisible();
     await page.getByRole('button', { name: ' Form Editor Create and' }).click();
+    await expect(page.getByRole('heading', { name: 'Active Forms:', exact: true })).toBeVisible();
     await page.getByRole('link', { name: uniqueFormName }).click();
 
    //Connect the workflow to the form
+
    const workflowLocator = await page.locator('select > option', { hasText: workflowTitle,});
    const workflowValue = await workflowLocator.getAttribute('value');
+   await expect(page.locator('#edit-properties-other-properties')).toBeVisible();
    await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowValue);
    
     console.log("Text : " + workflowValue);
@@ -219,7 +230,7 @@ test('Update Form', async ({ page}, testInfo) => {
 });
 
 //Create New Request
-test('Create New', async ({ page }, testInfo) => {
+test('Create New Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
@@ -268,7 +279,7 @@ await page.locator('#indicator_selector').selectOption(ddOptions);
   await page.locator('#btn78').click();
   await page.locator('#btn19').click();
 
-  
+
    //**Add a check */
   page.once('dialog', dialog => {
     console.log(`Dialog message: ${dialog.message()}`);
