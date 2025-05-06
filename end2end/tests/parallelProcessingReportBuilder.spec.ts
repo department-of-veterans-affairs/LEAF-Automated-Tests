@@ -35,6 +35,9 @@ test ('Create a New Form', async ({ page}, testinfo) => {
     await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).fill(uniqueFormDescr);
     await page.getByRole('button', { name: 'Save' }).click();
 
+    //Verify Form Save
+    await expect(page.getByRole('button', { name: 'delete this form' })).toBeVisible();
+
     //Add Section for Questions
     await page.getByRole('button', { name: 'Add Section' }).click();
     await page.getByRole('textbox', { name: 'Section Heading' }).click();
@@ -50,7 +53,7 @@ test ('Create a New Form', async ({ page}, testinfo) => {
     await page.locator('.trumbowyg-editor').fill('Please select an employee?');
     await page.getByLabel('Input Format').selectOption('orgchart_employee');
     await page.getByRole('button', { name: 'Save' }).click();
-    await page.locator('html').click({ button: 'right' });
+    
 
     await page.getByRole('button', { name: 'Add Question to Section' }).click();
     await page.getByRole('button', { name: 'Advanced Formatting' }).click();
@@ -85,8 +88,6 @@ test ('Create a New Form', async ({ page}, testinfo) => {
 
   //Preview Form
   await page.getByRole('button', { name: 'Preview this Form' }).click();
-
-
 
   //Screenshot of NewForm
   const newForm = await page.screenshot();
@@ -234,14 +235,19 @@ test('Create New Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
+
   //Create New Request
-  await page.getByText('New Request', { exact: true }).click();
+  await expect(page.getByText('New Request Start a new')).toBeVisible();
+ await page.getByText('New Request', { exact: true }).click();
+ await expect(page.locator('#step1_questions')).toBeVisible();
   await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
   await page.getByRole('option', { name: 'AS Test Group' }).click();
   await page.getByRole('textbox', { name: 'Title of Request' }).click();
   await page.getByRole('textbox', { name: 'Title of Request' }).fill(newRequestForm);
   await page.getByText(uniqueFormName).click();
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+
 
   //**Add a check */
 
