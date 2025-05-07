@@ -264,18 +264,15 @@ test('navigate to the Report Builder, find the travel request, and check status'
   await page.getByText('Report Builder').click();
 
   // Click on the "Current Status" link
-  await expect(page.getByRole('cell', { name: 'Current Status' }).locator('a')).toBeVisible();
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
 
   // Select the "Type" option
-  await expect(page.getByRole('option', { name: 'Type' })).toBeVisible();
   await page.getByRole('option', { name: 'Type' }).click();
 
   // After clicking Type, we should expect the dropdown containing "Resolved" to be replaced
   await expect(page.getByRole('cell', { name: 'Resolved' }).locator('a')).not.toBeVisible();
 
   // Select "Complex Form" from the list
-  await expect(page.locator('td').nth(4)).toBeVisible();
   await page.locator('td').nth(4).click();
 
   // The list might be very long, so search for it
@@ -284,11 +281,9 @@ test('navigate to the Report Builder, find the travel request, and check status'
   await page.getByRole('option', { name: uniqueText }).click();
 
   // Proceed to the next step
-  await expect(page.getByRole('button', { name: 'Next Step' })).toBeVisible();
   await page.getByRole('button', { name: 'Next Step' }).click();
 
   // Open the status indicator list
-  await expect(page.locator('#indicatorList').getByText('Current Status')).toBeVisible();
   await page.locator('#indicatorList').getByText('Current Status').click();
   await page.locator('#indicatorList').getByText(uniqueText, { exact: true }).click();
 
@@ -301,7 +296,6 @@ test('navigate to the Report Builder, find the travel request, and check status'
   */
 
   // Generate the report
-  await expect(page.getByRole('button', { name: 'Generate Report' })).toBeVisible();
   await page.getByRole('button', { name: 'Generate Report' }).click();
 
   // Confirm the approval status is visible
