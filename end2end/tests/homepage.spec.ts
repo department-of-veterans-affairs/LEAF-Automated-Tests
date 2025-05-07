@@ -7,7 +7,7 @@ test('search record ID using quick search', async ({ page }, testInfo) => {
 
   // Use .pressSequentially since the UX does search-as-you-type
   await page.getByLabel('Enter your search text').pressSequentially('500');
-  await expect(page.getByRole('link', { name: '500' })).toBeInViewport();
+  await expect(page.getByRole('link', { name: '500', exact: true })).toBeInViewport();
 
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
@@ -24,7 +24,7 @@ test('search record ID using advanced options', async ({ page }, testInfo) => {
   await page.getByLabel('text', { exact: true }).click();
   await page.getByLabel('text', { exact: true }).fill('500');
   await page.getByRole('button', { name: 'Apply Filters' }).click();
-  await expect(page.getByRole('link', { name: '500' })).toBeInViewport();
+  await expect(page.getByRole('link', { name: '500', exact: true })).toBeInViewport();
 
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
