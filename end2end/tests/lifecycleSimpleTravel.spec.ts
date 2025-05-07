@@ -272,8 +272,8 @@ test('navigate to the Report Builder, find the travel request, and check status'
   await page.getByRole('option', { name: 'Type' }).click();
 
   // Select "Complex Form" from the list
-  await expect(page.getByRole('cell', { name: 'Complex Form' }).locator('a')).toBeVisible();
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await expect(page.getByRole('cell').locator('select[aria-label="categories"] + div a')).toBeVisible();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
 
   // Choose the specific travel request
   await page.getByRole('option', { name: uniqueText }).click();
