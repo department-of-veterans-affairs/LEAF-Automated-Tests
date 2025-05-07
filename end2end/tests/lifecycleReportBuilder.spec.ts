@@ -28,7 +28,7 @@ test('Correct Data Columns Available to Select', async ({ page}) => {
   // Filter by Type IS General Form
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'General Form' }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
 
@@ -49,7 +49,7 @@ test('Correct Columns Displayed', async ({ page }) => {
   // Filter by Type IS General Form
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
-  await page.getByRole('cell', { name: 'Complex Form' }).click();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'General Form' }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
 
@@ -183,7 +183,7 @@ test('Add a New Row and Populate', async ({ page }) => {
   // Set filter to Type IS Input Formats
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'Input Formats' }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
 
@@ -277,7 +277,7 @@ test('Report Allows Negative Currency', async ({ page}) => {
   await page.getByRole('option', { name: 'Type' }).click();
 
   // Choose reports which use the Input Formats form
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'Input Formats' }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
   await page.locator('#indicatorList').getByText('Input Formats').click();
@@ -314,7 +314,7 @@ test('Go to UID Link', async ({ page }) => {
   // Change search filter to Type IS General Form
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'General Form' }).click();
 
   // Add 'AND'to the search filter
