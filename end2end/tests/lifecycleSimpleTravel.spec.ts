@@ -271,10 +271,15 @@ test('navigate to the Report Builder, find the travel request, and check status'
   await expect(page.getByRole('option', { name: 'Type' })).toBeVisible();
   await page.getByRole('option', { name: 'Type' }).click();
 
-  // Select "Complex Form" from the list
-  await expect(page.getByRole('cell', { name: 'Complex Form' }).locator('a')).toBeVisible();
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  // After clicking Type, we should expect the dropdown containing "Resolved" to be replaced
+  await expect(page.getByRole('cell', { name: 'Resolved' }).locator('a')).not.toBeVisible();
 
+  // Select "Complex Form" from the list
+  await expect(page.locator('td').nth(4)).toBeVisible();
+  await page.locator('td').nth(4).click();
+
+  // The list might be very long, so search for it
+  await page.keyboard.type(uniqueText);
   // Choose the specific travel request
   await page.getByRole('option', { name: uniqueText }).click();
 
