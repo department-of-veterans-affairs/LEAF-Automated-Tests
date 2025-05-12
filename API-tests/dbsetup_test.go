@@ -6,25 +6,32 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 var origPortalDbName, origNexusDbName string
 var origNexusDbNameForNexus string
 var mysqlDSN = dbUsername + ":" + dbPassword + "@(" + dbHost + ")/?multiStatements=true"
 
-// setupTestDB creates a predefined test database and reroutes the DB in a standard LEAF dev environment
-func setupTestDB() {
-	// Setup test database
+func getDB() *sql.DB {
 	db, err := sql.Open("mysql", mysqlDSN)
 	if err != nil {
 		log.Fatal("Couldn't open database, check DSN: ", err.Error())
 	}
-	defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
 		log.Fatal("Can't ping database: ", err.Error())
 	}
+
+	return db
+}
+
+// setupTestDB creates a predefined test database and reroutes the DB in a standard LEAF dev environment
+func setupTestDB() {
+	// Setup test database
+	db := getDB()
+	defer db.Close()
 
 	// Prep switchover to test DB
 	f, err := os.ReadFile("database/portal_test_db.sql")
@@ -60,20 +67,42 @@ func setupTestDB() {
 		Scan(&origNexusDbNameForNexus)
 
 	// Load test DBs
-	db.Exec("DROP DATABASE " + testPortalDbName)
-	db.Exec("CREATE DATABASE " + testPortalDbName)
-	db.Exec("USE " + testPortalDbName)
-	db.Exec(importPortalSql)
+	wg := sync.WaitGroup{}
+	wg.Add(3)
 
-	db.Exec("DROP DATABASE " + testNexusDbName)
-	db.Exec("CREATE DATABASE " + testNexusDbName)
-	db.Exec("USE " + testNexusDbName)
-	db.Exec(importNexusSql)
+	go func() {
+		defer wg.Done()
 
-	db.Exec("DROP DATABASE leaf_agent")
-	db.Exec("CREATE DATABASE leaf_agent")
-	db.Exec("USE leaf_agent")
-	db.Exec(importPortalAgentSql)
+		db := getDB()
+		defer db.Close()
+		db.Exec("DROP DATABASE " + testPortalDbName)
+		db.Exec("CREATE DATABASE " + testPortalDbName)
+		db.Exec("USE " + testPortalDbName)
+		db.Exec(importPortalSql)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		db := getDB()
+		defer db.Close()
+		db.Exec("DROP DATABASE " + testNexusDbName)
+		db.Exec("CREATE DATABASE " + testNexusDbName)
+		db.Exec("USE " + testNexusDbName)
+		db.Exec(importNexusSql)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		db := getDB()
+		defer db.Close()
+		db.Exec("DROP DATABASE leaf_agent")
+		db.Exec("CREATE DATABASE leaf_agent")
+		db.Exec("USE leaf_agent")
+		db.Exec(importPortalAgentSql)
+	}()
+	wg.Wait()
 
 	// Switch to test DB
 	db.Exec("USE national_leaf_launchpad")
