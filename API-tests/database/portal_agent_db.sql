@@ -57,9 +57,11 @@ CREATE TABLE `actions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 INSERT INTO `actions` (`actionType`, `actionText`, `actionTextPasttense`, `actionIcon`, `actionAlignment`, `sort`, `fillDependency`, `deleted`) VALUES
+('Activate',	'Activate',	'Activated',	'go-next.svg',	'right',	0,	1,	0),
 ('approve',	'Approve',	'Approved',	'gnome-emblem-default.svg',	'right',	0,	1,	0),
 ('changeInitiator',	'Change Initiator',	'Changed Initiator',	'',	'',	0,	0,	0),
 ('concur',	'Concur',	'Concurred',	'go-next.svg',	'right',	1,	1,	0),
+('Decommission',	'Decommission',	'Decommissioned',	'go-next.svg',	'right',	0,	1,	0),
 ('defer',	'Defer',	'Deferred',	'software-update-urgent.svg',	'left',	0,	-2,	0),
 ('deleted',	'Cancel',	'Cancelled',	'',	'',	0,	0,	0),
 ('disapprove',	'Disapprove',	'Disapproved',	'process-stop.svg',	'left',	0,	-1,	0),
@@ -107,6 +109,7 @@ CREATE TABLE `categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDescription`, `workflowID`, `sort`, `needToKnow`, `formLibraryID`, `visible`, `disabled`, `type`, `destructionAge`, `lastModified`) VALUES
+('leaf_agent',	'',	'Task',	'Tasks are defined by local administrators, and executed by the LEAF Agent',	1,	0,	0,	NULL,	0,	0,	'',	NULL,	1746555014),
 ('leaf_devconsole',	'',	'LEAF Developer Console',	'',	-2,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
 ('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0);
 
@@ -121,6 +124,8 @@ CREATE TABLE `category_count` (
   CONSTRAINT `fk_records_category_count_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `category_count` (`recordID`, `categoryID`, `count`) VALUES
+(1,	'leaf_agent',	1);
 
 DROP TABLE IF EXISTS `category_privs`;
 CREATE TABLE `category_privs` (
@@ -162,6 +167,11 @@ CREATE TABLE `data` (
   CONSTRAINT `fk_records_data_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`) VALUES
+(1,	2,	1,	'https://host.docker.internal/Test_Request_Portal/',	NULL,	1747005203,	'tester'),
+(1,	3,	1,	'10',	NULL,	1747005203,	'tester'),
+(1,	4,	1,	'[{&quot;type&quot;:&quot;route-conditional-data&quot;,&quot;actionType&quot;:&quot;concur&quot;,&quot;query&quot;:{&quot;terms&quot;:[{&quot;id&quot;:&quot;data&quot;,&quot;indicatorID&quot;:&quot;5&quot;,&quot;operator&quot;:&quot;&gt;&quot;,&quot;match&quot;:&quot;10000&quot;}]}}]',	NULL,	1747005431,	'tester'),
+(1,	6,	1,	'',	NULL,	1747005433,	'tester');
 
 DROP TABLE IF EXISTS `data_action_log`;
 CREATE TABLE `data_action_log` (
@@ -379,7 +389,13 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (-4,	'Supervisor or ELT (GS-13 or higher)',	'orgchart_employee',	NULL,	NULL,	-3,	'leaf_secure',	NULL,	NULL,	NULL,	NULL,	1,	1,	'2019-08-09 15:52:34',	0,	0),
 (-3,	'Approval Officials',	'',	NULL,	NULL,	NULL,	'leaf_secure',	'',	NULL,	NULL,	NULL,	0,	1,	'2019-08-09 15:48:46',	0,	0),
 (-2,	'Justification for collection of sensitive data',	'textarea',	'',	'',	NULL,	'leaf_secure',	'<div id=\"leafSecureDialogContent\"></div>\n\n<script src=\"js/LeafSecureReviewDialog.js\"></script>\n<script>\n$(function() {\n\n    LeafSecureReviewDialog(\'leafSecureDialogContent\');\n\n});\n</script>',	'<div id=\"leafSecureDialogContentPrint\"></div>\n\n<script src=\"js/LeafSecureReviewDialog.js\"></script>\n<script>\n$(function() {\n\n    LeafSecureReviewDialog(\'leafSecureDialogContentPrint\');\n\n});\n</script>',	NULL,	NULL,	1,	2,	'2019-07-30 20:25:06',	0,	0),
-(-1,	'Privacy Officer',	'orgchart_employee',	NULL,	NULL,	-3,	'leaf_secure',	NULL,	NULL,	NULL,	NULL,	1,	1,	'2019-07-30 17:11:38',	0,	0);
+(-1,	'Privacy Officer',	'orgchart_employee',	NULL,	NULL,	-3,	'leaf_secure',	NULL,	NULL,	NULL,	NULL,	1,	1,	'2019-07-30 17:11:38',	0,	0),
+(1,	'Configuration',	'',	'',	'',	NULL,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-05-06 17:54:23',	0,	0),
+(2,	'Site',	'text',	'',	'',	1,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-05-06 18:06:42',	0,	0),
+(3,	'Step ID',	'number',	'',	'',	1,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-05-06 18:10:14',	0,	0),
+(4,	'Instructions',	'textarea',	'',	'',	NULL,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-05-06 18:09:02',	0,	0),
+(5,	'Schedule',	'',	'',	'',	NULL,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-05-09 22:30:35',	0,	0),
+(6,	'Last Run Timestamp',	'number',	'',	'',	5,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-05-10 23:10:42',	0,	0);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
@@ -431,6 +447,8 @@ CREATE TABLE `records` (
   KEY `submitted` (`submitted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `priority`, `lastStatus`, `submitted`, `deleted`, `isWritableUser`, `isWritableGroup`, `userMetadata`) VALUES
+(1,	1747005173,	0,	'tester',	'Record',	0,	'',	0,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
 
 DROP TABLE IF EXISTS `records_dependencies`;
 CREATE TABLE `records_dependencies` (
@@ -612,6 +630,8 @@ CREATE TABLE `step_dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 INSERT INTO `step_dependencies` (`stepID`, `dependencyID`) VALUES
+(1,	-4),
+(2,	-4),
 (-4,	-1),
 (-3,	-1),
 (-2,	-1);
@@ -685,7 +705,10 @@ INSERT INTO `workflow_routes` (`workflowID`, `stepID`, `nextStepID`, `actionType
 (-1,	-3,	-2,	'approve',	''),
 (-1,	-3,	0,	'sendback',	''),
 (-1,	-2,	0,	'approve',	''),
-(-1,	-2,	0,	'sendback',	'');
+(-1,	-2,	0,	'sendback',	''),
+(1,	1,	2,	'Activate',	''),
+(1,	1,	0,	'Decommission',	''),
+(1,	2,	0,	'Decommission',	'');
 
 DROP TABLE IF EXISTS `workflow_steps`;
 CREATE TABLE `workflow_steps` (
@@ -710,7 +733,9 @@ CREATE TABLE `workflow_steps` (
 INSERT INTO `workflow_steps` (`workflowID`, `stepID`, `stepTitle`, `stepBgColor`, `stepFontColor`, `stepBorder`, `jsSrc`, `posX`, `posY`, `indicatorID_for_assigned_empUID`, `indicatorID_for_assigned_groupID`, `requiresDigitalSignature`, `stepData`) VALUES
 (-2,	-4,	'Supervisory Review for LEAF Developer Console',	'#82b9fe',	'black',	'1px solid black',	'',	580,	146,	-6,	NULL,	NULL,	NULL),
 (-1,	-3,	'Supervisory Review for LEAF-S Certification',	'#82b9fe',	'black',	'1px solid black',	'',	579,	146,	-4,	NULL,	NULL,	NULL),
-(-1,	-2,	'Privacy Officer Review for LEAF-S Certification',	'#82b9fe',	'black',	'1px solid black',	'',	575,	331,	-1,	NULL,	NULL,	NULL);
+(-1,	-2,	'Privacy Officer Review for LEAF-S Certification',	'#82b9fe',	'black',	'1px solid black',	'',	575,	331,	-1,	NULL,	NULL,	NULL),
+(1,	1,	'Staging',	'#fffdcd',	'black',	'1px solid black',	'',	586,	125,	NULL,	NULL,	NULL,	NULL),
+(1,	2,	'Active',	'#fffdcd',	'black',	'1px solid black',	'',	866,	202,	NULL,	NULL,	NULL,	NULL);
 
 DROP TABLE IF EXISTS `workflows`;
 CREATE TABLE `workflows` (
@@ -722,4 +747,5 @@ CREATE TABLE `workflows` (
 
 INSERT INTO `workflows` (`workflowID`, `initialStepID`, `description`) VALUES
 (-2,	-4,	'Leaf Developer Console'),
-(-1,	-3,	'LEAF Secure Certification');
+(-1,	-3,	'LEAF Secure Certification'),
+(1,	1,	'Task');
