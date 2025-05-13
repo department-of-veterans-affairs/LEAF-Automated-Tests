@@ -170,8 +170,8 @@ CREATE TABLE `data` (
 INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`) VALUES
 (1,	2,	1,	'https://host.docker.internal/Test_Request_Portal/',	NULL,	1747005203,	'tester'),
 (1,	3,	1,	'10',	NULL,	1747005203,	'tester'),
-(1,	4,	1,	'[{&quot;type&quot;:&quot;route-conditional-data&quot;,&quot;actionType&quot;:&quot;concur&quot;,&quot;query&quot;:{&quot;terms&quot;:[{&quot;id&quot;:&quot;data&quot;,&quot;indicatorID&quot;:&quot;5&quot;,&quot;operator&quot;:&quot;&gt;&quot;,&quot;match&quot;:&quot;10000&quot;}]}}]',	NULL,	1747005431,	'tester'),
-(1,	6,	1,	'',	NULL,	1747005433,	'tester');
+(1,	4,	1,	'[{&quot;type&quot;:&quot;routeConditionalData&quot;,&quot;payload&quot;:{&quot;actionType&quot;:&quot;concur&quot;,&quot;query&quot;:{&quot;terms&quot;:[{&quot;id&quot;:&quot;data&quot;,&quot;indicatorID&quot;:&quot;5&quot;,&quot;operator&quot;:&quot;&gt;&quot;,&quot;match&quot;:&quot;10000&quot;}]}}}]',	NULL,	1747095745,	'tester'),
+(1,	6,	1,	'1747095749',	NULL,	1747095749,	'*LEAF Agent*');
 
 DROP TABLE IF EXISTS `data_action_log`;
 CREATE TABLE `data_action_log` (

@@ -123,32 +123,50 @@ func setupTestDB() {
 }
 
 func updateTestDBSchema() {
-	fmt.Print("Updating DB Schema: Request Portal... ")
-	res, _ := httpGet(RootURL + `scripts/updateDatabase.php`)
-	if strings.Contains(res, `Db Update failed`) {
-		log.Fatal(`Could not update Request Portal schema: ` + res)
-	}
-	fmt.Println("OK")
+	wg := sync.WaitGroup{}
+	wg.Add(4)
 
-	fmt.Print("Updating DB Schema: Local Nexus (Orgchart)... ")
-	res, _ = httpGet(RootOrgchartURL + `scripts/updateDatabase.php`)
-	if strings.Contains(res, `Db Update failed`) {
-		log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
-	}
-	fmt.Println("OK")
+	go func() {
+		defer wg.Done()
 
-	fmt.Print("Updating DB Schema: National Nexus (Orgchart)... ")
-	res, _ = httpGet(NationalOrgchartURL + `scripts/updateDatabase.php`)
-	if strings.Contains(res, `Db Update failed`) {
-		log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
-	}
-	fmt.Println("OK")
+		res, _ := httpGet(RootURL + `scripts/updateDatabase.php`)
+		if strings.Contains(res, `Db Update failed`) {
+			log.Fatal(`Could not update Request Portal schema: ` + res)
+		}
+		fmt.Println("Updated DB Schema: Request Portal... OK")
+	}()
 
-	// Update DB Schema: Portal Agent
-	res, _ = httpGet(HostURL + `/platform/agent/scripts/updateDatabase.php`)
-	if strings.Contains(res, `Db Update failed`) {
-		log.Fatal(`Could not update Platform Agent schema: ` + res)
-	}
+	go func() {
+		defer wg.Done()
+
+		res, _ := httpGet(RootOrgchartURL + `scripts/updateDatabase.php`)
+		if strings.Contains(res, `Db Update failed`) {
+			log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
+		}
+		fmt.Println("Updated DB Schema: Local Nexus (Orgchart)... OK")
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		res, _ := httpGet(NationalOrgchartURL + `scripts/updateDatabase.php`)
+		if strings.Contains(res, `Db Update failed`) {
+			log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
+		}
+		fmt.Println("Updated DB Schema: National Nexus (Orgchart)... OK")
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		// Update DB Schema: Portal Agent
+		res, _ := httpGet(HostURL + `/platform/agent/scripts/updateDatabase.php`)
+		if strings.Contains(res, `Db Update failed`) {
+			log.Fatal(`Could not update Platform Agent schema: ` + res)
+		}
+		fmt.Println("Updated DB Schema: Agent... OK")
+	}()
+	wg.Wait()
 }
 
 // teardownTestDB reroutes the standard LEAF dev environment back to the original configuration
