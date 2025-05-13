@@ -51,6 +51,11 @@ test('new record', async ({ page }, testInfo) => {
 
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+  // Remove created request
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
 });
 
 test('table header background color is inverted when scrolled down', async ({ page }, testInfo) => {

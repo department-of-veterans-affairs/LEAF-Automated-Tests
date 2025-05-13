@@ -305,4 +305,33 @@ test('navigate to the Report Builder, find the travel request, and check status'
   // Capture and attach a screenshot
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+  // Clean up 
+
+  // Cancel Request
+  await page.getByRole('link', { name: 'Home' }).click();
+  await page.getByRole('link', { name: 'e2e travel request' }).click();
+  
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
+
+  // Remove Travel Form
+  await page.getByRole('link', { name: 'Admin Panel' }).click();
+  await page.getByRole('button', { name: 'Form Editor Create and' }).click();
+  await page.getByRole('link', { name: uniqueText, exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Admin  Form Browser  Form' })).toBeVisible();
+
+  await page.getByLabel('delete this form').click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  //await expect(page.getByText('Are you sure you want to delete this form?')).not.toBeVisible();
+  await page.reload();
+  await expect(page.locator('#createFormButton')).toContainText('Create Form');
+  
+  await expect(page.getByRole('link', { name: uniqueText })).not.toBeVisible();
+
+  // Remove Workflow
+
+
+
 });

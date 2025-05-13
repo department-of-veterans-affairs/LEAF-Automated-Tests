@@ -16,4 +16,11 @@ test('change title', async ({ page }) => {
   await page.getByLabel('Title of LEAF site').fill(uniqueText);
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('#headerDescription')).toContainText(uniqueText);
+
+  // Revert back to original contents
+  await page.getByLabel('Title of LEAF site').click();
+  await page.getByLabel('Title of LEAF site').fill('LEAF Test Site');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('#headerDescription')).toContainText('LEAF Test Site');
+  
 });

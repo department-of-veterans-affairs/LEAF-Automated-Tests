@@ -33,12 +33,22 @@ test('Create group and add an employee', async ({ page }) => {
 
   // Reload the page to ensure the changes are reflected
   await page.reload();
+
   await newGroup.click();
 
   // Validate that the employee appears in the group’s employee table
   const employeeTable = page.locator('#employee_table');
   await expect(employeeTable).toBeVisible();
   await expect(employeeTable).toHaveText(/Tester, Tester/);
+
+  // Remove Created Group
+  await page.getByRole('button', { name: 'Delete Group' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+
+  await page.reload();
+  await expect(newGroup).not.toBeVisible();
+  
+
 });
 
 test('Import a group from another leaf site and delete it', async ({ page }) => {
