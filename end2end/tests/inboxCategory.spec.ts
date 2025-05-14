@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+
 test("Verify Request Appears in Inbox After Submission", async function ({ page }) {
   // Locators
   const adminMenuOptions = page.locator("span.leaf-admin-btntitle");
@@ -28,7 +29,7 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
   const goToHomepageButton = page.locator("//a[@title='nav to homepage']");
   const inboxButton = page.locator("(//span[@class='menuButtonSmall'])[3]");
   const adminViewButton = page.locator("button#btn_adminView");
-  const inboxHeaderText = page.locator("//div[@style='padding:0.5rem;font-weight:bold;font-size:200%;line-height: 240%; background-color: #e6e4b9; color: black; ']");
+  const inboxHeaderText = page.locator("div#inbox div").first();
   const activeRequestsList = page.locator("//div[@class='siteFormContainers'] //span");
 
   // Variables
@@ -46,7 +47,7 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
     if (optionIndex !== -1) {
       await adminMenuOptions.nth(optionIndex).click();
     } else {
-      console.log(`Option "${optionName}" not found.`);
+      throw new Error(`Option "${optionName}" not found.`);
     }
   }
   // Step 1: Navigate to the admin portal
@@ -81,6 +82,7 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
   // Step 6: Verify Form Saved Correctly
   expect(await savedFormNameInput.inputValue()).toBe(formTitle);
   expect(await savedFormDescriptionTextarea.inputValue()).toBe(formDesc);
+  console.info("Form Created Successfully");
   // Step 7: Set Workflow and Status
   await workflowDropdown.selectOption("1");
   await statusDropdown.selectOption("1");
@@ -109,12 +111,13 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
     await formListCheckboxes.nth(formIndex).click();
     await submitRequestButton.click();
   } else {
-    console.log(`Form "${expectedFormLabel}" is NOT present in the list.`);
-    expect(true).toBe(false);
+    throw new Error(`Form "${expectedFormLabel}" is NOT present in the list.`);
+    
   }
   await answerInputBox.fill(userInputAnswer);
   await nextQuestionButton.click();
   await finalSubmitRequestButton.click();
+  console.info("Request has been Submitted Successfully");
   // Step 11: Verify Request in Inbox
   await goToHomepageButton.click();
   await inboxButton.click();
@@ -123,11 +126,12 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
   const inboxRequests = await activeRequestsList.allInnerTexts();
   const requestIndex = inboxRequests.indexOf(formTitle);
   if (requestIndex !== -1) {
-    console.log(`Form "${formTitle}" is present in the inbox.`);
-    expect(true).toBe(true);
+    console.info(`Form "${formTitle}" is present in the inbox`);
+    console.info(`Verified Request Appears in Inbox After Submission`);
+
   } else {
-    console.log(`Form "${formTitle}" is NOT present in the inbox.`);
-    expect(true).toBe(false);
+    throw new Error(`Form "${formTitle}" is NOT present in the inbox.`);
+    
   }
 });
 test("Verify Request is Removed from Inbox After Form Deletion", async function ({
@@ -160,7 +164,7 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
   let submitRequest = page.locator("div#submitControl button.buttonNorm");
   let inboxBtnLocator = page.locator("(//span[@class='menuButtonSmall'])[3]");
   let viewAsAdminBtn = page.locator("button#btn_adminView");
-  let inboxText = page.locator("//div[@style='padding:0.5rem;font-weight:bold;font-size:200%;line-height: 240%; background-color: #e6e4b9; color: black; ']");
+  let inboxText = page.locator("div#inbox div").first();
   let listOfActiveRquestsLocator = page.locator("//div[@class='siteFormContainers'] //span");
   let ActiveFormText = page.locator("//h3[normalize-space()='Active Forms:']");
   let listOfActiveFormsLocator = page.locator("table#active_forms td.form-name a");
@@ -174,7 +178,7 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
   let questionName = "Test Question Name";
   let TitleOfRequest = "Scenario Two Request Title";
   let inputAnswer = "Scenario Two Tested Answer automation"
-  let FormListingPageUrl = "https://host.docker.internal/LEAF_Request_Portal/admin/?a=form_vue#/";
+  let FormListingPageUrl = "https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/";
   //Utilities Functions
   async function clickOnMainOption(optionName: string) {
     let ExtractedOptionArr = await availableOptions.allInnerTexts();
@@ -182,7 +186,7 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
     if (index !== -1) {
       await availableOptions.nth(index).click();
     } else {
-      console.log(`Option "${optionName}" not found.`);
+      throw new Error(`Option "${optionName}" not found.`);
     }
   }
   //Step 1: Navigate to the URL
@@ -219,6 +223,8 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
   //Step 6: Verify the form is created successfully
   expect(await savedFormNameLocator.inputValue()).toBe(formName);
   expect(await savedDescriptionLocator.inputValue()).toBe(formDescription);
+  console.info("Form Created Successfully");
+
   //Step 7: Select the workflow and status from the dropdowns
   await workFlowDrpDwnLocator.selectOption("1");
   await statusDrpDwnLocator.selectOption("1");
@@ -231,7 +237,7 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
   await fieldNameLocator.fill(questionName);
   await formatTypeLocator.selectOption("text");
   await saveBtn.click();
-
+  console.info("Questions Added Successfully")
 
   //Step 11: Go to Homepage  and Create New Request
   await homepageBtnLocator.click();
@@ -250,12 +256,13 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
     await listOfFormsLocator.nth(indexOfForm).click();
     await submitRequestBtnLocator.click();
   } else {
-    console.log(`Form "${ParsedFormName}" is NOT present in the list.`);
-    expect(true).toBe(false);
+    throw new Error(`Form "${ParsedFormName}" is NOT present in the list.`);
+    
   }
   await inputBoxLocator.fill(inputAnswer);
   await nextQuesBtnLocator.click();
   await submitRequest.click();
+  console.info("Request Submitted Successfully")
   //Step 12: Delete the form from the Form Page
   await page.goto(FormListingPageUrl);
   await ActiveFormText.click();
@@ -271,10 +278,10 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
     await confirmDelete.dblclick({ force: true });
     await page.locator("div#form_browser_tables h3").nth(0).waitFor({ state: "visible" });
     await page.locator("div#form_browser_tables h3").nth(0).click();
+    console.info(`"${formName}" Deleted Successfully`)
   }
   else {
-    console.log(`Form "${formName}" is NOT present in the Active Forms.`);
-    expect(true).toBe(false);
+    throw new Error(`Form "${formName}" is NOT present in the Active Forms.`); 
   }
   //Step 13: Validate the form is not present in the inbox after deletion
   await homepageBtnLocator.click();
@@ -284,11 +291,11 @@ test("Verify Request is Removed from Inbox After Form Deletion", async function 
   let listOfActiveRequestsPostDelete = await listOfActiveRquestsLocator.allInnerTexts();
   let indexOfActiveReqestPostDelte = listOfActiveRequestsPostDelete.indexOf(formName);
   if (indexOfActiveReqestPostDelte !== -1) {
-    console.log(`Form "${formName}" is still present in the inbox after deletion.`);
-    expect(true).toBe(false);
+    throw new Error(`Form "${formName}" is still present in the inbox after deletion.`);
+    
   }
   else {
-    console.log(`Form "${formName}" is NOT present in the inbox.Test Passed.`);
-    expect(true).toBe(true);
+    console.info(`Form "${formName}" is NOT present in the inbox.`);
+    console.info(`Verified Request is Removed from Inbox After Deletion`);
   }
 });
