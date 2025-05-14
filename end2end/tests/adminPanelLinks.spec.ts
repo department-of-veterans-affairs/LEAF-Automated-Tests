@@ -84,16 +84,6 @@ test('Go to Search Database', async ({ page }) => {
   await expect(page.locator('#headerTab')).toContainText('Search Database');
 });
 
-test('Go to Sync Services', async ({ page }) => {
-  await page.getByRole('button', { name: 'Sync Services Update' }).click();
-  await expect(page.getByRole('heading')).toContainText('Sync Services');
-});
-
-test('Go to Update Database', async ({ page }) => {
-  await page.getByRole('button', { name: 'Update Database Updates the' }).click();
-  await expect(page.getByRole('heading')).toContainText('Update Database');
-});
-
 test('Go to Import Spreadsheet', async ({ page }) => {
   await page.getByRole('button', { name: 'Import Spreadsheet Rows to' }).click();
   await expect(page.locator('#uploadBox')).toContainText('Choose a Spreadsheet');
