@@ -98,6 +98,19 @@ func TestFormWorkflow_ApplyAction(t *testing.T) {
 	if res.StatusCode != http.StatusConflict {
 		t.Errorf("api/formWorkflow/504/apply ('invalid action with wrong stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusConflict)
 	}
+
+	// Test duplicate "valid action with stepID"
+	postData.Set("dependencyID", "-1")
+	postData.Set("stepID", "1")
+	postData.Set("actionType", "approve")
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/496/apply`, postData)
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("api/formWorkflow/504/apply ('duplicate valid action with stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusOK)
+	}
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/496/apply`, postData)
+	if res.StatusCode != http.StatusAccepted {
+		t.Errorf("api/formWorkflow/504/apply ('duplicate valid action with stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusAccepted)
+	}
 }
 
 func TestFormWorkflow_currentStepRequestorFollowupNonAdmin(t *testing.T) {
