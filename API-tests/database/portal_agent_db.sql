@@ -170,7 +170,7 @@ CREATE TABLE `data` (
 INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`) VALUES
 (1,	2,	1,	'https://host.docker.internal/Test_Request_Portal/',	NULL,	1747005203,	'tester'),
 (1,	3,	1,	'10',	NULL,	1747005203,	'tester'),
-(1,	4,	1,	'[{&quot;type&quot;:&quot;routeConditionalData&quot;,&quot;payload&quot;:{&quot;actionType&quot;:&quot;concur&quot;,&quot;query&quot;:{&quot;terms&quot;:[{&quot;id&quot;:&quot;data&quot;,&quot;indicatorID&quot;:&quot;5&quot;,&quot;operator&quot;:&quot;&gt;&quot;,&quot;match&quot;:&quot;10000&quot;}]}}}]',	NULL,	1747095745,	'tester'),
+(1,	4,	1,	'[{&quot;type&quot;:&quot;updateDataLLMCategorization&quot;,&quot;payload&quot;:{&quot;categories&quot;:[{&quot;name&quot;:&quot;Bug&quot;,&quot;description&quot;:&quot;&quot;},{&quot;name&quot;:&quot;Feature&quot;,&quot;description&quot;:&quot;Ideas or suggestions&quot;},{&quot;name&quot;:&quot;Support&quot;,&quot;description&quot;:&quot;Requests for help&quot;}],&quot;readIndicatorIDs&quot;:[4],&quot;writeIndicatorID&quot;:3}},{&quot;type&quot;:&quot;routeConditionalData&quot;,&quot;payload&quot;:{&quot;actionType&quot;:&quot;concur&quot;,&quot;query&quot;:{&quot;terms&quot;:[{&quot;id&quot;:&quot;data&quot;,&quot;indicatorID&quot;:&quot;5&quot;,&quot;operator&quot;:&quot;&gt;&quot;,&quot;match&quot;:&quot;10000&quot;}]}}}]',	NULL,	1747095745,	'tester'),
 (1,	6,	1,	'1747095749',	NULL,	1747095749,	'*LEAF Agent*');
 
 DROP TABLE IF EXISTS `data_action_log`;
