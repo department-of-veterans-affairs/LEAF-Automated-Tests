@@ -42,10 +42,14 @@ func TestForm_NonadminCannotEditData(t *testing.T) {
 	res, _ := client.PostForm(RootURL+`api/form/505?masquerade=nonAdmin`, postData)
 	bodyBytes, _ := io.ReadAll(res.Body)
 	got := string(bodyBytes)
-	want := `"0"`
+	want := `"No write access (data field)"`
 
 	if !cmp.Equal(got, want) {
 		t.Errorf("Non-admin got = %v, want = %v", got, want)
+	}
+
+	if res.StatusCode != 401 {
+		t.Errorf("Non-admin got status code = %v, want = %v", res.StatusCode, 401)
 	}
 }
 
@@ -185,7 +189,7 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	postData.Set("numform_7664a", "1")
 	postData.Set("title", "TestForm_GetProgressChecking")
 
-	res, _ := client.PostForm(RootURL + `api/form/new`, postData)
+	res, _ := client.PostForm(RootURL+`api/form/new`, postData)
 	bodyBytes, _ := io.ReadAll(res.Body)
 	var response string
 	json.Unmarshal(bodyBytes, &response)
@@ -196,7 +200,7 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 
 	got, res := httpGet(urlGetProgress)
 	if !cmp.Equal(res.StatusCode, 200) {
-		t.Errorf(urlGetProgress + ", Status Code = %v, want = %v", res.StatusCode, 200)
+		t.Errorf(urlGetProgress+", Status Code = %v, want = %v", res.StatusCode, 200)
 		return
 	}
 	want := `"0"`
@@ -229,7 +233,6 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	if !cmp.Equal(got, want) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
-
 
 	//fill 17 to display 18,19,20 (2/5)
 	postData = url.Values{}
@@ -272,7 +275,7 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	}
 	postData = url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
-	postData.Set("20", "test")  //single text
+	postData.Set("20", "test") //single text
 	res, err = client.PostForm(urlPostDoModify, postData)
 	if err != nil {
 		t.Error(urlPostDoModify + "Error sending post request")
@@ -282,7 +285,6 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	if !cmp.Equal(got, want) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
-
 
 	//fill 22 to display 23,24,25,26 (5/9)
 	postData = url.Values{}
@@ -325,7 +327,7 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	}
 	postData = url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
-	postData.Set("25", "test")  //multiline text
+	postData.Set("25", "test") //multiline text
 	res, err = client.PostForm(urlPostDoModify, postData)
 	if err != nil {
 		t.Error(urlPostDoModify + "Error sending post request")
@@ -347,7 +349,6 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	if !cmp.Equal(got, want) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
-
 
 	//fill 26 to display 27, 28 (9/11)
 	postData = url.Values{}
