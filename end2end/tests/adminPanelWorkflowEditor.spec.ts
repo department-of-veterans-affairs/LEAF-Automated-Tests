@@ -152,7 +152,11 @@ test.skip('Copy workflow', async ({ page }) => {
     const endConnector = page.locator('.jtk-endpoint').nth(1);
 
     await requestorConnector.dragTo(endConnector);
-    await expect(page.getByText('Submit')).toBeInViewport();
+   // await expect(page.getByText('Submit')).toBeInViewport();
+//MLG Add & Delete
+  await expect(page.getByText('Submit')).toBeVisible();
+
+
 
     // Click the 'Copy Workflow' button to start the copy process
     await page.reload();
@@ -169,13 +173,40 @@ test.skip('Copy workflow', async ({ page }) => {
     await saveButton.click();
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).toBeVisible();
 
-    const deleteButton = page.locator('#btn_deleteWorkflow');
-    await expect(deleteButton).toBeVisible();
-    await deleteButton.click();
+//5/14 Added
+ 
+  //Remove Submit first 
+  await expect(page.getByText('Submit')).toBeVisible();
+  await page.getByText('Submit').click();
+  await expect(page.locator('div').filter({ hasText: /^Remove Action$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Remove Action' }).click();
+  await expect(page.getByText('Confirm action removal')).toBeVisible();
+  await expect(page.locator('#confirm_xhr')).toContainText('Confirm removal of:-1 -> submit -> 0');
 
-    await expect(page.getByText('Confirmation required')).toBeVisible();
-    await page.locator('#confirm_button_save').click();
+  //Remove the workflow
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await expect(page.getByText('Requestor End')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete Workflow' })).toBeVisible();
+  await page.getByRole('button', { name: 'Delete Workflow' }).click();
+  await expect(page.getByText('Confirmation required Close')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+
+
+  //Need removal if works
+    //const deleteButton = page.locator('#btn_deleteWorkflow');
+    //await expect(deleteButton).toBeVisible();
+    //await deleteButton.click();
+
+    //await expect(page.getByText('Confirmation required')).toBeVisible();
+    //await page.locator('#confirm_button_save').click();
+    
+  
     await page.reload();
+      //MLG Added
+      await expect(page.getByRole('button', { name: 'New Workflow' })).toBeVisible();
+//Added
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).not.toBeVisible();
 });
 
@@ -480,8 +511,24 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await page.getByRole('option', { name: action }).click();
     await saveButton.click({force:true});
 
+
     await expect(page.locator(`text=${action}`)).toBeVisible();
+
+
+    //Remove action created 5/14
+  await page.getByText(action).click();
+  await expect(page.getByRole('heading', { name: 'Action: step1 clicks Login' })).toBeVisible();
+  await page.getByRole('button', { name: 'Remove Action' }).click();
+  await expect(page.getByText('Confirm action removal')).toBeVisible();
+  await expect(page.locator('#confirm_xhr')).toContainText('Confirm removal of:14 -> Login -> 0');
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  //Remove Action
+
+
 });
+
+
 
 /**
  *  Test for LEAF 4716 verifying the following:
