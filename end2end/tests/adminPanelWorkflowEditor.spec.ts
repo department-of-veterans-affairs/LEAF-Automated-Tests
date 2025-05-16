@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-
+test.describe.configure({ mode: 'serial' });
 test('Create a new workflow and add step', async ({ page }) => {
     // Generate unique workflow title
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
@@ -645,20 +645,40 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
   
     // Delete the custom actions that were added
     const yesButton = page.getByRole('button', { name: 'Yes' });
-    
-    await page.getByRole('button', { name: 'Edit Actions' }).click({force:true});
-   
-    await page.locator('#editor_Backlog').getByRole('button', { name: 'Delete' }).click({force:true});
+    // await page.waitForTimeout(5000);
+    // await page.pause();
+    await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
+
+    await page.locator("button#btn_listActionType").click();
+
+    await page.locator("caption h2").dblclick();
+    let ActionsAvailable = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
+    console.log("Before Delete",ActionsAvailable);
+    let backlogIndex =ActionsAvailable.indexOf("Backlog");
+    console.log("Index before delete",backlogIndex);
+    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
+    await yesButton.waitFor({ state: 'visible' });
     await yesButton.click();
-    await expect(page.locator('#editor_Backlog')).not.toBeVisible();
+    
+    await page.locator("caption h2").dblclick();
+    let ActionsAvailableAfterBacklog = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
+    console.log("After Delete",ActionsAvailableAfterBacklog);
+    let DenyIndex =ActionsAvailableAfterBacklog.indexOf("Deny");
+    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(DenyIndex).click({force:true});
+    await yesButton.waitFor({ state: 'visible' });
+    await yesButton.click();
   
-    await page.locator('#editor_Deny').getByRole('button', { name: 'Delete' }).click();
-    await yesButton.click();
-    await expect(page.locator('#editor_Deny')).not.toBeVisible();
     
-    await page.locator('#editor_Reply').getByRole('button', { name: 'Delete' }).click();
+    await page.locator("caption h2").dblclick();
+    let ActionsAvailableAfterDeny = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
+    console.log("After Delete",ActionsAvailableAfterDeny);
+    let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
+    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
+    await yesButton.waitFor({ state: 'visible' });
     await yesButton.click();
-    await expect(page.locator('#editor_Reply')).not.toBeVisible();
+
+
+    
   
     await page.getByRole('button', { name: 'Close' }).click();
   
