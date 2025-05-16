@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -170,7 +172,9 @@ func TestFormQuery_GroupClickedApprove(t *testing.T) {
 }
 
 func TestFormQuery_FilterActionHistory(t *testing.T) {
-	res, _ := getFormQuery(RootURL + `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"9","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["action_history"],"sort":{},"limit":10000,"limitOffset":0}&x-filterData=recordID,title,action_history.time,action_history.description,action_history.actionTextPasttense,action_history.approverName`)
+	q := `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"9","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["action_history"],"sort":{},"limit":10000,"limitOffset":0}`
+	xFilter := `&x-filterData=recordID,title,action_history.time,action_history.description,action_history.actionTextPasttense,action_history.approverName,action_history.userMetadata`
+	res, _ := getFormQuery(RootURL + q + xFilter)
 
 	if res[9].ActionHistory[0].RecordID != 0 {
 		t.Errorf(`Record ID should not exist since it wasn't requested within action_history. want = action_history[0].recordID is null`)
@@ -178,6 +182,40 @@ func TestFormQuery_FilterActionHistory(t *testing.T) {
 
 	if res[9].ActionHistory[0].ApproverName == "" {
 		t.Errorf(`Approver name should not be empty since the record contains actions, and it was requested via filter want = action_history[0].approverName is not empty`)
+	}
+
+	gotApproverName := res[9].ActionHistory[0].ApproverName
+	wantApproverName := "Tester Tester"
+	if !cmp.Equal(gotApproverName, wantApproverName) {
+		t.Errorf("Approver name got = %v, want = %v", gotApproverName, wantApproverName)
+	}
+
+	approverUserMetadata := res[9].ActionHistory[0].UserMetadata
+
+	gotFirst := approverUserMetadata.FirstName
+	wantFirst := "Tester"
+	if !cmp.Equal(gotFirst, wantFirst) {
+		t.Errorf("Approver first name got = %v, want = %v", gotFirst, wantFirst)
+	}
+	gotLast := approverUserMetadata.LastName
+	wantLast := "Tester"
+	if !cmp.Equal(gotLast, wantLast) {
+		t.Errorf("Approver last name got = %v, want = %v", gotLast, wantLast)
+	}
+	gotMiddle := approverUserMetadata.MiddleName
+	wantMiddle := ""
+	if !cmp.Equal(gotMiddle, wantMiddle) {
+		t.Errorf("Approver middle name got = %v, want = %v", gotMiddle, wantMiddle)
+	}
+	gotEmail := approverUserMetadata.Email
+	wantEmail := "tester.tester@fake-email.com"
+	if !cmp.Equal(gotEmail, wantEmail) {
+		t.Errorf("Approver email got = %v, want = %v", gotEmail, wantEmail)
+	}
+	gotUserName := approverUserMetadata.UserName
+	wantUserName := "tester"
+	if !cmp.Equal(gotUserName, wantUserName) {
+		t.Errorf("Last name got = %v, want = %v", gotUserName, wantUserName)
 	}
 }
 
@@ -211,6 +249,10 @@ func TestFormQuery_FindTwoSteps(t *testing.T) {
 /* post a new employee to an orgchart format question and then confirm expected values on orgchart property */
 func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
+<<<<<<< HEAD
+=======
+		EmpUID:     201,
+>>>>>>> main
 		FirstName:  "Ramon",
 		LastName:   "Watsica",
 		MiddleName: "Yundt",
@@ -275,6 +317,361 @@ func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	want = mock_orgchart_employee.UserName
 	if !cmp.Equal(got, want) {
 		t.Errorf("userName got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(org_emp.EmpUID)
+	want = strconv.Itoa(mock_orgchart_employee.EmpUID)
+	if !cmp.Equal(got, want) {
+		t.Errorf("empUID got = %v, want = %v", got, want)
+	}
+}
+
+/* test query S1[idIndicator] API values of orgchart format types */
+func TestFormQuery_Orgchart_Formats__idIndicator_Has_Expected_Values(t *testing.T) {
+	q := `q={"terms":[{"id":"categoryID","operator":"=","match":"form_512fa","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["49","50","51"]}`
+	xFilter := `&x-filterData=recordID`
+
+	recDataFound := 959
+	recDataEmpty := 960
+	recDataNotFound := 961
+	recNoDataRecord := 962
+	keyEmp := "id49"
+	keyGrp := "id50"
+	keyPos := "id51"
+
+	res, _ := getFormQuery(RootURL + `api/form/query/?` + q + xFilter)
+
+	//data.data value exists and is associated with an existing orgchart employee, group, position
+	got := res[recDataFound].S1[keyEmp] //Firstname Lastname derived from correspond metadata (which is based on lookup of data.data at time of entry)
+	want := "Tester Tester"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id49 valid employee, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataFound].S1[keyGrp] //Group Title - derived by group lookup of data.data
+	want = "Aluminum Books"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id50 valid group, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataFound].S1[keyPos] //Posistion Title (PayPlan-Series-PayGrade) - derived by position lookup of data.data and supsequent orgchart position_data
+	want = "Accountability Officer (GS-0343-14)"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id51 valid position, id value got = %v, want = %v", got, want)
+	}
+
+	//data record exists, but the data.data value is empty
+	got = res[recDataEmpty].S1[keyEmp]
+	want = ""
+	if !cmp.Equal(got, want) {
+		t.Errorf("id49 empty employee data, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataEmpty].S1[keyGrp]
+	want = ""
+	if !cmp.Equal(got, want) {
+		t.Errorf("id50 empty group data, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataEmpty].S1[keyPos]
+	want = ""
+	if !cmp.Equal(got, want) {
+		t.Errorf("id51 empty position data, id value got = %v, want = %v", got, want)
+	}
+
+	//data.data value exists but is not associated with a current orgchart employee, group, position AND no metadata exists
+	got = res[recDataNotFound].S1[keyEmp]
+	want = "Employee #9999 no longer available"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id49 outdated employee, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataNotFound].S1[keyGrp]
+	want = "Group #9999 no longer available"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id50 outdated group, id value got = %v, want = %v", got, want)
+	}
+	got = res[recDataNotFound].S1[keyPos]
+	want = "Position #9999 no longer available"
+	if !cmp.Equal(got, want) {
+		t.Errorf("id51 outdated position, id value got = %v, want = %v", got, want)
+	}
+
+	//id values should be null if no data record exists
+	got = res[recNoDataRecord].S1[keyEmp]
+	if got != nil {
+		t.Errorf("id49 no employee data (null), id value got = %v", got)
+	}
+	got = res[recNoDataRecord].S1[keyGrp]
+	if got != nil {
+		t.Errorf("id50 no group data (null), id value got = %v", got)
+	}
+	got = res[recNoDataRecord].S1[keyPos]
+	if got != nil {
+		t.Errorf("id49 no position data (null), id value got = %v", got)
+	}
+}
+
+func TestFormQuery_Records_UserMetadata__Has_Expected_Values(t *testing.T) {
+	mock_orgchart_employee := FormQuery_Orgchart_Employee{
+		FirstName:  "Risa",
+		LastName:   "Keebler",
+		MiddleName: "Hyatt",
+		Email:      "Risá.Keebler@fake-email.com",
+		UserName:   "vtrigzcristal",
+	}
+	//post new request under a username
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("initiator", "vtrigzcristal")
+	_, _ = client.PostForm(RootURL+`api/form/12/initiator`, postData)
+
+	//confirm firstName, lastName and userMetadata have expected values
+	q := `api/form/query/?q={"terms":[{"id":"categoryID","operator":"=","match":"form_5ea07","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}`
+	xFilter := `&x-filterData=recordID,lastName,firstName,userMetadata`
+	res, _ := getFormQuery(RootURL + q + xFilter)
+
+	formRecord := res[12]
+	initiatorMetadata := formRecord.UserMetadata
+
+	gotFirstName := formRecord.FirstName
+	gotLastName := formRecord.LastName
+
+	gotMetadataFirstName := initiatorMetadata.FirstName
+	gotMetadataLastName := initiatorMetadata.LastName
+	gotMetadataMiddle := initiatorMetadata.MiddleName
+	gotMetadataEmail := initiatorMetadata.Email
+	gotMetadataUserName := initiatorMetadata.UserName
+
+	wantFirst := mock_orgchart_employee.FirstName
+	wantLast := mock_orgchart_employee.LastName
+	wantMiddle := mock_orgchart_employee.MiddleName
+	wantEmail := mock_orgchart_employee.Email
+	wantUserName := mock_orgchart_employee.UserName
+
+	//record userMetadata properties
+	if !cmp.Equal(gotMetadataFirstName, wantFirst) {
+		t.Errorf("Record userMetadata first name got = %v, want = %v", gotMetadataFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotMetadataLastName, wantLast) {
+		t.Errorf("Record userMetadata last name got = %v, want = %v", gotMetadataLastName, wantLast)
+	}
+	if !cmp.Equal(gotMetadataMiddle, wantMiddle) {
+		t.Errorf("Last name got = %v, want = %v", gotMetadataMiddle, wantMiddle)
+	}
+	if !cmp.Equal(gotMetadataEmail, wantEmail) {
+		t.Errorf("Last name got = %v, want = %v", gotMetadataEmail, wantEmail)
+	}
+	if !cmp.Equal(gotMetadataUserName, wantUserName) {
+		t.Errorf("Last name got = %v, want = %v", gotMetadataUserName, wantUserName)
+	}
+
+	//record firstName lastName fields.  These are extracted from JSON userMetadata and should also match.
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+
+	//disable the account locally and confirm first and last name are still available
+	err := DisableEmployee(RootOrgchartURL + "api/employee/11")
+	if err != nil {
+		t.Error(err)
+	}
+	res, _ = getFormQuery(RootURL + q + xFilter)
+	formRecord = res[12]
+	gotFirstName = formRecord.FirstName
+	gotLastName = formRecord.LastName
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+	//re-enable account
+	err = EnableLocalEmployee("11")
+	if err != nil {
+		t.Error(err)
+	}
+
+	//test firstName, lastName record fields for a record (#13)with empty metadata (accounts disabled prior to 12/6/2024)
+	formRecord = res[13]
+	gotFirstName = formRecord.FirstName
+	gotLastName = formRecord.LastName
+
+	wantFirst = "(inactive user)"
+	wantLast = "tester_disabled"
+	if !cmp.Equal(gotFirstName, wantFirst) {
+		t.Errorf("Record first name got = %v, want = %v", gotFirstName, wantFirst)
+	}
+	if !cmp.Equal(gotLastName, wantLast) {
+		t.Errorf("Record last name got = %v, want = %v", gotLastName, wantLast)
+	}
+}
+
+func TestForm_VerifyInitiator(t *testing.T) {
+
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"5","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["initiatorName"],"sort":{}}&x-filterData=recordID,lastName,firstName,userName`
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	err := json.Unmarshal(b, &formQueryResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if formQueryResponse[5].FirstName == "" {
+		t.Error("FirstName not set")
+	}
+
+	if formQueryResponse[5].LastName == "" {
+		t.Error("LastName not set")
+	}
+
+	if formQueryResponse[5].UserName == "" {
+		t.Error("UserName not set")
+	}
+}
+
+/* Test special characters saved in the title of a record and contents of a record */
+func TestFormQuery_Special_Characters(t *testing.T) {
+
+	theTestString := "This is an otter 🦦 this is a smiley 😀"
+	theTestTitleString := "TestForm_Special_Characters😀"
+
+	// Setup conditions
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("numform_5ea07", "1")
+	postData.Set("title", theTestTitleString)
+	postData.Set("3", theTestString)
+	postData.Set("8", "1")
+	postData.Set("9", "112")
+
+	// TODO: streamline this
+	pRes, _ := client.PostForm(RootURL+`api/form/new`, postData)
+	bodyBytes, _ := io.ReadAll(pRes.Body)
+	var response string
+	json.Unmarshal(bodyBytes, &response)
+	recordID, err := strconv.Atoi(string(response))
+
+	if err != nil {
+		t.Errorf("Could not create record for TestFormQuery_Special_Characters: " + err.Error())
+	}
+
+	res, _ := getFormQuery(RootURL + fmt.Sprintf(`api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"%d","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["3"]}&x-filterData=recordID,title`, recordID))
+
+	if res[recordID].Title != theTestTitleString {
+		t.Errorf(`Title %v Does not match %v.`, res[recordID].Title, theTestTitleString)
+	}
+
+	for tKey, tVal := range res[recordID].S1 {
+
+		if tKey == "id3" && tVal != theTestString {
+			t.Errorf(`Text %v Does not match %v.`, tVal, theTestString)
+		}
+	}
+}
+
+// Check Role-Based Admin Inbox for accurate Person Designated and Requestor Followup assignments
+func TestFormQuery_RoleBasedInbox_PersonDesginatedAndFollowup(t *testing.T) {
+	mock_orgchart_employee := FormQuery_Orgchart_Employee{
+		FirstName: "Ramon",
+		LastName:  "Watsica",
+		Email:     "Ramon.Watsica@fake-email.com",
+	}
+
+	formRes, _ := getFormQuery(RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["service","categoryName","status","unfilledDependencies"],"sort":{},"limit":1000,"limitOffset":0}&x-filterData=recordID,categoryIDs,categoryNames,date,title,service,submitted,priority,stepID,blockingStepID,lastStatus,stepTitle,action_history.time,unfilledDependencyData`)
+	if _, exists := formRes[11]; !exists {
+		t.Errorf("Record 11 should be actionable")
+	}
+
+	got := formRes[11].UnfilledDependencyData["-1"].ApproverName
+	want := mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[11].UnfilledDependencyData["-1"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+
+	// Check another record
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Hilary",
+		LastName:  "Zboncak",
+		Email:     "Hilary.Zboncak@fake-email.com",
+	}
+	if _, exists := formRes[12]; !exists {
+		t.Errorf("Record 12 should be actionable")
+	}
+
+	got = formRes[12].UnfilledDependencyData["-1"].ApproverName
+	want = mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[12].UnfilledDependencyData["-1"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+
+	// Check record with blank assigned person
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Hilary",
+		LastName:  "Zboncak",
+		Email:     "Hilary.Zboncak@fake-email.com",
+	}
+	if _, exists := formRes[88]; !exists {
+		t.Errorf("Record 88 should be actionable")
+	}
+
+	got = formRes[88].UnfilledDependencyData["-1"].ApproverName
+	if !strings.Contains(got, "NEEDS REASSIGNMENT") {
+		t.Errorf(`ApproverName got = %v, want = contains "NEEDS REASSIGNMENT"`, got)
+	}
+
+	// Check Requestor Followup
+	mock_orgchart_employee = FormQuery_Orgchart_Employee{
+		FirstName: "Charlie",
+		LastName:  "Anderson",
+		Email:     "Charlie.Anderson@fake-email.com",
+	}
+	if _, exists := formRes[506]; !exists {
+		t.Errorf("Record 506 should be actionable")
+	}
+
+	got = formRes[506].UnfilledDependencyData["-2"].ApproverName
+	want = mock_orgchart_employee.FirstName + " " + mock_orgchart_employee.LastName
+	if !cmp.Equal(got, want) {
+		t.Errorf("ApproverName got = %v, want = %v", got, want)
+	}
+
+	got = formRes[506].UnfilledDependencyData["-2"].ApproverUID
+	want = mock_orgchart_employee.Email
+	if !cmp.Equal(got, want) {
+		t.Errorf("email got = %v, want = %v", got, want)
+	}
+}
+
+// Report Builder Step 2: Enable Current Status
+func TestForm_QueryJoinStatus(t *testing.T) {
+
+	url := RootURL + `api/form/query?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status"],"sort":{},"limit":1000,"limitOffset":0}&x-filterData=recordID,title,stepTitle,lastStatus`
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	err := json.Unmarshal(b, &formQueryResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, v := range formQueryResponse {
+		if v.StepTitle == "" {
+			t.Error("TestForm_BasicStatusQuery want = stepTitle is not empty, got = stepTitle is empty")
+		}
+		break
 	}
 }
 

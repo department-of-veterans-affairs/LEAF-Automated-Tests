@@ -81,3 +81,46 @@ func TestFormWorkflow_ApplyAction(t *testing.T) {
 		t.Errorf("api/formWorkflow/8/apply ('page is out of date') StatusCode = %v, want = %v", res.StatusCode, http.StatusConflict)
 	}
 }
+
+func TestFormWorkflow_currentStepRequestorFollowupNonAdmin(t *testing.T) {
+	res := getFormWorkflow(RootURL + `api/formWorkflow/530/currentStep?masquerade=nonAdmin`)
+
+	got := res[-2].UserMetadata.Email
+	want := "Alysa.Dare@fake-email.com"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = res[-2].UserMetadata.FirstName
+	want = "Alysa"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = res[-2].UserMetadata.LastName
+	want = "Dare"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = *res[-2].ApproverName
+	want = "Alysa Dare"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = *res[-2].ApproverUID
+	want = "Alysa.Dare@fake-email.com"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	// Request with an initiator who has a disabled account
+	res = getFormWorkflow(RootURL + `api/formWorkflow/509/currentStep?masquerade=nonAdmin`)
+
+	got = *res[-2].ApproverName
+	want = "Tracy O'Hane"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+}
