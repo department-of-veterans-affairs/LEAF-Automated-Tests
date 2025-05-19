@@ -653,16 +653,13 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
 
     await page.locator("caption h2").dblclick();
     let ActionsAvailable = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
-    console.log("Before Delete",ActionsAvailable);
     let backlogIndex =ActionsAvailable.indexOf("Backlog");
-    console.log("Index before delete",backlogIndex);
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
     await yesButton.waitFor({ state: 'visible' });
     await yesButton.click();
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterBacklog = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
-    console.log("After Delete",ActionsAvailableAfterBacklog);
     let DenyIndex =ActionsAvailableAfterBacklog.indexOf("Deny");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(DenyIndex).click({force:true});
     await yesButton.waitFor({ state: 'visible' });
@@ -671,7 +668,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterDeny = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
-    console.log("After Delete",ActionsAvailableAfterDeny);
     let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
     await yesButton.waitFor({ state: 'visible' });
