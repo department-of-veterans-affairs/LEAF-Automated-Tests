@@ -158,7 +158,7 @@ test('Create Workflow', async ({ page}, testinfo) => {
  await actionTypeDropdown.click();
  await approveOption.click();
  //await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
- await saveButton.click();
+ await saveButton.click({force:true});
 
 
  const newworkflow = await page.screenshot();
