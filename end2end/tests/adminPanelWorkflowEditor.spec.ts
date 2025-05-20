@@ -563,8 +563,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     //await page.getByLabel('Does this action represent').selectOption('-1');
 
 
-
-
     //5/14
 
   await expect(page.getByText('Create New Action Type')).toBeVisible();
@@ -617,7 +615,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Create a new Action' }).click();
     
     //5/14
-      await expect(page.getByText('Create New Action Type')).toBeVisible();
+  await expect(page.getByText('Create New Action Type')).toBeVisible();
   await page.getByRole('textbox', { name: 'Action *Required' }).click();
   await page.getByRole('textbox', { name: 'Action *Required' }).fill('Backlog');
   await page.getByRole('textbox', { name: 'Action *Required' }).press('Tab');
@@ -630,11 +628,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
   await page.getByLabel('Does this action represent').selectOption('-1');
   await page.getByLabel('Does this action represent').press('Tab');
   await page.getByRole('button', { name: 'Save' }).click();
-    
-    
-    
-    
-    
+   
    // await page.getByLabel('Action *Required').fill('Backlog');
     //await page.getByLabel('Action *Required').press('Tab');
     //await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
