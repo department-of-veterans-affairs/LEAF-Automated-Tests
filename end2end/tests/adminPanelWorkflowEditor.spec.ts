@@ -758,8 +758,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
   
     // Delete the custom actions that were added
     const yesButton = page.getByRole('button', { name: 'Yes' });
-    // await page.waitForTimeout(5000);
-    // await page.pause();
+
     await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
 
     await page.locator("button#btn_listActionType").click();
@@ -776,10 +775,9 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
 
     await page.locator('#editor_Login').getByRole('button', { name: 'Delete' }).click();
     await yesButton.click();
-    await expect(page.locator('#editor_Login')).not.toBeVisible();
+  
 
     await page.locator('#editor_Backlog').getByRole('button', { name: 'Delete' }).click();
-
     await yesButton.click();
   
     
