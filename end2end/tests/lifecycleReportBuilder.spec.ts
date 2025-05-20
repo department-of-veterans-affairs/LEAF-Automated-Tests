@@ -406,7 +406,7 @@ test('New Row Added in Correct Place After Sorting', async ({ page }) => {
 
   // Delete the second newest from the list of requests on the home page
   await page.getByRole('link', { name: 'Home' }).click();
-  await page.getByRole('link', { name: 'untitled' }).click();
+  await page.getByRole('link', { name: 'untitled' }).first().click();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   

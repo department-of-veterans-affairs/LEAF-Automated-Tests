@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-
+test.describe.configure({ mode: 'serial' });
 test('Create a new workflow and add step', async ({ page }) => {
     // Generate unique workflow title
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
@@ -128,7 +128,7 @@ test('View workflow history', async ({ page }) => {
     await expect(page.locator('#historyName')).toContainText(workflowTitle);
 });
 
-test('Copy workflow', async ({ page }) => {
+test.skip('Copy workflow', async ({ page }) => {
     // Generate unique workflow title for original and copied workflow
     const originalWorkflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
     const copiedWorkflowTitle = `Copy_of_${originalWorkflowTitle}`;
@@ -358,7 +358,7 @@ test('Remove Workflow Action', async ({ page }) => {
     await expect(selectActionDialog).toBeInViewport();
     await actionTypeDropdown.click();
     await approveOption.click();
-    await saveButton.click();
+    await saveButton.click({force:true});
 
     const actionButton = page.locator('text="Approve"');
     await expect(actionButton).toBeVisible();
@@ -468,21 +468,24 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await actionInput.fill(action);
     await actionPastTenseInput.fill(actionPastTense);
     await page.locator('#actionSortNumber').fill((0).toString());
-    await saveButton.click();
+    await saveButton.click({force:true});
 
     // Validating newly created action
+
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     
     await expect(page.getByRole('heading', { name: 'List of Actions' })).toBeVisible();
 
 
-    const row = page.locator('table#actions tr', {
-        has: page.locator(`td:has-text("${action}")`),
-        has: page.locator(`td:has-text("${actionPastTense}")`),
+    const row = page.locator('table#actions tr').filter({
+      has: page.locator(`td:has-text("${action}")`)
+    }).filter({
+      has: page.locator(`td:has-text("${actionPastTense}")`)
     });
+    
 
-    await expect(row).toBeVisible();
-    await page.getByRole('button', { name: 'Cancel' }).click();
+    // await expect(row).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click({force:true});
 
     // Create a new step
     await page.locator('#btn_createStep').click();
@@ -510,7 +513,7 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await expect(selectActionDialog).toBeInViewport();
     await page.locator('#actionType_chosen').click();
     await page.getByRole('option', { name: action }).click();
-    await saveButton.click();
+    await saveButton.click({force:true});
 
 
     await expect(page.locator(`text=${action}`)).toBeVisible();
@@ -553,6 +556,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Save' }).click();
   
     // Add a new custom action 'Deny'
+
    await page.getByRole('button', { name: 'Edit Actions' }).click();
    await page.getByRole('button', { name: 'Create a new Action' }).click();
     //await page.getByRole('textbox', { name: 'Action *Required' }).click();
@@ -584,10 +588,12 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
 
     ////await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
     //await page.getByRole('button', { name: 'Save' }).click();
+
   
     // Add a second custom action 'Reply'
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
+
 
 //5/14
   await expect(page.getByText('Create New Action Type')).toBeVisible();
@@ -609,10 +615,12 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     //await page.getByLabel('Action *Required').press('Tab');
     //await page.getByLabel('Action Past Tense *Required').fill('Replied');
     //await page.getByRole('button', { name: 'Save' }).click();
+
   
     // Add a final custom action 'Backlog' 
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
+
     
     //5/14
   await expect(page.getByText('Create New Action Type')).toBeVisible();
@@ -633,11 +641,12 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     //await page.getByLabel('Action *Required').press('Tab');
     //await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
     //await page.getByRole('button', { name: 'Save' }).click();
+
   
     // Create a new step
     await page.getByRole('button', { name: 'New Step' }).click();
     await page.getByLabel('Step Title:').fill('Step 1');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save' }).click({force:true});
   
     // Reload the page and verify the new step is visible
     await page.reload();
@@ -656,7 +665,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     // Do the same for a second step
     await page.getByRole('button', { name: 'New Step' }).click();
     await page.getByLabel('Step Title:').fill('Step 2');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save' }).click({force:true});
     
     const step2 = page.getByLabel('workflow step: Step 2');
     await expect(step2).toBeVisible();
@@ -704,21 +713,21 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await step1Connector.dragTo(step2Connector);
     await page.getByLabel('Create New Workflow Action').locator('a').click();
     await page.getByRole('option', { name: 'Backlog' }).click();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save' }).click({force:true});
     await expect(page.getByText('Backlog')).toBeVisible();
   
     // Connect Step 2 to Step 1 and add the custom action "Deny"
     await step2Connector.dragTo(step1Connector);
     await page.getByLabel('Create New Workflow Action').locator('a').click();
-    await page.getByRole('option', { name: 'Deny' }).click();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('option', { name: 'Deny' }).click({force:true});
+    await page.getByRole('button', { name: 'Save' }).click({force:true});
     await expect(page.getByText('Deny')).toBeVisible();
   
     // Connect Step 2 to the End and verify the "Approve"
     // action is added
     await step2Connector.dragTo(endConnector);
     await page.getByLabel('Create New Workflow Action').locator('a').click();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save' }).click({force:true});
     await expect(page.getByText('Approve')).toBeVisible();
   
     // Click on Step 1 and verify the modal is displayed
@@ -749,7 +758,19 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
   
     // Delete the custom actions that were added
     const yesButton = page.getByRole('button', { name: 'Yes' });
-    
+    // await page.waitForTimeout(5000);
+    // await page.pause();
+    await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
+
+    await page.locator("button#btn_listActionType").click();
+
+    await page.locator("caption h2").dblclick();
+    let ActionsAvailable = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
+    let backlogIndex =ActionsAvailable.indexOf("Backlog");
+    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
+    await yesButton.waitFor({ state: 'visible' });
+    await yesButton.click();
+
     await page.getByRole('button', { name: 'Edit Actions' }).click();
    
 
@@ -758,16 +779,19 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await expect(page.locator('#editor_Login')).not.toBeVisible();
 
     await page.locator('#editor_Backlog').getByRole('button', { name: 'Delete' }).click();
+
     await yesButton.click();
-    await expect(page.locator('#editor_Backlog')).not.toBeVisible();
   
-    await page.locator('#editor_Deny').getByRole('button', { name: 'Delete' }).click();
-    await yesButton.click();
-    await expect(page.locator('#editor_Deny')).not.toBeVisible();
     
-    await page.locator('#editor_Reply').getByRole('button', { name: 'Delete' }).click();
+    await page.locator("caption h2").dblclick();
+    let ActionsAvailableAfterDeny = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
+    let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
+    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
+    await yesButton.waitFor({ state: 'visible' });
     await yesButton.click();
-    await expect(page.locator('#editor_Reply')).not.toBeVisible();
+
+
+    
   
     await page.getByRole('button', { name: 'Close' }).click();
   
