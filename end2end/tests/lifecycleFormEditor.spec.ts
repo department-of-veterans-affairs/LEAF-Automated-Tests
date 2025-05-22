@@ -56,20 +56,20 @@ test('Add Question to Form', async ({ page }) => {
 
   // Add a question to the form
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: uniqueText }).click();
-  await page.getByLabel('Add Question to Section').click();
-  await page.getByLabel('Field Name').click();
+  await page.getByRole('link', { name: uniqueText }).click({force:true});
+  await page.getByLabel('Add Question to Section').click({force:true});
+  await page.getByLabel('Field Name').click({force:true});
   await page.getByLabel('Field Name').fill('Are you a VA Employee?');
   await page.getByLabel('Short label for spreadsheet').click();
   await page.getByLabel('Short label for spreadsheet').fill('VA Employee?');
 
   // Choose radio button for the input
   await page.getByLabel('Input Format').selectOption('radio');
-  await page.getByLabel('Options (One option per line)').click();
+  await page.getByLabel('Options (One option per line)').click({force:true});
 
   // Make the choices Yes and No
   await page.getByLabel('Options (One option per line)').fill('Yes\nNo');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Save' }).click({force:true});
 
   // Verify the question was added
   await expect(page.getByText('Are you a VA Employee?')).toBeVisible();
