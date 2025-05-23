@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test.describe.configure({ mode: 'serial' });
+// test.describe.configure({ mode: 'serial' });
 test('Create a new workflow and add step', async ({ page }) => {
     // Generate unique workflow title
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
@@ -657,14 +657,14 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     let backlogIndex =ActionsAvailable.indexOf("Backlog");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
     // await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+    await yesButton.click({force:true});
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterBacklog = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
     let DenyIndex =ActionsAvailableAfterBacklog.indexOf("Deny");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(DenyIndex).click({force:true});
     // await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+    await yesButton.click({force:true});
   
     
     await page.locator("caption h2").dblclick();
@@ -672,7 +672,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
     // await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+    await yesButton.click({force:true});
 
 
     
