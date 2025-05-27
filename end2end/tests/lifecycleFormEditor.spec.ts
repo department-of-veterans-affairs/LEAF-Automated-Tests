@@ -130,7 +130,7 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
   // Verify the if/then statement
   await expect(page.locator('#condition_editor_inputs')).toContainText('THEN \'Supervisor Name\' will have the value \'Jane Doe\'');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByLabel('Conditions For Supervisor').getByRole('listitem')).toContainText('If \'Are you a VA Employee?\' is Yes then pre-fill this question.');
+  await expect(page.getByLabel('Conditions For Supervisor').getByRole('listitem')).toContainText(`If \'Are you a VA Employee?\' is Yes then pre-fill this question.`);
   await page.getByText('Close').click();
 })
 

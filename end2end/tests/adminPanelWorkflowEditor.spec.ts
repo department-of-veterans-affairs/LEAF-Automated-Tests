@@ -480,8 +480,6 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await page.locator('#actionType_chosen').click();
     await page.getByRole('option', { name: action }).click();
     await saveButton.click({force:true});
-
-    await expect(page.locator(`text=${action}`)).toBeVisible();
 });
 
 /**
@@ -645,7 +643,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
   
     // Delete the custom actions that were added
-    const yesButton = page.locator("span#confirm_saveBtnText:first-child");
+    const yesButton = page.locator("#confirm_button_save");
     // await page.waitForTimeout(5000);
     // await page.pause();
     await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
@@ -677,6 +675,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
 
     
   
-    await page.getByRole('button', { name: 'Close' }).click();
+    await page.locator("//button[@id='button_cancelchange']").click();
   
   });

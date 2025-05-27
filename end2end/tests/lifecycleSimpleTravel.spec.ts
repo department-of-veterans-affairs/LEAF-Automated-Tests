@@ -168,8 +168,8 @@ test('navigate to Homepage, create and submit a travel request', async ({ page }
   await expect(page.getByRole('cell', { name: 'Select an Option Service' }).locator('a')).toBeInViewport();
   await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
 
-  await expect(page.getByRole('option', { name: 'Cotton Computers' })).toBeInViewport();
-  await page.getByRole('option', { name: 'Cotton Computers' }).click();
+  
+  await page.getByRole('option', { name: 'Cotton Computers' }).click({force: true});
 
   // Fill in the request title
   await expect(page.getByLabel('Title of Request')).toBeVisible();

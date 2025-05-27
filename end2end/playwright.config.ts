@@ -45,9 +45,12 @@ export default defineConfig({
     */
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      //dependencies: ['reset test DB'],
-    },
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: true,
+        viewport: { width: 1800, height: 900 }, // Standard screen size
+      },
+    }
 
     /*
     {

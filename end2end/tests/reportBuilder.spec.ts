@@ -258,8 +258,7 @@ test('Comment approval functionality and comment visibility on record page', asy
   // validate added comment visible on the record page
   await page.reload();
   await page.waitForLoadState();
-  const comment = page.locator('div#workflowbox_lastAction div:nth-child(2) div:last-child');
-  await comment.waitFor();
+  const comment = page.locator(`//div[@id='workflowbox_lastAction']//div[2]//div[1]`);
   await expect(comment).toBeVisible();
   await comment.click({force:true});
    expect(await comment.innerText()).toContain('testing purpose');
