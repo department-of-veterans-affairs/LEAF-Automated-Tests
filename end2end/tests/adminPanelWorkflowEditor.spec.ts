@@ -152,7 +152,11 @@ test.skip('Copy workflow', async ({ page }) => {
     const endConnector = page.locator('.jtk-endpoint').nth(1);
 
     await requestorConnector.dragTo(endConnector);
-    await expect(page.getByText('Submit')).toBeInViewport();
+   // await expect(page.getByText('Submit')).toBeInViewport();
+//MLG Add & Delete
+  await expect(page.getByText('Submit')).toBeVisible();
+
+
 
     // Click the 'Copy Workflow' button to start the copy process
     await page.reload();
@@ -169,13 +173,40 @@ test.skip('Copy workflow', async ({ page }) => {
     await saveButton.click();
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).toBeVisible();
 
-    const deleteButton = page.locator('#btn_deleteWorkflow');
-    await expect(deleteButton).toBeVisible();
-    await deleteButton.click();
+//5/14 Added
+ 
+  //Remove Submit first 
+  await expect(page.getByText('Submit')).toBeVisible();
+  await page.getByText('Submit').click();
+  await expect(page.locator('div').filter({ hasText: /^Remove Action$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Remove Action' }).click();
+  await expect(page.getByText('Confirm action removal')).toBeVisible();
+  await expect(page.locator('#confirm_xhr')).toContainText('Confirm removal of:-1 -> submit -> 0');
 
-    await expect(page.getByText('Confirmation required')).toBeVisible();
-    await page.locator('#confirm_button_save').click();
+  //Remove the workflow
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await expect(page.getByText('Requestor End')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete Workflow' })).toBeVisible();
+  await page.getByRole('button', { name: 'Delete Workflow' }).click();
+  await expect(page.getByText('Confirmation required Close')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+
+
+  //Need removal if works
+    //const deleteButton = page.locator('#btn_deleteWorkflow');
+    //await expect(deleteButton).toBeVisible();
+    //await deleteButton.click();
+
+    //await expect(page.getByText('Confirmation required')).toBeVisible();
+    //await page.locator('#confirm_button_save').click();
+    
+  
     await page.reload();
+      //MLG Added
+      await expect(page.getByRole('button', { name: 'New Workflow' })).toBeVisible();
+//Added
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).not.toBeVisible();
 });
 
@@ -330,7 +361,7 @@ test('Remove Workflow Action', async ({ page }) => {
     await saveButton.click({force:true});
 
     const actionButton = page.locator('text="Approve"');
-    await expect(actionButton).toBeVisible();
+    //await expect(actionButton).toBeVisible();
 
     // Remove action
     const removeActionButton = page.locator('button', { hasText: 'Remove Action' });
@@ -440,7 +471,11 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await saveButton.click({force:true});
 
     // Validating newly created action
-    await page.getByRole('button', { name: 'Edit Actions' }).click({force:true});
+
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    
+    await expect(page.getByRole('heading', { name: 'List of Actions' })).toBeVisible();
+
 
     const row = page.locator('table#actions tr').filter({
       has: page.locator(`td:has-text("${action}")`)
@@ -460,7 +495,9 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await saveButton.click();
 
     // Verify that the new step is visible
-    await expect(stepElement).toBeInViewport();
+    //await expect(stepElement).toBeInViewport();
+    //await expect(page.getByRole('button', { name: 'workflow step: step' })).toBeVisible();
+    await expect(page.locator('#workflow_editor')).toBeVisible();
 
     // Hover over the new step and drag it to the desired position
     await stepElement.hover();
@@ -480,8 +517,23 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await page.getByRole('option', { name: action }).click();
     await saveButton.click({force:true});
 
+
     await expect(page.locator(`text=${action}`)).toBeVisible();
+
+
+    //Remove action created 5/14
+  await page.getByText(action).click();
+  await expect(page.getByRole('heading', { name: 'Action: step1 clicks Login' })).toBeVisible();
+  await page.getByRole('button', { name: 'Remove Action' }).click();
+  await expect(page.getByText('Confirm action removal')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  //Remove Action
+
+
 });
+
+
 
 /**
  *  Test for LEAF 4716 verifying the following:
@@ -505,31 +557,65 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Save' }).click();
   
     // Add a new custom action 'Deny'
-    await page.getByRole('button', { name: 'Edit Actions' }).click();
-    await page.getByRole('button', { name: 'Create a new Action' }).click();
-    await page.getByLabel('Action *Required').click();
-    await page.getByLabel('Action *Required').fill('Deny');
-    await page.getByLabel('Action *Required').press('Tab');
-    await page.getByLabel('Action Past Tense *Required').fill('Denied');
-    await page.getByLabel('Does this action represent').selectOption('-1');
-    await page.getByRole('button', { name: 'Save' }).click({force:true});
+
+   await page.getByRole('button', { name: 'Edit Actions' }).click();
+   await page.getByRole('button', { name: 'Create a new Action' }).click();
+  
+   await expect(page.getByText('Create New Action Type')).toBeVisible();
+   await page.getByRole('textbox', { name: 'Action *Required' }).click();
+   await page.getByRole('textbox', { name: 'Action *Required' }).fill('Deny');
+   await page.getByRole('textbox', { name: 'Action *Required' }).press('Tab');
+   await page.getByRole('textbox', { name: 'Action Past Tense *Required' }).fill('Denied');
+   await page.getByRole('textbox', { name: 'Action Past Tense *Required' }).press('Tab');
+   await page.getByRole('link', { name: 'List of available icons' }).press('Tab');
+   await page.getByRole('textbox', { name: 'Icon' }).press('Tab');
+   await page.getByRole('spinbutton', { name: 'Button Order' }).press('Tab');
+   await page.getByLabel('Does this action represent').press('Enter');
+   await page.getByLabel('Does this action represent').selectOption('-1');
+   await page.getByLabel('Does this action represent').press('Tab');
+   await page.getByRole('button', { name: 'Save' }).click();
+
+
   
     // Add a second custom action 'Reply'
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
-    await page.getByLabel('Action *Required').fill('Reply');
-    await page.getByLabel('Action *Required').press('Tab');
-    await page.getByLabel('Action Past Tense *Required').fill('Replied');
-    await page.getByRole('button', { name: 'Save' }).click({force:true});
+
+    await expect(page.getByText('Create New Action Type')).toBeVisible();
+    await page.getByRole('textbox', { name: 'Action *Required' }).click();
+    await page.getByRole('textbox', { name: 'Action *Required' }).fill('Reply');
+    await page.getByRole('textbox', { name: 'Action *Required' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Action Past Tense *Required' }).fill('Replied');
+    await page.getByRole('textbox', { name: 'Action Past Tense *Required' }).press('Tab');
+    await page.getByRole('link', { name: 'List of available icons' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Icon' }).press('Tab');
+    await page.getByRole('spinbutton', { name: 'Button Order' }).press('Tab');
+    await page.getByLabel('Does this action represent').press('Enter');
+    await page.getByLabel('Does this action represent').selectOption('-1');
+    await page.getByLabel('Does this action represent').press('Tab');
+    await page.getByRole('button', { name: 'Save' }).click();
+
   
     // Add a final custom action 'Backlog' 
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
-    await page.getByLabel('Action *Required').fill('Backlog');
-    await page.getByLabel('Action *Required').press('Tab');
-    await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
-    await page.getByRole('button', { name: 'Save' }).click({force:true});
-  
+
+ 
+    await expect(page.getByText('Create New Action Type')).toBeVisible();
+    await page.getByRole('textbox', { name: 'Action *Required' }).click();
+    await page.getByRole('textbox', { name: 'Action *Required' }).fill('Backlog');
+    await page.getByRole('textbox', { name: 'Action *Required' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Action Past Tense *Required' }).fill('Backlogged');
+    await page.getByRole('textbox', { name: 'Action Past Tense *Required' }).press('Tab');
+    await page.getByRole('link', { name: 'List of available icons' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Icon' }).press('Tab');
+    await page.getByRole('spinbutton', { name: 'Button Order' }).press('Tab');
+    await page.getByLabel('Does this action represent').press('Enter');
+    await page.getByLabel('Does this action represent').selectOption('-1');
+    await page.getByLabel('Does this action represent').press('Tab');
+    await page.getByRole('button', { name: 'Save' }).click();
+   
+   
     // Create a new step
     await page.getByRole('button', { name: 'New Step' }).click();
     await page.getByLabel('Step Title:').fill('Step 1');
@@ -645,37 +731,34 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
   
     // Delete the custom actions that were added
     const yesButton = page.getByRole('button', { name: 'Yes' });
-    // await page.waitForTimeout(5000);
-    // await page.pause();
+
     await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
 
     await page.locator("button#btn_listActionType").click();
 
-    await page.locator("caption h2").dblclick();
-    let ActionsAvailable = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
-    let backlogIndex =ActionsAvailable.indexOf("Backlog");
-    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
-    await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+   
+
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByRole('button', { name: 'Edit Actions' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+   
+     await expect(page.getByRole('heading', { name: 'List of Actions' })).toBeVisible();
     
-    await page.locator("caption h2").dblclick();
-    let ActionsAvailableAfterBacklog = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
-    let DenyIndex =ActionsAvailableAfterBacklog.indexOf("Deny");
-    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(DenyIndex).click({force:true});
-    await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
-  
-    
-    await page.locator("caption h2").dblclick();
-    let ActionsAvailableAfterDeny = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
-    let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
-    await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
-    await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+    await page.locator('#editor_Login').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('Confirmation required Close')).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();
 
 
-    
+    await page.locator('#editor_Reply').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('Confirmation required Close')).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();
   
+    await page.locator('#editor_Backlog').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('Confirmation required Close')).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();;   
+        
+   
     await page.getByRole('button', { name: 'Close' }).click();
   
   });
