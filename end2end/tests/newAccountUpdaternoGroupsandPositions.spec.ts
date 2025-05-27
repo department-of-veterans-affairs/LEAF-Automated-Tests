@@ -40,9 +40,6 @@ const oldAcct:Locator = page1.getByLabel('Jacobs, Gilbert Wilderman.');
 oldAcct.click();
 
 
-const screenshot = await page.screenshot()
-await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
 // Enter New Account information
 const newRep:Locator = page1.locator('css=input.employeeSelectorInput').nth(1);
 await newRep.click();
@@ -51,8 +48,6 @@ await newRep.fill("vtrkmwroseann");
 
 const newAcct:Locator = page1.getByLabel('Greenholt, Shirlene Parisian');
 newAcct.click();
-
-//await expect(page.getByRole('button', { name: 'Preview Changes' })).toBeInViewport();
 
 await expect(page1.getByText('New Account Search results')).toBeVisible();
 
@@ -64,25 +59,28 @@ await previewChange.hover();
 await previewChange.click ();
 
   
-await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+//Screenshot
+const screenshot = await page.screenshot()
+await testInfo.attach('Empty Groups and Positions', { body: screenshot, contentType: 'image/png' });
   
-//Wait for page to refresh (
+//Wait for page to refresh 
 
+//Verify Select All for Request is present then uncheck so no request will move to account
+ await expect(page1.getByText('Select All Requests')).toBeVisible();
+  await page1.getByRole('columnheader', { name: 'Select All Requests' }).getByRole('checkbox').uncheck();
 
   //Veirfy Goups and Positions is empty. 
 
   await expect (page1.locator('#grid_groups_info')).toContainText('No groups found');
 
  await expect (page1.locator('#grid_positions_info')).toContainText('No Positions found');
- 
- await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
 
 //Accept changes
 await page1.getByRole('button', { name: 'Update Records' }).click();
 
 await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
-//await expect(page1.getByText('Syncing has finished. You are')).toBeInViewport();
 //Verify there are not any group/positions updates
 await expect(page1.locator('#groups_no_updates')).toContainText('no updates');
 await expect(page1.locator('#positions_no_updates')).toContainText('no updates');
@@ -91,5 +89,42 @@ await expect(page1.locator('#positions_no_updates')).toContainText('no updates')
 await expect(page.locator('#no_errors')).toContainText('no errors');
 await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
+
+});
+//End
+
+
+
+//Revert the changes
+test(`Clean up Test Data`, async ({page}, testInfo) =>{
+
+  //Open the Nexus
+
+  await page.goto('https://host.docker.internal/Test_Nexus/');
+
+  //Locate User
+  await expect(page.locator('#searchBorder')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Search' }).click();
+  await page.getByRole('textbox', { name: 'Search' }).fill('vtrmvtlynnette');
+
+  //Verify data is displayed
+ 
+  await page.getByRole('textbox', { name: 'Search' }).press('Enter');
+
+  //Click Enter
+  await page.getByRole('cell', { name: 'Jacobs, Gilbert Wilderman.' }).click();
+
+  //Refresh User Information
+  await expect(page.getByRole('button', { name: 'Refresh Employee Refresh' })).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh Employee Refresh' }).click();
+  await page.getByRole('button', { name: 'Ok' }).click();
+  await expect(page.getByRole('button', { name: 'Enable Account' })).toBeVisible();
+  await page.getByRole('button', { name: 'Enable Account' }).click();
+  page.once('dialog', dialog => {
+    console.log(`Dialog message: ${dialog.message()}`);
+    dialog.dismiss().catch(() => {});
+  });
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await page.getByRole('link', { name: 'Main Page' }).click();
 
 });

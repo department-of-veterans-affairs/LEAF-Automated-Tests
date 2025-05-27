@@ -141,8 +141,6 @@ test('Create Workflow', async ({ page}, testinfo) => {
    await page.mouse.up();
 
 
-
-
     // Locate connectors and drag them to connect steps
     const stepConnector = page.locator('.jtk-endpoint').nth(0);
     const endConnector = page.locator('.jtk-endpoint').nth(2);

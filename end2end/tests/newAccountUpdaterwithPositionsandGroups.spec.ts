@@ -25,8 +25,6 @@ test('check User Account', async ({ page }, testInfo) => {
  //Verify user have positions assigned
  await expect(page.getByText('Position Assignments Chief of')).toBeVisible();
 
-  
-
 });
 
 //This test has an user with multiple groups and positions
@@ -79,11 +77,15 @@ await expect(page1.getByText('New Account Search results')).toBeVisible();
 const previewChange:Locator = page1.getByRole('button', {name: 'Preview Changes'});
 await previewChange.hover();
 await previewChange.click ();
+await expect(page1.getByRole('button', { name: 'Update Records' })).toBeVisible();
 
-//Old Account with Groups & Positions Veirfy Goups and Positions have value
+//Old Account with Groups & Positions Verify Goups and Positions have value
+
+
 
 //Group
-await expect(page1.getByText('Export Group NameCurrent')).toBeVisible();
+await expect(page1.getByRole('columnheader', { name: 'Group Name' })).toBeVisible();
+//Old Account with Groups & Positions Veirfy Goups and Positions have value
 
 //Position
 await expect(page1.getByText('Export Position TitleCurrent')).toBeVisible();
@@ -92,6 +94,9 @@ await expect(page1.getByText('Export Position TitleCurrent')).toBeVisible();
 const screenshot = await page.screenshot();
 await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
+//Verify Select All for Request is present then uncheck so no request will move to account
+ await expect(page1.getByText('Select All Requests')).toBeVisible();
+  await page1.getByRole('columnheader', { name: 'Select All Requests' }).getByRole('checkbox').uncheck();
 //Accept changes
 await page1.getByRole('button', { name: 'Update Records' }).click();
 
@@ -156,17 +161,27 @@ newAcct.click();
 await expect(page1.getByText('New Account Search results')).toBeVisible();
 
 //Click to View Changes
+
 const previewChange:Locator = page1.getByRole('button', {name: 'Preview Changes'});
 await previewChange.hover();
 await previewChange.click ();
+await expect(page1.getByRole('button', { name: 'Update Records' })).toBeVisible();
 
 //Old Account with Groups & Positions Verify Goups and Positions have value
+//await expect(page1.getByText('Select All Requests')).toBeVisible();
+//await page1.getByRole('columnheader', { name: 'Select All Requests' }).getByRole('checkbox').uncheck();
 
 //Group
+//await expect(page1.getByRole('columnheader', { name: 'Group Name' })).toBeVisible();
 await expect(page1.getByText('Export Group NameCurrent')).toBeVisible();
 
 //Position
 await expect(page1.getByText('Export Position TitleCurrent')).toBeVisible();
+
+//Uncheck certain Poistion
+ await page1.getByRole('row', { name: 'Meme writer Predovic,' }).getByLabel('Select').uncheck();
+  await page1.getByRole('row', { name: 'Poor House Predovic,' }).getByLabel('Select').uncheck();
+  await page1.getByRole('row', { name: 'Money Bags Predovic,' }).getByLabel('Select').uncheck();
 
 // Need screenshot inserted in here
 const screenshot = await page.screenshot();
@@ -184,12 +199,67 @@ await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhc
 await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhconception and added vtrfaufelecia to position: Chief of Everything');
 await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhconception and added vtrfaufelecia to position: Chief, Facilties');
 await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhconception and added vtrfaufelecia to position: Dog Sitter West');
-await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhconception and added vtrfaufelecia to position: Money Bags (Acting)');
-await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhconception and added vtrfaufelecia to position: Poor House');
-await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhconception and added vtrfaufelecia to position: Meme writer');
 
 //No processing errors
-await expect(page.locator('#no_errors')).toContainText('no errors');
+await expect(page1.locator('#no_errors')).toContainText('no errors');
+
+});
+
+//Revert the changes
+test(`Clean up Test Data`, async ({page}, testInfo) =>{
+
+  //Open the Nexus
+
+  await page.goto('https://host.docker.internal/Test_Nexus/');
+
+  //Locate User
+  await expect(page.locator('#searchBorder')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Search' }).click();
+  await page.getByRole('textbox', { name: 'Search' }).fill('vtrfaufelecia');
+
+  //Verify data is displayed
+ 
+  await page.getByRole('textbox', { name: 'Search' }).press('Enter');
+
+  //Click Enter
+  await page.getByRole('cell', { name: 'Schultz, Phuong Boyer.' }).click();
+
+  //Refresh User Information
+  await expect(page.getByRole('button', { name: 'Refresh Employee Refresh' })).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh Employee Refresh' }).click();
+  await page.getByRole('button', { name: 'Ok' }).click();
+  await expect(page.getByRole('button', { name: 'Enable Account' })).toBeVisible();
+  await page.getByRole('button', { name: 'Enable Account' }).click();
+  page.once('dialog', dialog => {
+    console.log(`Dialog message: ${dialog.message()}`);
+    dialog.dismiss().catch(() => {});
+  });
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await page.getByRole('link', { name: 'Main Page' }).click();
+
+ //Locate User
+  await expect(page.locator('#searchBorder')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Search' }).click();
+  await page.getByRole('textbox', { name: 'Search' }).fill('vtrvxhconception');
+
+  //Verify data is displayed
+ 
+  await page.getByRole('textbox', { name: 'Search' }).press('Enter');
+
+  //Click Enter
+  await page.getByRole('cell', { name: 'edovic, Augustine Hammes.' }).click();
+
+  //Refresh User Information
+  await expect(page.getByRole('button', { name: 'Refresh Employee Refresh' })).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh Employee Refresh' }).click();
+  await page.getByRole('button', { name: 'Ok' }).click();
+  await expect(page.getByRole('button', { name: 'Enable Account' })).toBeVisible();
+  await page.getByRole('button', { name: 'Enable Account' }).click();
+  page.once('dialog', dialog => {
+    console.log(`Dialog message: ${dialog.message()}`);
+    dialog.dismiss().catch(() => {});
+  });
+  await page.getByRole('button', { name: 'Yes' }).click();
 
 
 });

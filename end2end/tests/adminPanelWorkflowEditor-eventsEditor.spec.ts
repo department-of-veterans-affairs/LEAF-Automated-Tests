@@ -143,8 +143,8 @@ test ('Add Event from Side Navigation', async ({ page }, testInfo) => {
     
     //Enter Data
     
-    let uniqueText2 = `Event2 - ${uniqueText}`;
-    let uniqueDescr2 = `Description2 - ${uniqueDescr}`;
+    let uniqueText2 = `Eve-${uniqueText}`;
+    let uniqueDescr2 = `Desc-${uniqueDescr}`;
   
    
       await page.getByLabel('Event Name:').click();
@@ -173,12 +173,19 @@ test ('Add Event from Side Navigation', async ({ page }, testInfo) => {
   
    const eventMatch = rows.filter({
       has: page.locator("td"),
-      hasText: uniqueText
+      hasText: uniqueDescr2
   
    });
   
-   await page.getByRole('button', { name: 'Close' }).click();
    
+   //Clean up Test Data
+
+  //Select the one that you need to Delete
+  await eventMatch.getByRole(`button`,{name:`Delete`}).click();
+
+  await page.getByRole('button', { name: 'Yes' }).click();
+
+   await page.getByRole('button', { name: 'Close' }).click();
   });
 
 
