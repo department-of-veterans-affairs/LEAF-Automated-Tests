@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-// test.describe.configure({ mode: 'serial' });
 test('Create a new workflow and add step', async ({ page }) => {
     // Generate unique workflow title
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
@@ -127,6 +126,7 @@ test('View workflow history', async ({ page }) => {
     // Verify if the new workflow name appears in the history
     await expect(page.locator('#historyName')).toContainText(workflowTitle);
 });
+
 
 test('Copy workflow' ,async ({ page }) => {
     // Generate unique workflow title for original and copied workflow
@@ -480,6 +480,8 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await page.locator('#actionType_chosen').click();
     await page.getByRole('option', { name: action }).click();
     await saveButton.click({force:true});
+
+
 });
 
 /**
@@ -643,7 +645,9 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
   
     // Delete the custom actions that were added
+
     const yesButton = page.locator("#confirm_button_save");
+   
     // await page.waitForTimeout(5000);
     // await page.pause();
     await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
@@ -656,6 +660,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
     // await yesButton.waitFor({ state: 'visible' });
     await yesButton.click({force:true});
+
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterBacklog = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
@@ -663,14 +668,17 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(DenyIndex).click({force:true});
     // await yesButton.waitFor({ state: 'visible' });
     await yesButton.click({force:true});
+
   
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterDeny = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
     let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
+
     // await yesButton.waitFor({ state: 'visible' });
     await yesButton.click({force:true});
+
 
 
     
