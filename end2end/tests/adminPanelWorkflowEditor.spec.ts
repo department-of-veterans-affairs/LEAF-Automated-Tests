@@ -516,6 +516,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Save' }).click({force:true});
   
     // Add a second custom action 'Reply'
+    await page.waitForSelector(`//div[@id='action_input_modal']`, { state: 'detached', timeout: 10000 });
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
     await page.getByLabel('Action *Required').fill('Reply');
@@ -524,6 +525,9 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Save' }).click({force:true});
   
     // Add a final custom action 'Backlog' 
+    await page.waitForSelector(`//div[@id='action_input_modal']`, { state: 'detached', timeout: 10000 });
+
+
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
     await page.getByLabel('Action *Required').fill('Backlog');
@@ -686,3 +690,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.locator("//button[@id='button_cancelchange']").click();
   
   });
+
+  
+  

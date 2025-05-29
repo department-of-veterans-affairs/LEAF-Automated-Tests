@@ -169,17 +169,37 @@ test('Update and revert report title from pop-up window', async ({ page }) => {
   await expect(initialReportTitle).toHaveText('Available for test case');
 });
 
+// test('Navigation to record page on UID link click', async ({ page }) => {
+//   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
+
+//   // UID Link
+//   const UID = page.getByRole('link', { name: '956' });
+//   await UID.waitFor();
+//   await UID.click();
+
+//   // Validate the record page opens with the correct UID
+//   await expect(page.locator('#headerTab')).toContainText('Request #956');
+// });
+
 test('Navigation to record page on UID link click', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
 
-  // UID Link
-  const UID = page.getByRole('link', { name: '956' });
-  await UID.waitFor();
-  await UID.click();
+  const UID = page.locator(`a[href='index.php?a=printview&recordID=956']`);
+  await UID.waitFor({ state: 'visible' });
 
-  // Validate the record page opens with the correct UID
-  await expect(page.locator('#headerTab')).toContainText('Request #956');
+  // Wait for navigation to complete
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle' }),
+    UID.click()
+  ]);
+
+  // Wait for the headerTab element to become visible before asserting text
+  const headerTab = await page.locator(`#headerTab`);
+  await headerTab.click();
+  expect(await headerTab.innerText()).toContain('Request #956');
+
 });
+
 
 test('Update current status to Initiator to generate report with reports', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/");
