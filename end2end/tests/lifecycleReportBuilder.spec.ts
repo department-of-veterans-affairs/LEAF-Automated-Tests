@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-
+test.describe.configure({ mode: 'serial' });
 /**
  *  Verify the Report Builder link from the
  *  Home Page is working
@@ -171,93 +171,158 @@ test('Change Report Title', async ({ page }) => {
  *  the title, and add data.
  *  Afterwards, cancel the new request
  */
+// test('Add a New Row and Populate', async ({ page }) => {
+
+//   // Generate unique text to help ensure that fields are being filled correctly.
+//   let randNum = Math.random();
+//   let uniqueText = `My New Request ${randNum}`;
+
+//   // Go to Report Builder page
+//   await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+
+//   // Set filter to Type IS Input Formats
+//   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+//   await page.getByRole('option', { name: 'Type' }).click();
+//   await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
+//   await page.getByRole('option', { name: 'Input Formats' }).click();
+//   await page.getByRole('button', { name: 'Next Step' }).click();
+
+//   // Choose the column 'checkboxes (LEAF-check)' from under 'Input Formats'
+//   await page.locator('#indicatorList').getByText('Input Formats').click();
+//   await page.getByTitle('indicatorID: 45\ncheckboxes (LEAF-check)').locator('span').click();
+//   await page.getByRole('button', { name: 'Generate Report' }).click();
+
+//   // Wait until the records text appears
+//   await expect(page.locator('#reportStats')).toContainText('records');
+  
+//   // Get the number of rows in the original report
+//   const initialRows = await page.locator('table tbody tr').count();
+
+//   // Click 'Create Row' button
+//   const createRowButton = page.getByRole('button', { name: 'Create Row' })
+//   await createRowButton.click();
+  
+//   // Find the row that has the background-color style set
+//   const highlightedRow = await page.locator(
+//     'table tbody tr[style*="background-color"]',
+//     { hasText: 'untitled' }
+//   );
+ 
+//   // 4) Wait for it and assert
+//   await expect(highlightedRow).toBeVisible();
+//   await expect(highlightedRow).toContainText('untitled');
+  
+
+//   // Get the rows for the new table after adding a row
+//   const newTable = await page.getByRole('table');
+//   const tableBody = await newTable.locator('tbody');
+//   const newRows = await tableBody.locator('tr');  
+  
+//   // Get the number of rows that is expected
+//   const expectedRows = await initialRows.valueOf() + 1;
+
+//   // Get the number of actual rows
+//   const numNewRows = await newRows.count();
+
+//   // Verify that the number of rows in the new report matches the number
+//   // of expected rows
+//   // await expect(numNewRows).toEqual(expectedRows);
+//   expect(numNewRows).toBeGreaterThanOrEqual(expectedRows);
+
+//   // Get the UID of the newly added row
+//   const addedRowUID = await createRowButton.getAttribute('data-newest-row-id');
+    
+//   // Update the title of the added row to the uniqueText
+//   const titleCell = page.locator(`[id$="_${addedRowUID}_title"]`);
+//   await titleCell.click();
+//   await page.getByLabel('Report Title').click();
+//   await page.getByLabel('Report Title').fill(uniqueText);
+//   await page.getByRole('button', { name: 'Save Change' }).click();
+
+//   // Verify the new title matches the uniqueText
+//   await expect(titleCell).toContainText(uniqueText);
+  
+//   // Check the values 5 and 6 in the 'checkboxes (LEAF-check)'
+//   const dataCell = page.locator(`[id$="_${addedRowUID}_45"]`);
+//   await dataCell.click();
+
+//   // Wait for the window to load
+//   expect(page.locator('#confirm_loadIndicator')).not.toBeVisible();
+  
+//   // Choose 5 and 6 from the checkbox options
+//   await page.locator('label').getByText('5', { exact: true}).locator('span').click();
+//   await page.locator('label').getByText('6', { exact: true}).locator('span').click();
+//   await page.getByRole('button', { name: 'Save Change' }).click();
+
+//   // Verify the values in the new row contain '5, 6'
+//   await expect(dataCell).toContainText('5, 6');
+
+//   // Cancel the created 'My New Request"
+//   await page.getByRole('link', { name: 'Home' }).click();
+//   await page.getByRole('link', { name: uniqueText }).click();
+//   await page.getByRole('button', { name: 'Cancel Request' }).click();
+//   await page.getByRole('button', { name: 'Yes' }).click();
+// });
 test('Add a New Row and Populate', async ({ page }) => {
+  const randNum = Math.random();
+  const uniqueText = `My New Request ${randNum}`;
 
-  // Generate unique text to help ensure that fields are being filled correctly.
-  let randNum = Math.random();
-  let uniqueText = `My New Request ${randNum}`;
-
-  // Go to Report Builder page
   await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
 
-  // Set filter to Type IS Input Formats
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
   await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'Input Formats' }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
 
-  // Choose the column 'checkboxes (LEAF-check)' from under 'Input Formats'
   await page.locator('#indicatorList').getByText('Input Formats').click();
   await page.getByTitle('indicatorID: 45\ncheckboxes (LEAF-check)').locator('span').click();
   await page.getByRole('button', { name: 'Generate Report' }).click();
 
-  // Wait until the records text appears
   await expect(page.locator('#reportStats')).toContainText('records');
-  
-  // Get the number of rows in the original report
+
   const initialRows = await page.locator('table tbody tr').count();
 
-  // Click 'Create Row' button
-  const createRowButton = page.getByRole('button', { name: 'Create Row' })
+  const createRowButton = page.getByRole('button', { name: 'Create Row' });
+  await createRowButton.waitFor({ state: 'visible' });
   await createRowButton.click();
-  
-  // Find the row that has the background-color style set
-  const highlightedRow = await page.locator(
-    'table tbody tr[style*="background-color"]',
-    { hasText: 'untitled' }
-  );
- 
-  // 4) Wait for it and assert
+
+  const highlightedRow = page.locator('table tbody tr[style*="background-color"]');
   await expect(highlightedRow).toBeVisible();
   await expect(highlightedRow).toContainText('untitled');
-  
 
-  // Get the rows for the new table after adding a row
-  const newTable = await page.getByRole('table');
+  const newTable = page.getByRole('table');
   const tableBody = await newTable.locator('tbody');
-  const newRows = await tableBody.locator('tr');  
-  
-  // Get the number of rows that is expected
-  const expectedRows = await initialRows.valueOf() + 1;
-
-  // Get the number of actual rows
+  const newRows = await tableBody.locator('tr');
+  const expectedRows = initialRows + 1;
   const numNewRows = await newRows.count();
 
-  // Verify that the number of rows in the new report matches the number
-  // of expected rows
-  // await expect(numNewRows).toEqual(expectedRows);
   expect(numNewRows).toBeGreaterThanOrEqual(expectedRows);
 
-  // Get the UID of the newly added row
   const addedRowUID = await createRowButton.getAttribute('data-newest-row-id');
-    
-  // Update the title of the added row to the uniqueText
   const titleCell = page.locator(`[id$="_${addedRowUID}_title"]`);
   await titleCell.click();
-  await page.getByLabel('Report Title').click();
+  await page.getByLabel('Report Title').waitFor({ state: 'visible' });
   await page.getByLabel('Report Title').fill(uniqueText);
   await page.getByRole('button', { name: 'Save Change' }).click();
 
-  // Verify the new title matches the uniqueText
   await expect(titleCell).toContainText(uniqueText);
-  
-  // Check the values 5 and 6 in the 'checkboxes (LEAF-check)'
+
   const dataCell = page.locator(`[id$="_${addedRowUID}_45"]`);
   await dataCell.click();
 
-  // Wait for the window to load
-  expect(page.locator('#confirm_loadIndicator')).not.toBeVisible();
-  
-  // Choose 5 and 6 from the checkbox options
-  await page.locator('label').getByText('5', { exact: true}).locator('span').click();
-  await page.locator('label').getByText('6', { exact: true}).locator('span').click();
+  // Wait until indicator is fully loaded
+  const confirmLoader = page.locator('#confirm_loadIndicator');
+  if (await confirmLoader.isVisible()) {
+    await confirmLoader.waitFor({ state: 'hidden', timeout: 10000 });
+  }
+
+  await page.locator('label').getByText('5', { exact: true }).locator('span').click();
+  await page.locator('label').getByText('6', { exact: true }).locator('span').click();
   await page.getByRole('button', { name: 'Save Change' }).click();
 
-  // Verify the values in the new row contain '5, 6'
   await expect(dataCell).toContainText('5, 6');
 
-  // Cancel the created 'My New Request"
   await page.getByRole('link', { name: 'Home' }).click();
   await page.getByRole('link', { name: uniqueText }).click();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
