@@ -109,15 +109,9 @@ test('Redirect to search filter and Generate Report with Approval History column
   await dataFieldOption.click();
 
   // Click on the data Field link
-  const dataFieldLink = page.locator('a', { hasText: 'Any standard data field' });
+  const dataFieldLink = page.locator('a span', { hasText: 'Any standard data field' });
   await expect(dataFieldLink).toBeVisible();
   await dataFieldLink.click();
-
-  // Select the role option
-  const roleOption = page.getByRole('option', { name: 'LEAF Developer Console: Supervisor' });
-  await expect(roleOption).toBeVisible();
-  await roleOption.click();
-
   // Proceed to the next step
   const nextStepButton = page.getByRole('button', { name: 'Next Step' });
   await expect(nextStepButton).toBeVisible();

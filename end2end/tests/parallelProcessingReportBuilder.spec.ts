@@ -231,97 +231,72 @@ test('Update Form', async ({ page}, testInfo) => {
 });
 
 //Create New Request
-// test('Create New Request', async ({ page }, testInfo) => {
-
-//   await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-
-//   //Create New Request
-//   await expect(page.getByText('New Request Start a new')).toBeVisible();
-//  await page.getByText('New Request', { exact: true }).click();
-//  await expect(page.locator('#step1_questions')).toBeVisible();
-//   await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-//   await page.getByRole('option', { name: 'AS Test Group' }).click();
-//   await page.getByRole('textbox', { name: 'Title of Request' }).click();
-//   await page.getByRole('textbox', { name: 'Title of Request' }).fill(newRequestForm);
-//   await page.getByText(uniqueFormName).click();
-//   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-//   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-
-
-//   //**Add a check */
-
-//   //Question 1
-//   await page.getByRole('searchbox', { name: 'Search for user to add as Please select an employee?' }).click();
-//   await page.getByRole('searchbox', { name: 'Search for user to add as Please select an employee?' }).fill('t');
-//   await page.getByRole('cell', { name: 'Bins, Terina Corkery. Dynamic' }).click();
-
-//   //Question 2
-//   await page.getByRole('searchbox', { name: 'Search for user to add as Please enter a position?' }).click();
-//   await page.getByRole('searchbox', { name: 'Search for user to add as Please enter a position?' }).fill('t');
-//   await page.getByRole('cell', { name: 'Accountability Officer (GS 14' }).click();
-
-//   //Question 3
-//   await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).click();
-//   await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).fill('t');
-//   await page.getByRole('cell', { name: 'AS Test Group', exact: true }).click();
-//   await page.locator('#nextQuestion2').click();
-
-//    //**Add a check */
-//   await expect(page.getByText('Please review your request')).toBeVisible();
-//   await expect(page.locator('#indicator_selector')).toBeVisible();
-
-
-// //Find the correct value in the dropdown
-// const ddLocator = await page.locator('select > option', { hasText: ddownText,});
-// const ddOptions = await ddLocator.getAttribute('value');;
-// await page.locator('#indicator_selector').selectOption(ddOptions);
-
-
-//   await page.getByRole('searchbox', { name: 'Search for user to add as' }).click();
-//   await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('t');
-//   await page.locator('#btn202').click();
-//   await page.locator('#btn63').click();
-//   await page.locator('#btn78').click();
-//   await page.locator('#btn19').click();
-
-
-//    //**Add a check */
-//   page.once('dialog', dialog => {
-//     console.log(`Dialog message: ${dialog.message()}`);
-//     dialog.dismiss().catch(() => {});
-//   });
-//   await page.getByRole('button', { name: 'Send Request to Selected' }).click();
-
-//   //Verify Report is displayed 
-//   await expect(page.getByText('Requests have been assigned to these people 4 recordsStop and show results')).toBeVisible();
-
-//   const rptBld = await page.screenshot();
-//   await testInfo.attach('rptBld', { body: rptBld, contentType: 'image/png' });
-  
-// });
-
 test('Create New Request', async ({ page }, testInfo) => {
+
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
-  await expect(page.getByText('New Request Start a new')).toBeVisible();
-  await page.getByText('New Request', { exact: true }).click();
-  await expect(page.locator('#step1_questions')).toBeVisible();
 
+  //Create New Request
+  await expect(page.getByText('New Request Start a new')).toBeVisible();
+ await page.getByText('New Request', { exact: true }).click();
+ await expect(page.locator('#step1_questions')).toBeVisible();
   await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
   await page.getByRole('option', { name: 'AS Test Group' }).click();
-
+  await page.getByRole('textbox', { name: 'Title of Request' }).click();
   await page.getByRole('textbox', { name: 'Title of Request' }).fill(newRequestForm);
-
-  const formChoice = page.getByText(uniqueFormName);
-  await expect(formChoice).toBeVisible({ timeout: 60000 });
-  await formChoice.click();
-
+  await page.getByText(uniqueFormName).click();
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
-  // Add screenshot for debugging purposes
+
+  //**Add a check */
+
+  //Question 1
+  await page.getByRole('searchbox', { name: 'Search for user to add as Please select an employee?' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Please select an employee?' }).fill('t');
+  await page.getByRole('cell', { name: 'Bins, Terina Corkery. Dynamic' }).click();
+
+  //Question 2
+  await page.getByRole('searchbox', { name: 'Search for user to add as Please enter a position?' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Please enter a position?' }).fill('t');
+  await page.getByRole('cell', { name: 'Accountability Officer (GS 14' }).click();
+
+  //Question 3
+  await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).fill('t');
+  await page.getByRole('cell', { name: 'AS Test Group', exact: true }).click();
+  await page.locator('#nextQuestion2').click();
+
+   //**Add a check */
+  await expect(page.getByText('Please review your request')).toBeVisible();
+  await expect(page.locator('#indicator_selector')).toBeVisible();
+
+
+//Find the correct value in the dropdown
+const ddLocator = await page.locator('select > option', { hasText: ddownText,});
+const ddOptions = await ddLocator.getAttribute('value');;
+await page.locator('#indicator_selector').selectOption(ddOptions);
+
+
+  await page.getByRole('searchbox', { name: 'Search for user to add as' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('t');
+  await page.locator('#btn202').click();
+  await page.locator('#btn63').click();
+  await page.locator('#btn78').click();
+  await page.locator('#btn19').click();
+
+
+   //**Add a check */
+  page.once('dialog', dialog => {
+    console.log(`Dialog message: ${dialog.message()}`);
+    dialog.dismiss().catch(() => {});
+  });
+  await page.getByRole('button', { name: 'Send Request to Selected' }).click();
+
+  //Verify Report is displayed 
+  await expect(page.getByText('Requests have been assigned to these people 4 recordsStop and show results')).toBeVisible();
+
   const rptBld = await page.screenshot();
   await testInfo.attach('rptBld', { body: rptBld, contentType: 'image/png' });
+  
 });
-
