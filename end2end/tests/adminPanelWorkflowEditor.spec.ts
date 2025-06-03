@@ -494,7 +494,8 @@ test('Create a new action and add it to a step', async ({ page }) => {
  *  5.  Routes going from any step back to the requestor have the 'Email - Send Back Notification for Requestor'
  *      as the non-removable even
  */
-test('Workflow editor UX improvements - 4716', async ({ page }) => {
+// Skipping due to https://github.com/department-of-veterans-affairs/LEAF-Automated-Tests/issues/107
+test.skip('Workflow editor UX improvements - 4716', async ({ page }) => {
 
     // Create a unique workflow name
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;

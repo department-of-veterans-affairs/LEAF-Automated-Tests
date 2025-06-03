@@ -184,7 +184,7 @@ test('navigate to Homepage, create and submit a travel request', async ({ page }
   // Search and select a user
   await expect(page.getByLabel('Search for user to add as')).toBeVisible();
   await page.getByLabel('Search for user to add as').click();
-  await page.getByLabel('Search for user to add as').fill('a');
+  await page.getByLabel('Search for user to add as').fill('alt');
   await page.getByRole('cell', { name: 'Altenwerth, Ernest Bernier.' }).click();
 
   // Wait for async loading to complete

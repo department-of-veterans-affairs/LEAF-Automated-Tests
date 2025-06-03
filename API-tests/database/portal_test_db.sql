@@ -5745,7 +5745,7 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (4,	'Multi line text',	'textarea',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-06 17:30:30',	0,	0),
 (5,	'Numeric',	'number',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-06 17:30:36',	0,	0),
 (6,	'Single line text B',	'text',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-07 15:17:50',	0,	0),
-(7,	'Radio',	'radio\nA\nB\nC',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-07 15:18:45',	0,	0),
+(7,	'Radio',	'radio\nIssue\nFeature Request\nConsultation',	'',	'',	3,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-07 15:18:45',	0,	0),
 (8,	'Assigned Person',	'orgchart_employee',	'',	'',	NULL,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-09-07 18:07:55',	0,	0),
 (9,	'Assigned Group',	'orgchart_group',	'',	'',	NULL,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-09-07 22:43:06',	0,	0),
 (10,	'Assigned Person 2',	'orgchart_employee',	'',	'',	8,	'form_5ea07',	NULL,	NULL,	NULL,	NULL,	0,	0,	'2023-09-21 23:30:32',	0,	0),

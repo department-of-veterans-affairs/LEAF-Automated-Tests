@@ -60,8 +60,8 @@ test ('Create a New Event', async ({ page}, testinfo) => {
 // Select Newly Created Event from Icon
 test('Add Event from Action Icon', async ({ page }, testInfo) => {
 
- await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-  await page.locator('#jsPlumb_1_51').click();
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+  await page.locator('.action-3-Note-3').click();
   await page.getByRole('button', { name: 'Add Event' }).click();
   await expect(page.getByRole('button', { name: 'Create Event' })).toBeVisible();
   //await page.locator('a').
