@@ -257,9 +257,11 @@ test('Comment approval functionality and comment visibility on record page', asy
 
   // validate added comment visible on the record page
   await page.reload();
-  const comment = page.locator('#workflowbox_lastAction');
-  await comment.waitFor({ state: 'visible' });
-  await expect(comment).toContainText('testing purpose');
+  await page.waitForLoadState();
+  const comment = page.locator(`//div[@id='workflowbox_lastAction']//div[2]//div[1]`);
+  await expect(comment).toBeVisible();
+  await comment.click({force:true});
+   expect(await comment.innerText()).toContain('testing purpose');
 });
 
 test('Share Report button is visible on the UI', async ({ page }) => {

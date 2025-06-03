@@ -394,8 +394,8 @@ test.afterAll(async () => {
 
     // Cancel created form
     await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByRole('link', { name: uniqueText + ' to Create' }).click();
-    await page.getByRole('button', { name: 'Cancel Request' }).click();
+    await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true});
+    await page.getByRole('button', { name: 'Cancel Request' }).click({force:true});
     await page.getByPlaceholder('Enter Comment').click();
     await page.getByPlaceholder('Enter Comment').fill('No longer needed');
     await page.getByRole('button', { name: 'Yes' }).click();
