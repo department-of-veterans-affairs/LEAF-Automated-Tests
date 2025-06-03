@@ -47,6 +47,10 @@ Files must use camelCase. No spaces are permitted in filenames. Underscores shou
 
 Test Titles must briefly and plainly explain the component or feature it exercises. For example, if we're creating a test on the homepage to check the search box's ability to find a specific record in a certain way, the title can be `search [specific record] using [method]`. It's not necessary to explain that the test is for the homepage, because this is implicit in the filename. Titles must be formatted in plain language, no naming conventions such as CamelCase should be used for the whole title.
 
+### Test Repeatability
+
+Tests must pass on repeated runs. This helps ensure that tests remain robust, and provide significant value during the development process as tests are frequently run multiple times.
+
 ### Screenshots
 
 Including screenshots within tests is highly recommended, but not currently required. Screenshots provide value when reviewing tests, as it can be immediately apparent in a screenshot if a test is functioning correctly.

@@ -257,9 +257,11 @@ test('Comment approval functionality and comment visibility on record page', asy
 
   // validate added comment visible on the record page
   await page.reload();
-  const comment = page.locator('#workflowbox_lastAction');
-  await comment.waitFor({ state: 'visible' });
-  await expect(comment).toContainText('testing purpose');
+  await page.waitForLoadState();
+  const comment = page.locator(`//div[@id='workflowbox_lastAction']//div[2]//div[1]`);
+  await expect(comment).toBeVisible();
+  await comment.click({force:true});
+   expect(await comment.innerText()).toContain('testing purpose');
 });
 
 test('Share Report button is visible on the UI', async ({ page }) => {
@@ -296,7 +298,7 @@ test('Report builder workflow and create row button functionality', async ({ pag
   await expect(typeOption).toBeVisible();
   await typeOption.click();
 
-  const complexFormLink = page.getByRole('cell', { name: 'Complex Form' }).locator('a');
+  const complexFormLink = page.getByRole('cell').locator('select[aria-label="categories"] + div a');
   await expect(complexFormLink).toBeVisible();
   await complexFormLink.click();
 
@@ -357,7 +359,7 @@ test('Report Allows Negative Currency', async ({ page}) => {
   await page.getByRole('option', { name: 'Type' }).click();
 
   // Choose reports which use the Input Formats form
-  await page.getByRole('cell', { name: 'Complex Form' }).locator('a').click();
+  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
   await page.getByRole('option', { name: 'Input Formats' }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
   await page.locator('#indicatorList').getByText('Input Formats').click();
