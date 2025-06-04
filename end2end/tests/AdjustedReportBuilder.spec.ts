@@ -1,5 +1,44 @@
 import { test, expect } from '@playwright/test';
 
+test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
+  console.info('🔄 Navigating to reports page and extracting UID...');
+  await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
+
+  const UID = await page.locator('//table/tbody/tr[1]//a').textContent();
+
+  const takeActionButton = page.locator('//tbody/tr[1]//div');
+  await takeActionButton.waitFor();
+  await takeActionButton.click();
+
+  const validateForm = page.getByText(`Apply Action to #${UID}`);
+  await expect(validateForm).toBeVisible();
+
+  const commentInput = page.locator('textarea[aria-label="comment text area"]').nth(0);
+  await commentInput.waitFor();
+  await commentInput.fill('testing purpose');
+
+  const approveButton = page.getByRole('button', { name: 'Approve' }).nth(0);
+  await approveButton.waitFor();
+  await approveButton.click();
+
+  console.info(`🧾 Submitted approval for UID: ${UID}. Navigating to record page...`);
+  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
+  await page.reload();
+  await page.waitForLoadState();
+
+  await page.waitForSelector('div[style*="font-weight: normal"][style*="padding-left: 16px"]');
+
+  const comment = await page.$eval(
+    'div[style*="font-weight: normal"][style*="padding-left: 16px"]',
+    el => el.textContent?.trim() || ''
+  );
+
+  console.info(`💬 Comment found on record page: "${comment}"`);
+  expect(comment).toContain('testing purpose');
+  console.info(`💬 Comment Validated successfully`);
+
+});
+
 // When the underlying issue is fixed, we should expect this test to pass.
 // Tests should be tagged with an associated ticket or PR reference
 test('column order is maintained after modifying the search filter', async ({ page }, testInfo) => {
@@ -241,42 +280,6 @@ test('Update current status to Initiator to generate report with reports', async
   expect(reportText).toContain('records');
 });
 
-test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
-  await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
-
-  // get UID from the first row of the table
-  const UID = await page.locator('//table/tbody/tr[1]//a').textContent();
-
-  // take Action Button
-  const takeActionButton = page.locator('//tbody/tr[1]//div');
-  await takeActionButton.waitFor();
-  await takeActionButton.click();
-
-  // Validate form is visible for the specific UID
-  const validateForm = page.getByText(`Apply Action to #${UID}`);
-  await expect(validateForm).toBeVisible();
-
-  // add approval comment
-  const commentInput = page.locator('textarea[aria-label="comment text area"]').nth(0);
-  await commentInput.waitFor();
-  await commentInput.fill('testing purpose');
-
-  // approve button
-  const approveButton = page.getByRole('button', { name: 'Approve' }).nth(0)
-  await approveButton.waitFor();
-  await approveButton.click();
-
-  // navigate to same UID record page
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
-
-  // validate added comment visible on the record page
-  await page.reload();
-  await page.waitForLoadState();
-  const comment = page.locator(`//div[@id='workflowbox_lastAction']//div[2]//div[1]`);
-  await expect(comment).toBeVisible();
-  await comment.click({force:true});
-   expect(await comment.innerText()).toContain('testing purpose');
-});
 
 
 test('Share Report button is visible on the UI', async ({ page }) => {

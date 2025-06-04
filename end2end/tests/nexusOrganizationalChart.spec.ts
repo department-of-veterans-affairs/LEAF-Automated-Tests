@@ -108,43 +108,6 @@ test ('Relocate Cards', async ({ page}, testinfo) => {
   await testinfo.attach('Card Move', { body: newCardMove, contentType: 'image/png' });
 
   });
-//End of Relocating Card
-
-
-// Add Subordinate
-// test ('Add Subordinate', async ({ page}, testinfo) => {
-
-//   await page.goto('https://host.docker.internal/Test_Nexus/');
-
-//   //Wait for page to Load
-//   await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
- 
-//   await page.getByText('Browser View Organizational').click();
-
-//  // Wait for button to appear
-//   await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible();
-//   await page.getByRole('button', { name: 'Edit Orgchart' }).click();
-
-//   //Select a card
-//   await expect(page.getByRole('button', { name: 'Zoom In' })).toBeVisible();
-//   await expect(page.getByRole('button', { name: 'Chief of Everything' })).toBeVisible();
-//   await page.getByRole('button', { name: 'Chief of Everything' }).hover();
-//   await page.getByRole('button', { name: 'Add Subordinate' }).click();
-
-//   // Wait for the Add Subordinate
-//   await expect(page.getByLabel('Full Position Title:')).toBeVisible();
-//   await page.getByLabel('Full Position Title:').click();
-//   await page.getByLabel('Full Position Title:').fill('Medical Tech Test');
-//   await page.getByRole('button', { name: 'Save Change' }).click();
-
-//   // Verify Subordinate
-//   await expect(page.getByRole('button', { name: 'Medical Tech Test'})).toBeVisible();
-
-//   //Verify the new Card is displayed
-//   const newCardCreated = await page.screenshot();
-//   await testinfo.attach('Card Create', { body: newCardCreated, contentType: 'image/png' });
-
-// });
 
 test('Add Subordinate', async ({ page}, testInfo ) => {
   await page.goto('https://host.docker.internal/Test_Nexus/');
@@ -167,7 +130,8 @@ test('Add Subordinate', async ({ page}, testInfo ) => {
   await chiefBtn.hover();
 
   // Click "Add Subordinate"
-  const addSubBtn = page.getByRole('button', { name: 'Add Subordinate' });
+  // const addSubBtn = page.getByRole('button', { name: 'Add Subordinate' });
+  const addSubBtn = page.locator(`body > main:nth-child(3) > div:nth-child(2) > div:nth-child(1) > div:nth-child(9) > div:nth-child(3) > div:nth-child(2) > button:nth-child(2)`);
   await expect(addSubBtn).toBeVisible();
   await addSubBtn.click();
 

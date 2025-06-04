@@ -403,86 +403,76 @@ test('Add email reminder to a step by specific days', async ({ page }) => {
 });
 
 test('Create a new action and add it to a step', async ({ page }) => {
-    // Variables
     const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
     const action = 'Log in';
     const actionPastTense = 'Logged In';
     const stepTitle = 'step1';
-
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    const saveButton = page.locator('#button_save');
-    const workflowDropdown = page.locator('#workflows_chosen');
-    const actionInput = page.locator('#actionText');
-    const actionPastTenseInput = page.locator('#actionTextPasttense');
-    const stepCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new Step")');
-    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
-    const selectActionDialog = page.getByRole('dialog');
-
+  
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-
-    // Create a new workflow
+    console.info('✅ Navigated to Workflow Builder');
+  
+    // Create new workflow
     await page.locator('#btn_newWorkflow').click();
-    await expect(workflowCreateDialog).toBeVisible();
-
+    await expect(page.locator('span.ui-dialog-title', { hasText: 'Create new workflow' })).toBeVisible();
     await page.locator('#description').fill(uniqueWorkflowName);
-    await saveButton.click();
-
-    // Verify the newly created workflow appears in the dropdown
-    await expect(workflowDropdown).toContainText(uniqueWorkflowName);
-
-    // Add new Action
+    await page.locator('#button_save').click();
+    console.info(`✅ Created new workflow: ${uniqueWorkflowName}`);
+  
+    // Verify workflow exists
+    await expect(page.locator('#workflows_chosen')).toContainText(uniqueWorkflowName);
+    console.info('✅ Verified workflow appears in the dropdown');
+  
+    // Create new action
     await page.getByRole('button', { name: 'Edit Actions' }).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
-
-    // Add new action credentials
-    await actionInput.fill(action);
-    await actionPastTenseInput.fill(actionPastTense);
-    await page.locator('#actionSortNumber').fill((0).toString());
-    await saveButton.click({ force: true });
-
-    // Validating newly created action
+    await page.locator('#actionText').fill(action);
+    await page.locator('#actionTextPasttense').fill(actionPastTense);
+    await page.locator('#actionSortNumber').fill('0');
+    await page.locator('#button_save').click({ force: true });
+    console.info(`✅ Created new action: ${action} (${actionPastTense})`);
+  
+    // Verify new action appears
     await page.getByRole('button', { name: 'Edit Actions' }).click({ force: true });
-
-    const row = page.locator('table#actions tr').filter({
-        has: page.locator(`td:has-text("${action}")`)
+    const actionRow = page.locator('table#actions tr').filter({
+      has: page.locator(`td:has-text("${action}")`)
     }).filter({
-        has: page.locator(`td:has-text("${actionPastTense}")`)
+      has: page.locator(`td:has-text("${actionPastTense}")`)
     });
-
-
-    // await expect(row).toBeVisible();
+    await expect(actionRow).toBeVisible();
+    console.info('✅ Verified action is listed in the action table');
     await page.getByRole('button', { name: 'Cancel' }).click({ force: true });
-
+  
     // Create a new step
     await page.locator('div#sideBar button#btn_createStep').click();
-    await expect(stepCreateDialog).toBeVisible();
-
+    await expect(page.locator('span.ui-dialog-title', { hasText: 'Create new Step' })).toBeVisible();
     await page.locator('#stepTitle').fill(stepTitle);
-    await saveButton.click();
-
-    // Verify that the new step is visible
-    await expect(stepElement).toBeInViewport();
-
-    // Hover over the new step and drag it to the desired position
+    await page.locator('#button_save').click();
+    console.info(`✅ Created new step: ${stepTitle}`);
+  
+    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
+    await expect(stepElement).toBeVisible();
+  
+    // Move step visually
     await stepElement.hover();
     await page.mouse.down();
     await page.mouse.move(300, 300);
     await page.mouse.up();
-
-    // Locate connectors and drag them to connect steps
+    console.info('✅ Moved step into position');
+  
+    // Connect step to end
     const stepConnector = page.locator('.jtk-endpoint').nth(0);
     const endConnector = page.locator('.jtk-endpoint').nth(2);
-
     await stepConnector.dragTo(endConnector);
-
-    // Select newly created action
-    await expect(selectActionDialog).toBeInViewport();
+    console.info('✅ Connected step to Workflow End');
+  
+    // Assign action to connector
+    await expect(page.getByRole('dialog')).toBeVisible();
     await page.locator('#actionType_chosen').click();
     await page.getByRole('option', { name: action }).click();
-    await saveButton.click({ force: true });
-
-
-});
+    await page.locator('#button_save').click({ force: true });
+    console.info(`✅ Assigned action "${action}" to connector`);
+  });
+  
 
 /**
  *  Test for LEAF 4716 verifying the following:
@@ -520,7 +510,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
 
 
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
     await page.locator(`//button[@id='btn_listActionType']`).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
     await page.getByLabel('Action *Required').fill('Reply');
@@ -531,7 +520,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     // Add a final custom action 'Backlog' 
 
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
 
 
     await page.locator(`//button[@id='btn_listActionType']`).click();
