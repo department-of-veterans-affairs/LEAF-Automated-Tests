@@ -40,6 +40,7 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
   const questionText = "Test Question Name";
   const requestTitle = "Tested Request Title";
   const userInputAnswer = "Tested Answer automation";
+
   // Utility Function
   async function selectAdminMenuOption(optionName: string) {
     const allOptions = await adminMenuOptions.allInnerTexts();
@@ -50,90 +51,101 @@ test("Verify Request Appears in Inbox After Submission", async function ({ page 
       throw new Error(`Option "${optionName}" not found.`);
     }
   }
+
   // Step 1: Navigate to the admin portal
   await page.goto(adminPortalURL);
+
   // Step 2: Open Form Editor
   await selectAdminMenuOption("Form Editor");
-  await page.waitForResponse((response) => {
-    return (
-      response
-        .url()
-        .includes("https://host.docker.internal/Test_Request_Portal/api/formStack/categoryList/allWithStaples") &&
-      response.status() === 200
-    );
-  });
+  await page.waitForResponse((res) =>
+    res.url().includes("/api/formStack/categoryList/allWithStaples") && res.status() === 200
+  );
+
   // Step 3: Click on Create Form
   await createFormButton.click();
   await formNameInput.waitFor({ state: "visible" });
+
   // Step 4: Enter Form Name and Description
   await formNameInput.fill(formTitle);
   await formDescriptionTextarea.fill(formDesc);
+
   // Step 5: Save the Form
   await saveButton.click();
-  await page.waitForResponse((response) => {
-    return (
-      response
-        .url()
-        .includes("https://host.docker.internal/Test_Request_Portal/api/formEditor/new") &&
-      response.status() === 200
-    );
-  });
+  await page.waitForResponse((res) =>
+    res.url().includes("/api/formEditor/new") && res.status() === 200
+  );
   await savedFormNameInput.waitFor({ state: "visible" });
+
   // Step 6: Verify Form Saved Correctly
   expect(await savedFormNameInput.inputValue()).toBe(formTitle);
   expect(await savedFormDescriptionTextarea.inputValue()).toBe(formDesc);
-  console.info("Form Created Successfully");
+
   // Step 7: Set Workflow and Status
   await workflowDropdown.selectOption("1");
   await statusDropdown.selectOption("1");
+
   // Step 8: Add Section
   await addSectionButton.click();
   await sectionHeadingTextarea.fill(sectionTitle);
   await saveButton.click();
+
   // Step 9: Add Question to Section
   await addQuestionButton.click();
   await questionNameTextarea.fill(questionText);
   await formatTypeDropdown.selectOption("text");
   await saveButton.click();
+
   // Step 10: Submit a New Request
   await homepageLink.click();
   await newRequestButton.waitFor({ state: "visible" });
-  await newRequestButton.click({ force: true });
+  await newRequestButton.click();
   await serviceDropdown.click();
   await serviceOption.click();
   await requestTitleInput.fill(requestTitle);
-  await formListCheckboxes.first().waitFor({ state: "visible" });
+
+  await formListCheckboxes.first().waitFor({ state: "visible", timeout: 10000 });
+
+  const checkboxCount = await formListCheckboxes.count();
+  if (checkboxCount === 0) {
+    throw new Error("No form checkboxes found — form list failed to render.");
+  }
+  
+
   const availableForms = await formListCheckboxes.allInnerTexts();
-  let expectedFormLabel = `${formTitle}  (${formDesc})`.normalize().replace(/\s+/g, ' ').trim();
-  const cleanedFormLabels = availableForms.map(item => item.normalize().replace(/\s+/g, ' ').trim());
+  const expectedFormLabel = `${formTitle}  (${formDesc})`.toLowerCase().replace(/\s+/g, ' ').trim();
+  const cleanedFormLabels = availableForms.map(item =>
+    item.toLowerCase().replace(/\s+/g, ' ').trim()
+  );
+  
+
   const formIndex = cleanedFormLabels.indexOf(expectedFormLabel);
   if (formIndex !== -1) {
     await formListCheckboxes.nth(formIndex).click();
     await submitRequestButton.click();
   } else {
     throw new Error(`Form "${expectedFormLabel}" is NOT present in the list.`);
-    
   }
+
   await answerInputBox.fill(userInputAnswer);
   await nextQuestionButton.click();
   await finalSubmitRequestButton.click();
   console.info("Request has been Submitted Successfully");
+
   // Step 11: Verify Request in Inbox
   await goToHomepageButton.click();
   await inboxButton.click();
   await adminViewButton.click();
   await inboxHeaderText.click();
+
   const inboxRequests = await activeRequestsList.allInnerTexts();
   const requestIndex = inboxRequests.indexOf(formTitle);
   if (requestIndex !== -1) {
     console.info(`Form "${formTitle}" is present in the inbox`);
-    console.info(`Verified Request Appears in Inbox After Submission`);
-
   } else {
     throw new Error(`Form "${formTitle}" is NOT present in the inbox.`);
-    
   }
 });
+
 test("Verify Request is Removed from Inbox After Form Deletion", async function ({
   page,
 }) {

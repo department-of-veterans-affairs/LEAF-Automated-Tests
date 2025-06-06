@@ -238,22 +238,45 @@ test('Negative Currency Allowed in New Request', async () => {
  *  Verify that a negative amount is allowed for currency
  *  when editing a request
  */
-test("Negative Currency Allowed When Editing a Request", async () => {
+// test("Negative Currency Allowed When Editing a Request", async () => {
     
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
-    await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
-    await page.getByLabel('currency').click();
-    await page.getByLabel('currency').click();
+//     await page.goto('https://host.docker.internal/Test_Request_Portal/');
+//     await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+//     await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
+//     await page.getByLabel('currency').click();
+//     await page.getByLabel('currency').click();
 
-    // Change the currency amount to -50
-    await page.getByLabel('currency').fill('-50');
+//     // Change the currency amount to -50
+//     await page.getByLabel('currency').fill('-50');
 
-    // Save the changes and verify the amount has changed to -50
-    await page.getByRole('button', { name: 'Save Change' }).click();
-    await expect(page.locator('#data_37_1')).toContainText('-$50.00');
-})
- 
+//     // Save the changes and verify the amount has changed to -50
+//     await page.getByRole('button', { name: 'Save Change' }).click();
+//     await expect(page.locator('#data_37_1')).toContainText('-$50.00');
+// })
+test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+
+  const recordLink = page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' });
+  await recordLink.waitFor({ state: 'visible', timeout: 10000 });
+  await recordLink.click();
+
+  const editButton = page.getByRole('button', { name: 'Edit Basic input types field' });
+  await editButton.waitFor({ state: 'visible', timeout: 10000 });
+  await editButton.click();
+
+  const currencyInput = page.getByLabel('currency');
+  await currencyInput.waitFor({ state: 'visible', timeout: 10000 });
+  await currencyInput.click();
+  await currencyInput.fill('-50');
+
+  const saveButton = page.getByRole('button', { name: 'Save Change' });
+  await saveButton.waitFor({ state: 'visible', timeout: 10000 });
+  await saveButton.click();
+
+  const updatedField = page.locator('#data_37_1');
+  await expect(updatedField).toHaveText('-$50.00', { timeout: 10000 });
+});
+
 /**
  *    Set of tests which do the following:
  *    1. Create a request with the "Multiple Person Designated" form
