@@ -26,12 +26,13 @@ test('Comment approval functionality and comment visibility on record page', asy
   await page.reload();
   await page.waitForLoadState();
 
-  await page.waitForSelector('div[style*="font-weight: normal"][style*="padding-left: 16px"]');
-
-  const comment = await page.$eval(
-    'div[style*="font-weight: normal"][style*="padding-left: 16px"]',
-    el => el.textContent?.trim() || ''
+  const response = await page.waitForResponse(res =>
+    res.url().includes(`Test_Request_Portal/api/formWorkflow/${UID}/lastActionSummary?`) &&
+    res.status() === 200
   );
+
+  const responseBody = await response.json();
+  let comment =responseBody.lastAction?.comment;
 
   console.info(`💬 Comment found on record page: "${comment}"`);
   expect(comment).toContain('testing purpose');
