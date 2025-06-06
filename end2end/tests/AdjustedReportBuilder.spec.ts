@@ -20,6 +20,10 @@ test('Comment approval functionality and comment visibility on record page', asy
   const approveButton = page.getByRole('button', { name: 'Approve' }).nth(0);
   await approveButton.waitFor();
   await approveButton.click();
+  await page.waitForResponse(res =>
+    res.url().includes(`Test_Request_Portal/api/form/${UID}`) &&
+    res.status() === 200
+  );
 
   console.info(`🧾 Submitted approval for UID: ${UID}. Navigating to record page...`);
   await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
