@@ -131,7 +131,7 @@ test('Add Subordinate', async ({ page}, testInfo ) => {
 
   // Click "Add Subordinate"
   // const addSubBtn = page.getByRole('button', { name: 'Add Subordinate' });
-  const addSubBtn = page.locator(`body > main:nth-child(3) > div:nth-child(2) > div:nth-child(1) > div:nth-child(9) > div:nth-child(3) > div:nth-child(2) > button:nth-child(2)`);
+  const addSubBtn = page.locator(`button[onclick="addSubordinate(3)"]`);
   await expect(addSubBtn).toBeVisible();
   await addSubBtn.click();
 
