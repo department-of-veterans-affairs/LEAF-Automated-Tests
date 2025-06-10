@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('Save Body Contents using Ctrl+S', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email&file=CustomEvent_event_valid_edited_body.tpl&name=test+edited+event+description&subjectFile=CustomEvent_event_valid_edited_subject.tpl&emailToFile=CustomEvent_event_valid_edited_emailTo.tpl&emailCcFile=CustomEvent_event_valid_edited_emailCc.tpl');
-  await page.getByText('The following request requires your review. Please review your inbox at: {{$').fill('');
+  await page.locator('.trumbowyg-editor').fill('');
   await expect(page.getByRole('button', { name: 'Restore Original' })).not.toBeVisible();
   await page.locator('.trumbowyg-editor').click();
   await page.locator('.trumbowyg-editor').fill('Testing 123');
@@ -17,7 +17,7 @@ test('Save Body Contents using Ctrl+S', async ({ page }) => {
 test('Add Variable Using Dropdown', async ({ page }) => {
  
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email&file=CustomEvent_event_valid_edited_body.tpl&name=test+edited+event+description&subjectFile=CustomEvent_event_valid_edited_subject.tpl&emailToFile=CustomEvent_event_valid_edited_emailTo.tpl&emailCcFile=CustomEvent_event_valid_edited_emailCc.tpl');
-  await page.getByText('The following request requires your review. Please review your inbox at: {{$').fill('');
+  await page.locator('.trumbowyg-editor').fill('');
   await page.getByRole('button', { name: 'Variables' }).click();
   await page.getByRole('button', { name: 'formType' }).click();
   await expect(page.locator('#codeContainer')).toContainText('{{$formType}}');
@@ -28,7 +28,7 @@ test('Add Variable Using Dropdown', async ({ page }) => {
 
 test('Receive Error Message When Variable Format is Incorrect', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email&file=CustomEvent_event_valid_edited_body.tpl&name=test+edited+event+description&subjectFile=CustomEvent_event_valid_edited_subject.tpl&emailToFile=CustomEvent_event_valid_edited_emailTo.tpl&emailCcFile=CustomEvent_event_valid_edited_emailCc.tpl');
-  await page.getByText('The following request requires your review. Please review your inbox at: {{$').fill('');
+  await page.locator('.trumbowyg-editor').fill('');
   await page.locator('.trumbowyg-editor').click();
   await page.locator('.trumbowyg-editor').fill('{{formType}}');
   await page.getByRole('button', { name: 'Save Changes' }).click();
@@ -59,7 +59,6 @@ test('Email Templates Listed Alphabetically', async ({ page }) => {
   await expect(await standardListHeader.innerText()).toEqual("Standard Events");
 
   const standardListLocator = await page.locator('//*[@id="fileList"]/ul[2]');
-  //console.log(await standardListLocator.innerHTML());
 
   const standardListItems = await standardListLocator.locator('li > div > a').allTextContents();
   const standardLowerCaseList = standardListItems.map(el => el.toLowerCase());
