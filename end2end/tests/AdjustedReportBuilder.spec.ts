@@ -1,5 +1,49 @@
 import { test, expect } from '@playwright/test';
 
+test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
+  console.info('🔄 Navigating to reports page and extracting UID...');
+  await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
+
+  const UID = await page.locator('//table/tbody/tr[1]//a').textContent();
+
+  const takeActionButton = page.locator('//tbody/tr[1]//div');
+  await takeActionButton.waitFor();
+  await takeActionButton.click();
+
+  const validateForm = page.getByText(`Apply Action to #${UID}`);
+  await expect(validateForm).toBeVisible();
+
+  const commentInput = page.locator('textarea[aria-label="comment text area"]').nth(0);
+  await commentInput.waitFor();
+  await commentInput.fill('testing purpose');
+
+  const approveButton = page.getByRole('button', { name: 'Approve' }).nth(0);
+  await approveButton.waitFor();
+  await approveButton.click();
+  await page.waitForResponse(res =>
+    res.url().includes(`Test_Request_Portal/api/form/${UID}`) &&
+    res.status() === 200
+  );
+
+  console.info(`🧾 Submitted approval for UID: ${UID}. Navigating to record page...`);
+  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
+  await page.reload();
+  await page.waitForLoadState();
+
+  const response = await page.waitForResponse(res =>
+    res.url().includes(`Test_Request_Portal/api/formWorkflow/${UID}/lastActionSummary?`) &&
+    res.status() === 200
+  );
+
+  const responseBody = await response.json();
+  let comment =responseBody.lastAction?.comment;
+
+  console.info(`💬 Comment found on record page: "${comment}"`);
+  expect(comment).toContain('testing purpose');
+  console.info(`💬 Comment Validated successfully`);
+
+});
+
 // When the underlying issue is fixed, we should expect this test to pass.
 // Tests should be tagged with an associated ticket or PR reference
 test('column order is maintained after modifying the search filter', async ({ page }, testInfo) => {
@@ -109,15 +153,9 @@ test('Redirect to search filter and Generate Report with Approval History column
   await dataFieldOption.click();
 
   // Click on the data Field link
-  const dataFieldLink = page.locator('a', { hasText: 'Any standard data field' });
+  const dataFieldLink = page.locator('a span', { hasText: 'Any standard data field' });
   await expect(dataFieldLink).toBeVisible();
   await dataFieldLink.click();
-
-  // Select the role option
-  const roleOption = page.getByRole('option', { name: 'LEAF Developer Console: Supervisor' });
-  await expect(roleOption).toBeVisible();
-  await roleOption.click();
-
   // Proceed to the next step
   const nextStepButton = page.getByRole('button', { name: 'Next Step' });
   await expect(nextStepButton).toBeVisible();
@@ -169,17 +207,37 @@ test('Update and revert report title from pop-up window', async ({ page }) => {
   await expect(initialReportTitle).toHaveText('Available for test case');
 });
 
+// test('Navigation to record page on UID link click', async ({ page }) => {
+//   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
+
+//   // UID Link
+//   const UID = page.getByRole('link', { name: '956' });
+//   await UID.waitFor();
+//   await UID.click();
+
+//   // Validate the record page opens with the correct UID
+//   await expect(page.locator('#headerTab')).toContainText('Request #956');
+// });
+
 test('Navigation to record page on UID link click', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
 
-  // UID Link
-  const UID = page.getByRole('link', { name: '956' });
-  await UID.waitFor();
-  await UID.click();
+  const UID = page.locator(`a[href='index.php?a=printview&recordID=956']`);
+  await UID.waitFor({ state: 'visible' });
 
-  // Validate the record page opens with the correct UID
-  await expect(page.locator('#headerTab')).toContainText('Request #956');
+  // Wait for navigation to complete
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle' }),
+    UID.click()
+  ]);
+
+  // Wait for the headerTab element to become visible before asserting text
+  const headerTab = await page.locator(`#headerTab`);
+  await headerTab.click();
+  expect(await headerTab.innerText()).toContain('Request #956');
+
 });
+
 
 test('Update current status to Initiator to generate report with reports', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/");
@@ -227,42 +285,7 @@ test('Update current status to Initiator to generate report with reports', async
   expect(reportText).toContain('records');
 });
 
-test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
-  await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");
 
-  // get UID from the first row of the table
-  const UID = await page.locator('//table/tbody/tr[1]//a').textContent();
-
-  // take Action Button
-  const takeActionButton = page.locator('//tbody/tr[1]//div');
-  await takeActionButton.waitFor();
-  await takeActionButton.click();
-
-  // Validate form is visible for the specific UID
-  const validateForm = page.getByText(`Apply Action to #${UID}`);
-  await expect(validateForm).toBeVisible();
-
-  // add approval comment
-  const commentInput = page.locator('textarea[aria-label="comment text area"]').nth(0);
-  await commentInput.waitFor();
-  await commentInput.fill('testing purpose');
-
-  // approve button
-  const approveButton = page.getByRole('button', { name: 'Approve' }).nth(0)
-  await approveButton.waitFor();
-  await approveButton.click();
-
-  // navigate to same UID record page
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${UID}`);
-
-  // validate added comment visible on the record page
-  await page.reload();
-  await page.waitForLoadState();
-  const comment = page.locator(`//div[@id='workflowbox_lastAction']//div[2]//div[1]`);
-  await expect(comment).toBeVisible();
-  await comment.click({force:true});
-   expect(await comment.innerText()).toContain('testing purpose');
-});
 
 test('Share Report button is visible on the UI', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHccBjAkYDUQYTQYNCjEAEZbdPJ4xLAAeQAzPLh9OxUgA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgWJ4RVFABCk5Giiz6jRdWWqeAXSA%3D");

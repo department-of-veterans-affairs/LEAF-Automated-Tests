@@ -300,4 +300,3 @@ await page.locator('#indicator_selector').selectOption(ddOptions);
   await testInfo.attach('rptBld', { body: rptBld, contentType: 'image/png' });
   
 });
-
