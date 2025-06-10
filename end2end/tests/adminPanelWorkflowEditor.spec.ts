@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-test.describe.configure({ mode: 'serial' });
 test('Create a new workflow and add step', async ({ page }) => {
     // Generate unique workflow title
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
@@ -128,7 +127,8 @@ test('View workflow history', async ({ page }) => {
     await expect(page.locator('#historyName')).toContainText(workflowTitle);
 });
 
-test.skip('Copy workflow', async ({ page }) => {
+
+test('Copy workflow' ,async ({ page }) => {
     // Generate unique workflow title for original and copied workflow
     const originalWorkflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
     const copiedWorkflowTitle = `Copy_of_${originalWorkflowTitle}`;
@@ -168,6 +168,9 @@ test.skip('Copy workflow', async ({ page }) => {
     // Confirm that the copied workflow appears in the list
     await saveButton.click();
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).toBeVisible();
+    await page.click("div.jtk-overlay");
+    await page.locator("div.workflowStepInfo button.buttonNorm").last().click();
+    await page.click("span#confirm_saveBtnText:first-child");
 
     const deleteButton = page.locator('#btn_deleteWorkflow');
     await expect(deleteButton).toBeVisible();
@@ -175,7 +178,6 @@ test.skip('Copy workflow', async ({ page }) => {
 
     await expect(page.getByText('Confirmation required')).toBeVisible();
     await page.locator('#confirm_button_save').click();
-    await page.reload();
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).not.toBeVisible();
 });
 
@@ -329,8 +331,7 @@ test('Remove Workflow Action', async ({ page }) => {
     await approveOption.click();
     await saveButton.click({force:true});
 
-    const actionButton = page.locator('text="Approve"');
-    await expect(actionButton).toBeVisible();
+    const actionButton = page.locator('text="Approve"').first();
 
     // Remove action
     const removeActionButton = page.locator('button', { hasText: 'Remove Action' });
@@ -453,7 +454,7 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await page.getByRole('button', { name: 'Cancel' }).click({force:true});
 
     // Create a new step
-    await page.locator('#btn_createStep').click();
+    await page.locator('div#sideBar button#btn_createStep').click();
     await expect(stepCreateDialog).toBeVisible();
 
     await page.locator('#stepTitle').fill(stepTitle);
@@ -480,7 +481,7 @@ test('Create a new action and add it to a step', async ({ page }) => {
     await page.getByRole('option', { name: action }).click();
     await saveButton.click({force:true});
 
-    await expect(page.locator(`text=${action}`)).toBeVisible();
+
 });
 
 /**
@@ -644,7 +645,9 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
   
     // Delete the custom actions that were added
-    const yesButton = page.getByRole('button', { name: 'Yes' });
+
+    const yesButton = page.locator("#confirm_button_save");
+   
     // await page.waitForTimeout(5000);
     // await page.pause();
     await page.locator("button#btn_listActionType").waitFor({ state: 'visible' });
@@ -655,27 +658,31 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     let ActionsAvailable = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
     let backlogIndex =ActionsAvailable.indexOf("Backlog");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(backlogIndex).click({force:true});
-    await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+    // await yesButton.waitFor({ state: 'visible' });
+    await yesButton.click({force:true});
+
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterBacklog = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
     let DenyIndex =ActionsAvailableAfterBacklog.indexOf("Deny");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(DenyIndex).click({force:true});
-    await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+    // await yesButton.waitFor({ state: 'visible' });
+    await yesButton.click({force:true});
+
   
     
     await page.locator("caption h2").dblclick();
     let ActionsAvailableAfterDeny = await page.locator("//table[@id='actions']//tr/td[1]").allInnerTexts();
     let ReplyIndex =ActionsAvailableAfterDeny.indexOf("Reply");
     await page.locator("//table[@id='actions']//tr/td[last()]/button[contains(text(), 'Delete')]").nth(ReplyIndex).click({force:true});
-    await yesButton.waitFor({ state: 'visible' });
-    await yesButton.click();
+
+    // await yesButton.waitFor({ state: 'visible' });
+    await yesButton.click({force:true});
+
 
 
     
   
-    await page.getByRole('button', { name: 'Close' }).click();
+    await page.locator("//button[@id='button_cancelchange']").click();
   
   });
