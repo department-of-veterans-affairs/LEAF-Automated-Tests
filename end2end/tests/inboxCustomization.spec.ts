@@ -12,9 +12,11 @@ let siteMapURL = 'https://host.docker.internal/Test_Request_Portal/';
 let siteMapColor = '#5d1adb';
 let siteMapFontColor = '#e2db08';
 let serviceRequest ='LEAF 4832 - Request';
+let serviceRequest2 ='LEAF 4832 - Request2';
 let stapledRequest = 'LEAF 4832 - Stapled Request';
 let stapleName = 'Test IFTHEN staple | Multiple person designated';
 let requestId;
+let requestId2
 let stapledRequestId;
 
 
@@ -328,34 +330,64 @@ test('View Request in Inbox', async ({ page }, testInfo) => {
 });
 
 //Verify custom form columns should show if there is only one form type in the section.
-test('Verify Role View Custom Column not Present', async ({ page }, testInfo) => {
+test('Create Multiple Form with User with multiple Forms', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
+ //Start a new Multiple person designated
+  await page.getByText('New Request Start a new').click();
 
- //Select the request
-  await expect(page.getByRole('link', { name: serviceRequest})).toBeVisible();
-  await page.getByRole('link', { name: serviceRequest }).click();
+  //Enter data needed to create Request
+  await expect(page.getByRole('heading', { name: 'Step 1 - General Information' })).toBeVisible();
+  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
+  await page.getByRole('option', { name: 'AS - Service' }).click();
+  await page.getByText('Please enter keywords to').click();
+  await page.getByRole('textbox', { name: 'Title of Request' }).click();
+  await page.getByRole('textbox', { name: 'Title of Request' }).fill(serviceRequest2);
+  await page.locator('label').filter({ hasText: 'Multiple person designated' }).locator('span').click();
 
-  //Update Request
-  await expect(page.getByRole('button', { name: 'Edit Reviewer 1 field' })).toBeVisible();
-  await page.getByRole('button', { name: 'Edit Reviewer 1 field' }).click();
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).clear();
+  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+
+  //Enter the Reviewer Information
+  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+
+
+  //Get UID
+  requestId2 = await page.textContent('#headerTab');
+  console.log('Text inside span:', requestId2);
+  let str: string = requestId2;
+  let parts = str.split("#", 2);
+  let firstPart = parts[0];
+  let secondPart = parts[1];
+  console.log(firstPart, secondPart);
+  requestId2 =secondPart;
+
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('test');
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('test');
+  await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
 
-    await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
+  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
+  await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
 
- // await expect(page.getByText('NameLocationContact Tester,')).toBeVisible();
+ //Screenshot
+   const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
-  //Save updated Request
-  await expect(page.getByRole('button', { name: 'Save Change' })).toBeVisible();
-  await page.getByRole('button', { name: 'Save Change' }).click();
-
-  //Return to the homepage
-  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+  await expect(page.locator('#nextQuestion2')).toBeVisible();
+  await page.locator('#nextQuestion2').click({force:true});
+  
+  
+  //Submit Request
+  await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
+  await page.getByRole('button', { name: 'Submit Request' }).click({force:true});
   await page.getByRole('link', { name: 'Home' }).click();
+});
 
+test ('Validate Role View Custom Column not Present', async ({ page }, testInfo) => {
+
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+ 
   //Go to the Custom Inbox
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox').click();
@@ -375,12 +407,9 @@ test('Verify Role View Custom Column not Present', async ({ page }, testInfo) =>
   
  // NEED to add the form field await expect(page.getByRole('cell', { name: serviceRequest })).toBeVisible();
 
-    await expect(page.getByLabel('LEAF 4832 - Request')).toMatchAriaSnapshot(`
-    - cell /LEAF \\d+ - Request/:
-      - link /LEAF \\d+ - Request/
-      - button "Quick View"
-    `);
-  
+   await expect(page.getByRole('cell', { name: requestId2 })).toBeVisible();
+   await expect(page.getByRole('columnheader', { name: 'Sort by Reviewer' })).not.toBeVisible();
+
   // await expect(page.getByRole('cell', { name: 'Tester Tester' })).not.toBeVisible();
 
   //Screenshot
@@ -490,9 +519,11 @@ test('View Stapled Request', async ({ page }, testInfo) => {
   //Verify Stapled 
   const formTxt = 'LeafFormGrid';
   const formRegex =new RegExp('^${formTxt}.*')
+  const dynTxt = 'Adan Wolf View';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
 
-  await expect(page.getByRole('button', { name: 'Adan Wolf View 1 requests' })).toBeVisible();
-  await page.getByRole('button', { name: 'Adan Wolf View 1 requests' }).click();
+  await expect(page.getByRole('button', { name: dynRegex })).toBeVisible();
+  await page.getByRole('button', { name: dynRegex}).click();
  // await expect(page.locator('#LeafFormGrid805_970_type')).toContainText(stapleName);
   await expect(page.getByRole('cell', { name: stapleName })).toBeVisible();
 
@@ -531,6 +562,29 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
 
 });
 
+//Cleanup Remove Request2
+
+test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
+
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  
+ await expect(page.getByText('Inbox Review and apply')).toBeVisible();
+
+  //Find Request
+  await page.getByRole('link', {name: requestId2}).click();
+  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+
+  //Verify you want to Cancel Request
+
+  await page.getByRole('dialog').getByText('Editor Close').click();
+  await page.getByRole('textbox', { name: 'Enter Comment' }).click();
+  await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes' }).click();
+
+});
+
 //Cleanup Stapled Request
 
 test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
@@ -553,6 +607,8 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Yes' }).click();
 
 });
+
+
 
 //Removed Stapled Forms
 test('Remove Stapled Forms', async ({ page }, testInfo) => {
