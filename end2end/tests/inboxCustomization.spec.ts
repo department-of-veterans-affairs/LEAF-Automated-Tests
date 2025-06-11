@@ -4,24 +4,31 @@ import { test, expect } from '@playwright/test';
 test.describe.configure({ mode: 'serial' });
 
 //Global Variables
-let siteMapname = 'LEAF 4832 - Customization';
+let randNum = Math.random();
+let siteMapname = `LEAF 4832 - Customization`;
 let siteMapDesc = 'Testing for LEAF 4823 Customization';
+let leafSiteCard = 'LEAF 4832 - CustomizationTesting for LEAF 4823 Customization';
 let siteMapURL = 'https://host.docker.internal/Test_Request_Portal/';
 let siteMapColor = '#5d1adb';
 let siteMapFontColor = '#e2db08';
 let serviceRequest ='LEAF 4832 - Request';
 let stapledRequest = 'LEAF 4832 - Stapled Request';
 let stapleName = 'Test IFTHEN staple | Multiple person designated';
+let requestId;
+let stapledRequestId;
 
 
 
 //Create Sitemap Card
 test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  
   await page.getByRole('link', { name: 'Admin Panel' }).click();
   await page.getByRole('button', { name: ' Sitemap Editor Edit portal' }).click();
 
   await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
+
+  //Style the Sitemap
   await page.getByRole('button', { name: '+ Add Site' }).click();
   await page.locator('#button-title').click();
   await page.locator('#button-title').fill(siteMapname);
@@ -39,7 +46,7 @@ test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Save Change' }).click();
 
   //Verify the customized card is present
-  await expect(page.getByText('LEAF 4832 - CustomizationTesting for LEAF 4823 Customization')).toBeVisible();
+  await expect(page.getByText(leafSiteCard)).toBeVisible();
  
   //Screenshot
   const screenshot = await page.screenshot();
@@ -57,8 +64,8 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
   await page.getByText('Inbox Review and apply').click();
 
   //Verify the customization is present 
-  await expect(page.locator('#inbox').getByText('LEAF 4832 - Customization')).toBeVisible();
-  await expect(page.locator('#indexSites')).toContainText('LEAF 4832 - Customization');
+  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
 
 
   //Verify display based on View
@@ -85,11 +92,15 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
    //Role View
    await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  await page.getByRole('button', { name: 'Toggle sections' }).click();
-    const uidColrole = page.locator('text=UID').nth(0);
+
+  const dynTxt = 'Tester Tester View';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
+  await page.getByRole('button', { name: dynRegex}).click();
+
+  const uidColrole = page.locator('text=UID').nth(0);
   expect(await uidColrole.isVisible()).toBeTruthy();
 
-  const serviceColrole = page.locator('text=Service').nth(1);
+  const serviceColrole = page.locator('text=Service').nth(2);
   expect(await serviceColrole.isVisible).toBeTruthy();
 
   const titleColrole = page.locator('text=Title').nth(0);
@@ -110,7 +121,7 @@ test('Customized Column Display', async ({ page }, testInfo) => {
   await page.getByRole('link', { name: 'Admin Panel' }).click();
   await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
   await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
-  await expect(page.getByText('LEAF 4832 - Customization', { exact: true })).toBeVisible();
+  await expect(page.getByText(siteMapname, { exact: true })).toBeVisible();
 
  //Add Customization
   await page.getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('p');
@@ -125,14 +136,15 @@ test('Customized Column Display', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
 
-  await expect(page.getByRole('button', { name: 'Toggle sections' })).toBeVisible();
-  await page.getByRole('button', { name: 'Toggle sections' }).click();
+  const dynTxt = 'Tester Tester View';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
+  await page.getByRole('button', { name: dynRegex}).click();
 
   //Verify Role Customization
   const uidColrole = page.locator('text=UID').nth(0);
   expect(await uidColrole.isVisible()).toBeTruthy();
 
-  const serviceColrole = page.locator('text=Service').nth(1);
+  const serviceColrole = page.locator('text=Service').nth(2);
   expect(await serviceColrole.isVisible).toBeTruthy();
 
   const titleColrole = page.locator('text=Title').nth(0);
@@ -153,7 +165,10 @@ test('Customized Column Display', async ({ page }, testInfo) => {
 
  //Form View
   await page.getByRole('button', { name: 'Organize by Forms' }).click();
-  await page.getByRole('button', { name: 'Toggle sections' }).click();
+ 
+  const dynTxt2 = 'Complex Form';
+  const dynRegex2 = new RegExp(`^${dynTxt2}.*`);
+  await page.getByRole('button', { name: dynRegex2}).click();
   
   //Complex Form View
   const uidCol = page.locator('text=UID').nth(0);
@@ -242,11 +257,22 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
   //Enter the Reviewer Information
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
+  //Get UID
+  requestId = await page.textContent('#headerTab');
+  console.log('Text inside span:', requestId);
+  let str: string = requestId;
+  let parts = str.split("#", 2);
+  let firstPart = parts[0];
+  let secondPart = parts[1];
+  console.log(firstPart, secondPart);
+  requestId =secondPart;
+  
+
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
 
-    await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
+  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
 
@@ -272,24 +298,32 @@ test('View Request in Inbox', async ({ page }, testInfo) => {
 
   await page.getByText('Review and apply actions to').click();
 
-  await expect(page.locator('#inbox').getByText('LEAF 4832 - Customization')).toBeVisible();
+  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
   await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
   
 
  // await page.getByRole('button', {name:'Multiple person designated'}).click();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
   await page.getByRole('button', { name: 'View as Admin' }).click();
-  await page.getByRole('button', { name: 'Adan Wolf View 1 requests' }).click();
+
+  const dynTxt = 'Adan Wolf View ';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
+  await page.getByRole('button', { name: dynRegex}).click();
+ 
 
  //Verify Text
  
-  await expect(page.getByRole('cell', { name: 'Multiple person designated' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'LEAF 4832 - Request' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: requestId })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Adan Wolf' })).toBeVisible();
+  const typeColrole = page.locator('text=Type').nth(1);
+  expect(await typeColrole.isVisible).toBeTruthy();
+
   
    //Screenshot
    const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+  
 
 });
 
@@ -485,7 +519,7 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
   //Find Request
-  await page.getByRole('link', {name: serviceRequest}).click();
+  await page.getByRole('link', {name: requestId}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
 
