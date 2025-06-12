@@ -291,6 +291,7 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
 
+ // await expect(page.getByText('* Required')).not.toBeVisible();
  //Screenshot
    const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
