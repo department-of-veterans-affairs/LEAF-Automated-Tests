@@ -286,15 +286,24 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+
 
  // await expect(page.getByText('* Required')).not.toBeVisible();
  //Screenshot
    const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+    await expect(page.getByText('1. Reviewer')).toBeVisible();
+  await page.getByText('1. Reviewer').click();
+  await expect(page.locator('#save_indicator')).toBeVisible();
+  await page.locator('#save_indicator').click();
+
 
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
