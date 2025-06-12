@@ -5723,6 +5723,7 @@ CREATE TABLE `indicators` (
   `timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `disabled` int unsigned NOT NULL DEFAULT '0',
   `is_sensitive` tinyint NOT NULL DEFAULT '0',
+  `trackChanges` tinyint NOT NULL DEFAULT '1',
   PRIMARY KEY (`indicatorID`),
   KEY `categoryID` (`categoryID`),
   KEY `parentID` (`parentID`),
