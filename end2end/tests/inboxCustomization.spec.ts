@@ -403,6 +403,11 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
    const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
+    await expect(page.getByText('1. Reviewer')).toBeVisible();
+  await page.getByText('1. Reviewer').click();
+  await expect(page.locator('#save_indicator')).toBeVisible();
+  await page.locator('#save_indicator').click();
+
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
   
@@ -474,7 +479,7 @@ test ('Create a Stapled Form', async ({ page }, testInfo) => {
   //Screenshot
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
- 
+
   await page.getByRole('link', { name: 'Home' }).click();
 
 });
@@ -499,7 +504,8 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
 
   //Enter information for multipledesginated form
-  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+    await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
+
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
@@ -512,12 +518,16 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
 
-  await expect(page.locator('#nextQuestion')).toBeVisible();
- 
  //Screenshot
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
+  await expect(page.getByText('1. Reviewer')).toBeVisible();
+  await page.getByText('1. Reviewer').click();
+  await expect(page.getByRole('button', { name: 'Previous Question' })).toBeVisible();
+ 
+  await expect(page.locator('#nextQuestion')).toBeVisible();
+ 
   const buttonClick = await page.getByRole('button', {name: 'Next Question'}).first();
   await buttonClick.click({force:true});
   
