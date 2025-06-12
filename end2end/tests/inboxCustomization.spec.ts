@@ -409,7 +409,7 @@ test ('Validate Role View Custom Column not Present', async ({ page }, testInfo)
   await page.getByText('Inbox').click();
 
   //Switch to Role View
-  await expect(page.getByRole('button', { name: 'Toggle sections' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
   
   //Select Tester
