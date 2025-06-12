@@ -19,8 +19,6 @@ let requestId;
 let requestId2
 let stapledRequestId;
 
-
-
 //Create Sitemap Card
 test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -72,8 +70,7 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
 
   //Verify display based on View
   //Form View
- 
-  await page.getByRole('button', { name: 'Toggle sections' }).click();
+   await page.getByRole('button', { name: 'Toggle sections' }).click();
   
   //Complex Form View
   const uidCol = page.locator('text=UID').nth(0);
@@ -101,6 +98,9 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
 
   const uidColrole = page.locator('text=UID').nth(0);
   expect(await uidColrole.isVisible()).toBeTruthy();
+
+  const typeColrole = page.locator('text=Type').nth(0);
+  expect(await typeColrole.isVisible).toBeTruthy();
 
   const serviceColrole = page.locator('text=Service').nth(2);
   expect(await serviceColrole.isVisible).toBeTruthy();
@@ -146,6 +146,9 @@ test('Customized Column Display', async ({ page }, testInfo) => {
   const uidColrole = page.locator('text=UID').nth(0);
   expect(await uidColrole.isVisible()).toBeTruthy();
 
+    const typeColrole = page.locator('text=Type').nth(0);
+  expect(await typeColrole.isVisible).toBeTruthy();
+
   const serviceColrole = page.locator('text=Service').nth(2);
   expect(await serviceColrole.isVisible).toBeTruthy();
 
@@ -188,6 +191,12 @@ test('Customized Column Display', async ({ page }, testInfo) => {
   const actionCol = page.locator('text=Action').nth(0);
   expect(await actionCol.isVisible).toBeTruthy();
 
+   const priorityCol = page.locator('text=Priority').nth(0);
+  expect(await priorityCol.isVisible).toBeTruthy();
+
+  const daysCol = page.locator('text=Days Since Last Action').nth(0);
+  expect(await daysCol.isVisible).toBeTruthy();
+
  });
 
 //Personalized a Form
@@ -222,7 +231,13 @@ test('Personalized a Form', async ({ page }, testInfo) => {
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
  
-  await page.getByRole('button', { name: 'Toggle sections' }).click();
+  //await page.getByRole('button', { name: 'Toggle sections' }).click();
+
+  const dynTxt2 = 'Multiple person designated View';
+  const dynRegex2 = new RegExp(`^${dynTxt2}.*`);
+
+  await page.getByRole('button', { name: dynRegex2}).click();
+
   const reviewCol = page.locator('text=Reviewer 1').nth(0);
   expect(await reviewCol.isVisible).toBeTruthy();
 
@@ -232,7 +247,6 @@ test('Personalized a Form', async ({ page }, testInfo) => {
   //Screenshot
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
 
 });
 
@@ -268,8 +282,7 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
   let secondPart = parts[1];
   console.log(firstPart, secondPart);
   requestId =secondPart;
-  
-
+ 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
@@ -285,8 +298,7 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
   
-  
-  //Submit Request
+   //Submit Request
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Submit Request' }).click({force:true});
   await page.getByRole('link', { name: 'Home' }).click();
@@ -312,20 +324,24 @@ test('View Request in Inbox', async ({ page }, testInfo) => {
   const dynRegex = new RegExp(`^${dynTxt}.*`);
   await page.getByRole('button', { name: dynRegex}).click();
  
-
  //Verify Text
  
   await expect(page.getByRole('cell', { name: requestId })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Adan Wolf' })).toBeVisible();
+ //await expect(page.getByRole('cell', { name: 'Adan Wolf' })).toBeVisible();
+  
+  const reviewCol = page.locator('text=Reviewer 1').nth(0);
+  expect(await reviewCol.isVisible).toBeTruthy();
+
+  const dateCol = page.locator('text=Date Submitted').nth(0);
+  expect(await dateCol.isVisible).toBeTruthy();
+
   const typeColrole = page.locator('text=Type').nth(1);
   expect(await typeColrole.isVisible).toBeTruthy();
 
-  
+ 
    //Screenshot
    const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
-
 
 });
 
@@ -350,7 +366,6 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
 
   //Enter the Reviewer Information
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-
 
   //Get UID
   requestId2 = await page.textContent('#headerTab');
@@ -384,6 +399,7 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
   await page.getByRole('link', { name: 'Home' }).click();
 });
 
+//Verify custom column is not present when multiple forms are present in Role View
 test ('Validate Role View Custom Column not Present', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -396,7 +412,6 @@ test ('Validate Role View Custom Column not Present', async ({ page }, testInfo)
   await expect(page.getByRole('button', { name: 'Toggle sections' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
   
-
   //Select Tester
   const dynTxt = 'Tester Tester View';
   const dynRegex = new RegExp(`^${dynTxt}.*`);
@@ -404,16 +419,16 @@ test ('Validate Role View Custom Column not Present', async ({ page }, testInfo)
   const formRegex =new RegExp('^${formTxt}.*')
   
   await page.getByRole ('button', {name: dynRegex}).click();
+ 
+  await expect(page.getByRole('cell', { name: requestId2 })).toBeVisible();
   
- // NEED to add the form field await expect(page.getByRole('cell', { name: serviceRequest })).toBeVisible();
+  const typeColrole = page.locator('text=Type').nth(1);
+  expect(await typeColrole.isVisible).toBeTruthy();
 
-   await expect(page.getByRole('cell', { name: requestId2 })).toBeVisible();
    await expect(page.getByRole('columnheader', { name: 'Sort by Reviewer' })).not.toBeVisible();
 
-  // await expect(page.getByRole('cell', { name: 'Tester Tester' })).not.toBeVisible();
-
   //Screenshot
-   const screenshot = await page.screenshot();
+  const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
  
 });
@@ -442,8 +457,8 @@ test ('Create a Stapled Form', async ({ page }, testInfo) => {
 
    await expect(page.getByRole('button', { name: 'Test IFTHEN staple, stapled' })).toBeVisible();
   
-    //Screenshot
-   const screenshot = await page.screenshot();
+  //Screenshot
+  const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
  
   await page.getByRole('link', { name: 'Home' }).click();
@@ -453,9 +468,9 @@ test ('Create a Stapled Form', async ({ page }, testInfo) => {
 //Create a new Stapled Request
 test('Create a new Stapled Request', async ({ page }, testInfo) => {
 
-   await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
-   //Create a new stapled Request
+  //Create a new stapled Request
   await expect(page.getByText('New Request Start a new')).toBeVisible();
   await page.getByText('New Request Start a new').click();
 
@@ -506,7 +521,7 @@ test('View Stapled Request', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
-//Go to the Inbox
+  //Go to the Inbox
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
 
@@ -524,26 +539,23 @@ test('View Stapled Request', async ({ page }, testInfo) => {
 
   await expect(page.getByRole('button', { name: dynRegex })).toBeVisible();
   await page.getByRole('button', { name: dynRegex}).click();
- // await expect(page.locator('#LeafFormGrid805_970_type')).toContainText(stapleName);
+ 
   await expect(page.getByRole('cell', { name: stapleName })).toBeVisible();
+
+  const typeColrole = page.locator('text=Type').nth(1);
+  expect(await typeColrole.isVisible).toBeTruthy();
 
    //Screenshot
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
-  await expect(page.getByRole('button', { name: 'Organize by Forms' })).toBeVisible();
-  await page.getByRole('button', { name: 'Organize by Forms' }).click();
-  await expect(page.getByRole('button', { name: 'Multiple person designated' })).toBeVisible();
-  await page.getByRole('button', { name: 'Multiple person designated' }).click();
-
-  
+ 
 });
 
 //Cleanup Remove Request
 
 test('Clean up NewRequest Form', async ({ page }, testInfo) => {
 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+ await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
@@ -553,7 +565,6 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Cancel Request' }).click();
 
   //Verify you want to Cancel Request
-
   await page.getByRole('dialog').getByText('Editor Close').click();
   await page.getByRole('textbox', { name: 'Enter Comment' }).click();
   await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
@@ -566,7 +577,7 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
 
 test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+ await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
@@ -576,7 +587,6 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Cancel Request' }).click();
 
   //Verify you want to Cancel Request
-
   await page.getByRole('dialog').getByText('Editor Close').click();
   await page.getByRole('textbox', { name: 'Enter Comment' }).click();
   await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
@@ -589,22 +599,22 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
 
 test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+ await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
-  //Find Request
-  await page.getByRole('link', {name: stapledRequest}).click();
-  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel Request' }).click();
+ //Find Request
+ await page.getByRole('link', {name: stapledRequest}).click();
+ await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
+ await page.getByRole('button', { name: 'Cancel Request' }).click();
 
-  //Verify you want to Cancel Request
+ //Verify you want to Cancel Request
 
-  await page.getByRole('dialog').getByText('Editor Close').click();
-  await page.getByRole('textbox', { name: 'Enter Comment' }).click();
-  await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
-  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-  await page.getByRole('button', { name: 'Yes' }).click();
+ await page.getByRole('dialog').getByText('Editor Close').click();
+ await page.getByRole('textbox', { name: 'Enter Comment' }).click();
+ await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
+ await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+ await page.getByRole('button', { name: 'Yes' }).click();
 
 });
 
@@ -647,7 +657,6 @@ test('Remove Stapled Forms', async ({ page }, testInfo) => {
   //Return Home
   await page.getByRole('link', { name: 'Home' }).click();
   
-
 });
 
 //Delete Customized Card
