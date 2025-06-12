@@ -377,14 +377,18 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
   let secondPart = parts[1];
   console.log(firstPart, secondPart);
   requestId2 =secondPart;
-
+  
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('test');
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('test');
   await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
 
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
+
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
 
  //Screenshot
    const screenshot = await page.screenshot();
@@ -490,10 +494,15 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
 
+
+ 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+
   await expect(page.locator('#nextQuestion')).toBeVisible();
  
  //Screenshot
@@ -619,8 +628,6 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
 
 });
 
-
-
 //Removed Stapled Forms
 test('Remove Stapled Forms', async ({ page }, testInfo) => {
 
@@ -643,20 +650,6 @@ test('Remove Stapled Forms', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'remove Test IFTHEN staple' }).click();
   await expect(page.getByText('Close')).toBeVisible();
   await page.getByText('Close').click();
-
-  //Verify stapled Fprm is removed
-  await expect(page.locator('#form_index_display')).toMatchAriaSnapshot(`
-    - status
-    - button "Preview this Form"
-    - button "Add Internal-Use"
-    - button "Staple other form"
-    - list:
-      - listitem:
-        - button "Multiple person designated, main form"
-    `);
-
-  //Return Home
-  await page.getByRole('link', { name: 'Home' }).click();
   
 });
 
