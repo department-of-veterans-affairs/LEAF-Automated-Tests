@@ -282,33 +282,57 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
   let secondPart = parts[1];
   console.log(firstPart, secondPart);
   requestId =secondPart;
+  let indicatorID;
+
+  const indicators = page.locator('[id^="loadingIndicator_"]');
  
+  const reviewer1Id = await indicators.nth(0).getAttribute('id');
+  const reviewer2Id = await indicators.nth(1).getAttribute('id');
+ 
+  console.log('Reviewer 1 ID:', reviewer1Id);
+  console.log('Reviewer 2 ID:', reviewer2Id);
+
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
+
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
+
+
+  const loadingInc = await page.locator(`#${reviewer2Id}`);
+  await expect(loadingInc).toBeVisible();
+  console.log('text', loadingInc);
+  await expect(loadingInc).not.toBeVisible();
+  //await page.locator(reviewer2Id).to
+
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
 
+ // const myLocator = page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' });
+//  myLocator.waitFor();
 
- // await expect(page.getByText('* Required')).not.toBeVisible();
+
+//await page.waitForSelector('searchbox', { name: 'Search for user to add as Reviewer 2' }).
+//console.log('Search results are visible!');/
+
  //Screenshot
-   const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+//   const screenshot = await page.screenshot();
+//  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
-    await expect(page.getByText('1. Reviewer')).toBeVisible();
-  await page.getByText('1. Reviewer').click();
-  await expect(page.locator('#save_indicator')).toBeVisible();
-  await page.locator('#save_indicator').click();
-
+ //await expect(page.getByText('*** Loading... ***',{ exact: true } )).toBeVisible();
+ //await expect(page.getByText('*** Loading... ***', { exact: true })).not.toBeVisible();
+  //await page.getByText('1. Reviewer').click();
+  //await expect(page.locator('#save_indicator')).toBeVisible();
+  //await page.locator('#save_indicator').click();
 
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
   
    //Submit Request
+   //await page.waitForSelector('#')
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Submit Request' }).click({force:true});
   await page.getByRole('link', { name: 'Home' }).click();
@@ -387,6 +411,15 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
   console.log(firstPart, secondPart);
   requestId2 =secondPart;
   
+  const indicators = page.locator('[id^="loadingIndicator_"]');
+ 
+  const reviewer1Id = await indicators.nth(0).getAttribute('id');
+  const reviewer2Id = await indicators.nth(1).getAttribute('id');
+ 
+  console.log('Reviewer 1 ID:', reviewer1Id);
+  console.log('Reviewer 2 ID:', reviewer2Id);
+
+
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('test');
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('test');
@@ -396,17 +429,22 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
 
+  const loadingInc = await page.locator(`#${reviewer2Id}`);
+  await expect(loadingInc).toBeVisible();
+  console.log('text', loadingInc);
+  await expect(loadingInc).not.toBeVisible();
+
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+
+  const myLocator = page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' });
+  myLocator.waitFor();
 
  //Screenshot
    const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
-    await expect(page.getByText('1. Reviewer')).toBeVisible();
-  await page.getByText('1. Reviewer').click();
-  await expect(page.locator('#save_indicator')).toBeVisible();
-  await page.locator('#save_indicator').click();
+
 
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
@@ -493,6 +531,8 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await expect(page.getByText('New Request Start a new')).toBeVisible();
   await page.getByText('New Request Start a new').click();
 
+
+
   //Enter the required information
   await expect(page.getByRole('cell', { name: 'Select an Option Service' }).locator('a')).toBeVisible();
   await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
@@ -506,6 +546,14 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   //Enter information for multipledesginated form
     await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
 
+        const indicators = page.locator('[id^="loadingIndicator_"]');
+ 
+  const reviewer1Id = await indicators.nth(0).getAttribute('id');
+  const reviewer2Id = await indicators.nth(1).getAttribute('id');
+ 
+  console.log('Reviewer 1 ID:', reviewer1Id);
+  console.log('Reviewer 2 ID:', reviewer2Id);
+
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
@@ -515,16 +563,25 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
  
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
+
+  const loadingInc = await page.locator(`#${reviewer2Id}`);
+  await expect(loadingInc).toBeVisible();
+  console.log('text', loadingInc);
+  await expect(loadingInc).not.toBeVisible();
+
   await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+
+    const myLocator = page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' });
+  myLocator.waitFor();
 
  //Screenshot
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
-  await expect(page.getByText('1. Reviewer')).toBeVisible();
-  await page.getByText('1. Reviewer').click();
-  await expect(page.getByRole('button', { name: 'Previous Question' })).toBeVisible();
+
+
+
  
   await expect(page.locator('#nextQuestion')).toBeVisible();
  
@@ -683,5 +740,9 @@ test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
   await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
   await page.getByRole('button', { name: 'Delete Site' }).click();
+
+     //Screenshot
+  const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
  });
