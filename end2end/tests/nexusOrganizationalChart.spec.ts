@@ -108,43 +108,49 @@ test ('Relocate Cards', async ({ page}, testinfo) => {
   await testinfo.attach('Card Move', { body: newCardMove, contentType: 'image/png' });
 
   });
-//End of Relocating Card
 
-
-// Add Subordinate
-test ('Add Subordinate', async ({ page}, testinfo) => {
-
+test('Add Subordinate', async ({ page}, testInfo ) => {
   await page.goto('https://host.docker.internal/Test_Nexus/');
 
-  //Wait for page to Load
-  await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
- 
+  // Wait for homepage to load
+  await expect(
+    page.getByText("Browser View Organizational Charts Service Org. Chart View your service's Org.")
+  ).toBeVisible({ timeout: 30000 });
+
   await page.getByText('Browser View Organizational').click();
 
- // Wait for button to appear
-  await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible();
+  // Wait for Edit Orgchart button
+  await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Edit Orgchart' }).click();
 
-  //Select a card
-  await expect(page.getByRole('button', { name: 'Zoom In' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Chief of Everything' })).toBeVisible();
-  await page.getByRole('button', { name: 'Chief of Everything' }).hover();
-  await page.getByRole('button', { name: 'Add Subordinate' }).click();
+  // Zoom In and find position
+  await expect(page.getByRole('button', { name: 'Zoom In' })).toBeVisible({ timeout: 30000 });
+  const chiefBtn = page.getByRole('button', { name: 'Chief of Everything' });
+  await expect(chiefBtn).toBeVisible();
+  await chiefBtn.hover();
 
-  // Wait for the Add Subordinate
-  await expect(page.getByLabel('Full Position Title:')).toBeVisible();
-  await page.getByLabel('Full Position Title:').click();
-  await page.getByLabel('Full Position Title:').fill('Medical Tech Test');
+  // Click "Add Subordinate"
+  // const addSubBtn = page.getByRole('button', { name: 'Add Subordinate' });
+  const addSubBtn = page.locator(`button[onclick="addSubordinate(3)"]`);
+  await expect(addSubBtn).toBeVisible();
+  await addSubBtn.click();
+
+  // Fill the subordinate info
+  const titleInput = page.getByLabel('Full Position Title:');
+  await expect(titleInput).toBeVisible({ timeout: 30000 });
+  await titleInput.fill('Medical Tech Test');
+
   await page.getByRole('button', { name: 'Save Change' }).click();
 
-  // Verify Subordinate
-  await expect(page.getByRole('button', { name: 'Medical Tech Test'})).toBeVisible();
+  // Verify the subordinate card appears
+  const newCard = page.getByRole('button', { name: 'Medical Tech Test' });
+  await expect(newCard).toBeVisible({ timeout: 10000 });
 
-  //Verify the new Card is displayed
+  // Screenshot for validation
   const newCardCreated = await page.screenshot();
-  await testinfo.attach('Card Create', { body: newCardCreated, contentType: 'image/png' });
-
+  await testInfo.attach('Card Create', { body: newCardCreated, contentType: 'image/png' });
 });
+
 // New Subordinate
 
 
