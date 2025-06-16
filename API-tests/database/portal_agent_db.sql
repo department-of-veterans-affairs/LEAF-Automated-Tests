@@ -396,7 +396,10 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (3,	'Step ID',	'number',	'',	'',	1,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-05-06 18:10:14',	0,	0,	1),
 (4,	'Instructions',	'textarea',	'',	'',	NULL,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-05-06 18:09:02',	0,	0,	1),
 (5,	'Schedule',	'',	'',	'',	NULL,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-05-09 22:30:35',	0,	0,	1),
-(6,	'Last Run Timestamp',	'number',	'',	'',	5,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-05-10 23:10:42',	0,	0,	0);
+(6,	'Timestamp for last successful run',	'number',	'',	'',	7,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-05-10 23:10:42',	0,	0,	0),
+(7,	'Stats',	'',	'',	'',	NULL,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-125,	'2025-06-16 15:04:33',	0,	0,	1),
+(8,	'Average Duration',	'number',	'',	'',	7,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-06-16 19:07:24',	0,	0,	0),
+(9,	'Log',	'textarea',	'',	'',	7,	'leaf_agent',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-06-16 19:41:27',	0,	0,	0);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
