@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 //This test is designed to test LEAF
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'default' });
 
 //Global Variables
 let randNum = Math.random();
@@ -19,7 +19,7 @@ let requestId;
 let requestId2
 let stapledRequestId;
 
-//Create Sitemap Card
+test.describe('SiteMap Creation, Verification and Inbox Customazation', () => {
 test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
@@ -250,6 +250,10 @@ test('Personalized a Form', async ({ page }, testInfo) => {
 
 });
 
+ });
+ //End of Creation and Customization
+
+test.describe('Creating and Validating Form Displays', () => {
 
 //Create a New MUltipleperson request
 test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
@@ -319,20 +323,17 @@ test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
 //console.log('Search results are visible!');/
 
  //Screenshot
-//   const screenshot = await page.screenshot();
-//  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
- //await expect(page.getByText('*** Loading... ***',{ exact: true } )).toBeVisible();
- //await expect(page.getByText('*** Loading... ***', { exact: true })).not.toBeVisible();
-  //await page.getByText('1. Reviewer').click();
-  //await expect(page.locator('#save_indicator')).toBeVisible();
-  //await page.locator('#save_indicator').click();
+  const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
   
    //Submit Request
    //await page.waitForSelector('#')
+
+ page.waitForLoadState('domcontentloaded');
+
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Submit Request' }).click({force:true});
   await page.getByRole('link', { name: 'Home' }).click();
@@ -637,6 +638,13 @@ test('View Stapled Request', async ({ page }, testInfo) => {
  
 });
 
+});
+//End of Form Verification
+
+
+test.describe('Clean up all test data', () =>{ 
+
+
 //Cleanup Remove Request
 
 test('Clean up NewRequest Form', async ({ page }, testInfo) => {
@@ -746,3 +754,6 @@ test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
  });
+
+});
+//End
