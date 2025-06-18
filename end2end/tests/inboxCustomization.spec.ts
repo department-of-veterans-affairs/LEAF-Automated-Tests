@@ -19,6 +19,7 @@ let requestId;
 let requestId2
 let stapledRequestId;
 
+
 test.describe('SiteMap Creation, Verification and Inbox Customazation', () => {
 test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -27,6 +28,19 @@ test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: ' Sitemap Editor Edit portal' }).click();
 
   await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
+
+
+ //Check to see if Custom LEAF Sitemap is present
+  if ( await page.getByText(leafSiteCard).isVisible() ){
+    //Perform Cleanup
+  console.log("Cleanup");
+  await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
+  await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
+  await page.getByRole('button', { name: 'Delete Site' }).click();
+
+  } 
+    console.log ("Sitemap not present");
+  
 
   //Style the Sitemap
   await page.getByRole('button', { name: '+ Add Site' }).click();
@@ -204,25 +218,34 @@ test('Personalized a Form', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
+    await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
   await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await page.getByRole('button', { name: 'admin submenu' }).click();
   await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
   await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
   
-  await expect(page.getByText('LEAF 4832 - CustomizationUIDServiceTitleStatusPriorityDays Since Last')).toBeVisible();
+  await expect(page.getByText('☰ LEAF 4832 - Customization')).toBeVisible();
   
-  await page.getByLabel('Select a form to add specific').selectOption('form_f8b95');
-  await page.getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+await expect(page.getByLabel('Select a form to add specific')).toBeVisible();
+ await page.getByLabel('Select a form to add specific').selectOption('form_f8b95');
 
-  //Add Reviewer 1 & Date Submitted
+   await expect(page.getByRole('textbox', { name: 'Click to search. Limit 7' })).toBeVisible();
+
+
+await page.getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+
+//Add Reviewer 1 & Date Submitted
   await page.getByRole('option', { name: 'Multiple person designated: Reviewer 1 (ID: 14) Press to select' }).click();
   await page.getByRole('option', { name: 'Date Submitted Press to select' }).click();
-
-  //Remove Status
+    //Remove Status
+  
+  await expect(page.getByText('StatusRemove item')).toBeVisible();
   await page.getByRole('button', { name: 'Remove item: \'status\'' }).click();
 
+
   //Verify the columns  
+
   await expect(page.getByText('Multiple person designated (form_f8b95)Service, Title, id#14, Date Submitted')).toBeVisible();
+
 
    //Check Inbox to verify updates
   await page.getByRole('link', { name: 'Home' }).click();
@@ -545,15 +568,24 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
 
   //Enter information for multipledesginated form
-    await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
 
-        const indicators = page.locator('[id^="loadingIndicator_"]');
- 
+  const indicators = page.locator('[id^="loadingIndicator_"]');
   const reviewer1Id = await indicators.nth(0).getAttribute('id');
   const reviewer2Id = await indicators.nth(1).getAttribute('id');
  
   console.log('Reviewer 1 ID:', reviewer1Id);
   console.log('Reviewer 2 ID:', reviewer2Id);
+
+  //Get UID
+  stapledRequestId = await page.textContent('#headerTab');
+  console.log('Text inside span:', stapledRequestId);
+  let str: string = stapledRequestId;
+  let parts = str.split("#", 2);
+  let firstPart = parts[0];
+  let secondPart = parts[1];
+  console.log(firstPart, secondPart);
+  stapledRequestId =secondPart;
 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
@@ -580,10 +612,6 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 
-
-
-
- 
   await expect(page.locator('#nextQuestion')).toBeVisible();
  
   const buttonClick = await page.getByRole('button', {name: 'Next Question'}).first();
@@ -644,7 +672,6 @@ test('View Stapled Request', async ({ page }, testInfo) => {
 
 test.describe('Clean up all test data', () =>{ 
 
-
 //Cleanup Remove Request
 
 test('Clean up NewRequest Form', async ({ page }, testInfo) => {
@@ -654,6 +681,7 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
   //Find Request
+  await expect(page.getByRole('link', { name: requestId})).toBeVisible();
   await page.getByRole('link', {name: requestId}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
@@ -676,6 +704,7 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
   //Find Request
+  await expect(page.getByRole('link', { name: requestId2})).toBeVisible();
   await page.getByRole('link', {name: requestId2}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
@@ -698,7 +727,8 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
  //Find Request
- await page.getByRole('link', {name: stapledRequest}).click();
+ await expect(page.getByRole('link', { name: stapledRequestId})).toBeVisible();
+ await page.getByRole('link', {name: stapledRequestId}).click();
  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
  await page.getByRole('button', { name: 'Cancel Request' }).click();
 
@@ -756,4 +786,5 @@ test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
  });
 
 });
+
 //End
