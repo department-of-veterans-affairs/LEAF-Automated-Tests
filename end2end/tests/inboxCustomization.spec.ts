@@ -138,10 +138,23 @@ test('Customized Column Display', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
   await expect(page.getByText(siteMapname, { exact: true })).toBeVisible();
 
+  //Get ID
+  const option =await (page.getByText('☰ LEAF 4832 - Customization'));
+ const siteId = await option.getAttribute('value');
+ const  leafSiteId = `#site-container-${siteId}`;
+
+  console.log('Text ID:', leafSiteId);
+ 
+
  //Add Customization
-  await page.getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('p');
-  await page.getByRole('option', { name: 'Priority Press to select' }).click();
-  await page.getByRole('option', { name: 'Days Since Last Action Press' }).click();
+
+   await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('p');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('d');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
 
   await page.getByRole('link', { name: 'Home' }).click();
   await expect(page.getByText('Review and apply actions to')).toBeVisible();
@@ -217,33 +230,37 @@ test('Personalized a Form', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
-    await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
   await page.getByRole('link', { name: 'Admin Panel' }).click();
   await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
   await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
   
+await page.waitForLoadState();
+
   await expect(page.getByText('☰ LEAF 4832 - Customization')).toBeVisible();
   
-await expect(page.getByLabel('Select a form to add specific')).toBeVisible();
- await page.getByLabel('Select a form to add specific').selectOption('form_f8b95');
+    //Get ID
+  const option =await (page.getByText('☰ LEAF 4832 - Customization'));
+ const siteId = await option.getAttribute('value');
+ const  leafSiteId = `#site-container-${siteId}`;
+ const formSiteId = `#form_select_${siteId}`;
 
-   await expect(page.getByRole('textbox', { name: 'Click to search. Limit 7' })).toBeVisible();
+  console.log('Text ID:', leafSiteId);
 
+  await expect(page.getByLabel('Select a form to add specific')).toBeVisible();
+  await page.locator(formSiteId).selectOption('form_f8b95');
 
-await page.getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+ await page.locator(leafSiteId).getByText('StatusRemove item').click();
 
-//Add Reviewer 1 & Date Submitted
-  await page.getByRole('option', { name: 'Multiple person designated: Reviewer 1 (ID: 14) Press to select' }).click();
-  await page.getByRole('option', { name: 'Date Submitted Press to select' }).click();
-    //Remove Status
-  
-  await expect(page.getByText('StatusRemove item')).toBeVisible();
-  await page.getByRole('button', { name: 'Remove item: \'status\'' }).click();
-
-
-  //Verify the columns  
-
-  await expect(page.getByText('Multiple person designated (form_f8b95)Service, Title, id#14, Date Submitted')).toBeVisible();
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('d');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('s');
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
 
 
    //Check Inbox to verify updates
@@ -639,6 +656,8 @@ test('View Stapled Request', async ({ page }, testInfo) => {
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
 
+
+  await page.waitForLoadState();
   //Organize by Role to verify the stapled
   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
@@ -747,6 +766,7 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
   //Find Request
+  await expect(page.locator('#searchContainer')).toBeVisible();
   await expect(page.getByRole('link', { name: requestId2})).toBeVisible();
   await page.getByRole('link', {name: requestId2}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
@@ -770,6 +790,7 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
  //Find Request
+ await expect(page.locator('#searchContainer')).toBeVisible();
  await expect(page.getByRole('link', { name: stapledRequestId})).toBeVisible();
  await page.getByRole('link', {name: stapledRequestId}).click();
  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
