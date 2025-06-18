@@ -4,7 +4,6 @@ import { test, expect } from '@playwright/test';
 test.describe.configure({ mode: 'default' });
 
 //Global Variables
-let randNum = Math.random();
 let siteMapname = `LEAF 4832 - Customization`;
 let siteMapDesc = 'Testing for LEAF 4823 Customization';
 let leafSiteCard = 'LEAF 4832 - CustomizationTesting for LEAF 4823 Customization';
@@ -672,6 +671,24 @@ test('View Stapled Request', async ({ page }, testInfo) => {
 
 test.describe('Clean up all test data', () =>{ 
 
+//Delete Customized Card
+
+test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+
+  await page.getByRole('link', { name: 'Admin Panel' }).click();
+  await page.getByRole('button', { name: ' Sitemap Editor Edit portal' }).click();
+
+  await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
+  await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
+  await page.getByRole('button', { name: 'Delete Site' }).click();
+
+     //Screenshot
+  const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+ });
+
 //Cleanup Remove Request
 
 test('Clean up NewRequest Form', async ({ page }, testInfo) => {
@@ -681,7 +698,7 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
 
   //Find Request
-  await expect(page.getByRole('link', { name: requestId})).toBeVisible();
+  await expect(page.locator('#searchContainer')).toBeVisible();
   await page.getByRole('link', {name: requestId}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
@@ -693,6 +710,32 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes' }).click();
 
+});
+
+
+//Removed Stapled Forms
+test('Remove Stapled Forms', async ({ page }, testInfo) => {
+
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+
+  //Click on Form Editor
+  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
+  await page.getByRole('link', { name: 'Admin Panel' }).click();
+  await expect(page.getByRole('button', { name: ' Form Editor Create and' })).toBeVisible();
+  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
+
+  //Find Multiple person designated Form
+  await expect(page.getByRole('link', { name: 'Multiple person designated', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
+
+  //Remove the stapled Form
+  await expect(page.getByRole('button', { name: 'Staple other form' })).toBeVisible();
+  await page.getByRole('button', { name: 'Staple other form' }).click();
+  await expect(page.getByText('Test IFTHEN staple [ Remove ]')).toBeVisible();
+  await page.getByRole('button', { name: 'remove Test IFTHEN staple' }).click();
+  await expect(page.getByText('Close')).toBeVisible();
+  await page.getByText('Close').click();
+  
 });
 
 //Cleanup Remove Request2
@@ -741,49 +784,6 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
  await page.getByRole('button', { name: 'Yes' }).click();
 
 });
-
-//Removed Stapled Forms
-test('Remove Stapled Forms', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  //Click on Form Editor
-  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await expect(page.getByRole('button', { name: ' Form Editor Create and' })).toBeVisible();
-  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
-
-  //Find Multiple person designated Form
-  await expect(page.getByRole('link', { name: 'Multiple person designated', exact: true })).toBeVisible();
-  await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-
-  //Remove the stapled Form
-  await expect(page.getByRole('button', { name: 'Staple other form' })).toBeVisible();
-  await page.getByRole('button', { name: 'Staple other form' }).click();
-  await expect(page.getByText('Test IFTHEN staple [ Remove ]')).toBeVisible();
-  await page.getByRole('button', { name: 'remove Test IFTHEN staple' }).click();
-  await expect(page.getByText('Close')).toBeVisible();
-  await page.getByText('Close').click();
-  
-});
-
-//Delete Customized Card
-
-test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await page.getByRole('button', { name: ' Sitemap Editor Edit portal' }).click();
-
-  await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
-  await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
-  await page.getByRole('button', { name: 'Delete Site' }).click();
-
-     //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
- });
 
 });
 
