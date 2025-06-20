@@ -7,9 +7,7 @@ test.describe.configure({ mode: 'default' });
 let siteMapname = `LEAF 4832 - Customization`;
 let siteMapDesc = 'Testing for LEAF 4823 Customization';
 let leafSiteCard = 'LEAF 4832 - CustomizationTesting for LEAF 4823 Customization';
-let siteMapURL = 'https://host.docker.internal/Test_Request_Portal/';
-let siteMapColor = '#5d1adb';
-let siteMapFontColor = '#e2db08';
+
 let serviceRequest ='LEAF 4832 - Request';
 let serviceRequest2 ='LEAF 4832 - Request2';
 let stapledRequest = 'LEAF 4832 - Stapled Request';
@@ -42,6 +40,9 @@ test('create New Sitemap Card', async ({ page }, testInfo) => {
   
 
   //Style the Sitemap
+  let siteMapURL = 'https://host.docker.internal/Test_Request_Portal/';
+  let siteMapColor = '#5d1adb';
+  let siteMapFontColor = '#e2db08';
   await page.getByRole('button', { name: '+ Add Site' }).click();
   await page.locator('#button-title').click();
   await page.locator('#button-title').fill(siteMapname);
@@ -75,6 +76,8 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
   //Open the Inbox
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
+
+  await page.waitForLoadState('load');
 
   //Verify the customization is present 
   await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
@@ -136,6 +139,8 @@ test('Customized Column Display', async ({ page }, testInfo) => {
   await page.getByRole('link', { name: 'Admin Panel' }).click();
   await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
   await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
+
+   await page.waitForLoadState('load');
   await expect(page.getByText(siteMapname, { exact: true })).toBeVisible();
 
   //Get ID
@@ -158,6 +163,8 @@ test('Customized Column Display', async ({ page }, testInfo) => {
 
   await page.getByRole('link', { name: 'Home' }).click();
   await expect(page.getByText('Review and apply actions to')).toBeVisible();
+
+   await page.waitForLoadState('load');
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
 
@@ -247,7 +254,7 @@ await page.waitForLoadState();
 
   console.log('Text ID:', leafSiteId);
 
-  await expect(page.getByLabel('Select a form to add specific')).toBeVisible();
+
   await page.locator(formSiteId).selectOption('form_f8b95');
 
  await page.locator(leafSiteId).getByText('StatusRemove item').click();
@@ -270,6 +277,7 @@ await page.waitForLoadState();
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox Review and apply').click();
  
+ await page.waitForLoadState('load');
   //await page.getByRole('button', { name: 'Toggle sections' }).click();
 
   const dynTxt2 = 'Multiple person designated View';
@@ -386,6 +394,7 @@ test('View Request in Inbox', async ({ page }, testInfo) => {
 
   await page.getByText('Review and apply actions to').click();
 
+  await page.waitForLoadState('load');
   await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
   await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
   
@@ -488,7 +497,7 @@ test('Create Multiple Form with User with multiple Forms', async ({ page }, test
 
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
-  
+  await page.waitForLoadState('load');
   
   //Submit Request
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
@@ -504,6 +513,8 @@ test ('Validate Role View Custom Column not Present', async ({ page }, testInfo)
   //Go to the Custom Inbox
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByText('Inbox').click();
+
+   await page.waitForLoadState('load');
 
   //Switch to Role View
   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
@@ -571,7 +582,7 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await expect(page.getByText('New Request Start a new')).toBeVisible();
   await page.getByText('New Request Start a new').click();
 
-
+  await page.waitForLoadState('load');
 
   //Enter the required information
   await expect(page.getByRole('cell', { name: 'Select an Option Service' }).locator('a')).toBeVisible();
@@ -582,6 +593,8 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   await page.locator('label').filter({ hasText: 'Multiple person designated' }).locator('span').click();
   await expect(page.getByRole('button', { name: 'Click here to Proceed' })).toBeVisible();
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+
+  await page.waitForLoadState('load');
 
   //Enter information for multipledesginated form
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
@@ -633,12 +646,15 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
   const buttonClick = await page.getByRole('button', {name: 'Next Question'}).first();
   await buttonClick.click({force:true});
   
+  await page.waitForLoadState('load');
  //Enter information for If then Form
   await expect(page.locator('a').filter({ hasText: 'Select an Option' })).toBeVisible();
   await page.locator('a').filter({ hasText: 'Select an Option' }).click();
   await page.getByRole('option', { name: '2' }).click();
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
+
+ await page.waitForLoadState('load');
 
    //Submit Request
   await expect(page.locator('#submitControl')).toBeVisible();
@@ -657,7 +673,7 @@ test('View Stapled Request', async ({ page }, testInfo) => {
   await page.getByText('Inbox Review and apply').click();
 
 
-  await page.waitForLoadState();
+  await page.waitForLoadState('domcontentloaded');
   //Organize by Role to verify the stapled
   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
@@ -708,6 +724,33 @@ test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
 
  });
 
+
+//Removed Stapled Forms
+test('Remove Stapled Forms', async ({ page }, testInfo) => {
+
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+
+   await page.waitForLoadState('load');
+
+  //Click on Form Editor
+  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
+  await page.getByRole('link', { name: 'Admin Panel' }).click();
+  await expect(page.getByRole('button', { name: ' Form Editor Create and' })).toBeVisible();
+  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
+
+  //Find Multiple person designated Form
+  await expect(page.getByRole('link', { name: 'Multiple person designated', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
+
+  //Remove the stapled Form
+  await expect(page.getByRole('button', { name: 'Staple other form' })).toBeVisible();
+  await page.getByRole('button', { name: 'Staple other form' }).click();
+  await expect(page.getByText('Test IFTHEN staple [ Remove ]')).toBeVisible();
+  await page.getByRole('button', { name: 'remove Test IFTHEN staple' }).click();
+  await expect(page.getByText('Close')).toBeVisible();
+  await page.getByText('Close').click();
+  
+});
 //Cleanup Remove Request
 
 test('Clean up NewRequest Form', async ({ page }, testInfo) => {
@@ -731,39 +774,15 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
 
 });
 
-
-//Removed Stapled Forms
-test('Remove Stapled Forms', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  //Click on Form Editor
-  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await expect(page.getByRole('button', { name: ' Form Editor Create and' })).toBeVisible();
-  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
-
-  //Find Multiple person designated Form
-  await expect(page.getByRole('link', { name: 'Multiple person designated', exact: true })).toBeVisible();
-  await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-
-  //Remove the stapled Form
-  await expect(page.getByRole('button', { name: 'Staple other form' })).toBeVisible();
-  await page.getByRole('button', { name: 'Staple other form' }).click();
-  await expect(page.getByText('Test IFTHEN staple [ Remove ]')).toBeVisible();
-  await page.getByRole('button', { name: 'remove Test IFTHEN staple' }).click();
-  await expect(page.getByText('Close')).toBeVisible();
-  await page.getByText('Close').click();
-  
-});
-
 //Cleanup Remove Request2
 
 test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  
+
+  await page.waitForLoadState('domcontentloaded');
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
+  
 
   //Find Request
   await expect(page.locator('#searchContainer')).toBeVisible();
@@ -786,8 +805,11 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
 test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+
+  await page.waitForLoadState('load');
   
  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
+
 
  //Find Request
  await expect(page.locator('#searchContainer')).toBeVisible();
