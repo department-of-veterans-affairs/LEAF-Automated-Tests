@@ -158,7 +158,7 @@ test('Redirect to search filter and Generate Report with Approval History column
   await dataFieldLink.click();
 
   // Select the role option
-  const roleOption = page.getByRole('option', { name: 'LEAF Developer Console: Supervisor' });
+  const roleOption = page.locator('ul.chosen-results li.active-result:nth-child(1)').first();
   await expect(roleOption).toBeVisible();
   await roleOption.click();
 
