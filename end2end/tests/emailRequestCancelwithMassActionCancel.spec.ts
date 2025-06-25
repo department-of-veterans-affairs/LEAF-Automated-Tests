@@ -204,7 +204,7 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
 
 
 });
-test('Supress Cancel MassAction Request', async ({ page }, testInfo) => {
+test('Suppress Cancel MassAction Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
   
