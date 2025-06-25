@@ -688,6 +688,7 @@ test('View Stapled Request', async ({ page }, testInfo) => {
 
   await expect(page.getByRole('button', { name: dynRegex })).toBeVisible();
   await page.getByRole('button', { name: dynRegex}).click();
+  console.log('------------------------stapleName', stapleName);
  
   await expect(page.getByRole('cell', { name: stapleName })).toBeVisible();
 
@@ -716,17 +717,23 @@ test('Clean up NewRequest Form', async ({ page }, testInfo) => {
 
   //Find Request
   await expect(page.locator('#searchContainer')).toBeVisible();
-  await page.getByRole('link', {name: requestId}).click();
+  console.log('Request ID:>->->->->', requestId);
+  let staples = await page.locator("span.browsecounter").allInnerTexts();
+  let indexofStaple = staples.indexOf(requestId);
+  console.log('Index of Staple:', indexofStaple);
+  await page.locator("span.browsecounter a").nth(indexofStaple).click();
+    
+  // await page.getByRole('link', {name: requestId}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
 
-  //Verify you want to Cancel Request
+  // Verify you want to Cancel Request
   await page.getByRole('dialog').getByText('Editor Close').click();
   await page.getByRole('textbox', { name: 'Enter Comment' }).click();
   await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
   await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes' }).click();
-
+  
 });
 
 
@@ -742,8 +749,12 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
 
   //Find Request
   await expect(page.locator('#searchContainer')).toBeVisible();
-  await expect(page.getByRole('link', { name: requestId2})).toBeVisible();
-  await page.getByRole('link', {name: requestId2}).click();
+  let staples = await page.locator("span.browsecounter").allInnerTexts();
+  let indexofStaple = staples.indexOf(requestId2);
+  console.log('Index of Staple:', indexofStaple);
+  await page.locator("span.browsecounter a").nth(indexofStaple).click();
+  // await expect(page.getByRole('link', { name: requestId2})).toBeVisible();
+  // await page.getByRole('link', {name: requestId2}).click();
   await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
 
@@ -753,10 +764,10 @@ test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
   await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
   await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes' }).click();
-
+  
 });
 
-//Cleanup Stapled Request
+// //Cleanup Stapled Request
 
 test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
 
@@ -769,8 +780,12 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
 
  //Find Request
  await expect(page.locator('#searchContainer')).toBeVisible();
- await expect(page.getByRole('link', { name: stapledRequestId})).toBeVisible();
- await page.getByRole('link', {name: stapledRequestId}).click();
+//  await expect(page.getByRole('link', { name: stapledRequestId})).toBeVisible();
+//  await page.getByRole('link', {name: stapledRequestId}).click();
+let staples = await page.locator("span.browsecounter").allInnerTexts();
+  let indexofStaple = staples.indexOf(stapledRequestId);
+  console.log('Index of Staple:', indexofStaple);
+  await page.locator("span.browsecounter a").nth(indexofStaple).click();
  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
  await page.getByRole('button', { name: 'Cancel Request' }).click();
 
@@ -781,11 +796,11 @@ test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
  await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
  await page.getByRole('button', { name: 'Yes' }).click();
-
+ 
 });
 
 
-//Delete Customized Card
+// //Delete Customized Card
 
 test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -804,7 +819,7 @@ test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
  });
 
 
-//Removed Stapled Forms
+// //Removed Stapled Forms
 test('Remove Stapled Forms', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
