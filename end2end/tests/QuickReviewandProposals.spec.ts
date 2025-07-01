@@ -31,7 +31,6 @@ test('Verify that using the quick review page, you are able to approve the reque
   let uniqueRequestIndex = -1;
 
   // Step 1: Open Quick Review Page
-  console.info('Navigating to Quick Review page...');
   await page.goto(quickReviewUrl);
   await formsDrpDwn.selectOption({ label: formName });
   await StepDrpDwn.selectOption({ label: stepName });
@@ -39,7 +38,6 @@ test('Verify that using the quick review page, you are able to approve the reque
   await page.locator(`//th[@aria-label='Sort by Title']`).waitFor({ state: 'visible' });
 
   // Step 2: Find unique request
-  console.info('Looking for unique request...');
   const listOfRequests = await listOfRequestsLoc.allInnerTexts();
   for (let i = 0; i < listOfRequests.length; i++) {
     if (listOfRequests.indexOf(listOfRequests[i]) === listOfRequests.lastIndexOf(listOfRequests[i])) {
@@ -53,25 +51,20 @@ test('Verify that using the quick review page, you are able to approve the reque
   const titleNumber = await TitleNumberOfRequests.nth(uniqueRequestIndex).innerText();
 
   // Step 3: Generate links for both roles
-  console.info(`Generating review link for ${role1}...`);
   await roleDrpDwn.selectOption({ label: role1 });
   await createQwkRviePage.click();
   await reviewLinkTextArea.waitFor({ state: 'visible' });
   const firstReviewLink = await reviewLinkTextArea.inputValue();
   expect(firstReviewLink).toContain('http');
-  console.info(`✅ First review link Generated Successfully`);
   await closeBtn.click();
 
-  console.info(`Generating review link for ${role2}...`);
   await roleDrpDwn.selectOption({ label: role2 });
   await createQwkRviePage.click();
   await reviewLinkTextArea.waitFor({ state: 'visible' });
   const secondReviewLink = await reviewLinkTextArea.inputValue();
   expect(secondReviewLink).toContain('http');
-  console.info(`✅ Second review link Generated Successfully`);
 
   // Step 4: Approve from first link
-  console.info(`Navigating to first review link...`);
   await page.goto(firstReviewLink);
   await page.locator(`//th[@aria-label='Sort by Title']`).waitFor({ state: 'visible' });
 
@@ -79,18 +72,13 @@ test('Verify that using the quick review page, you are able to approve the reque
   const pendingRequestIndex = uniqueRequest !== null ? pendingRequests.indexOf(uniqueRequest) : -1;
 
   if (pendingRequestIndex !== -1) {
-    console.info('Approving request from role 1...');
     await actionDrpDwn.nth(pendingRequestIndex).selectOption({ label: 'Approve' });
     await aprovalBtn.click();
     await page.locator(`span#confirm_saveBtnText`).click();
     await page.locator(`div#confirmProgress`).waitFor({ state: 'visible' });
-    console.info('✅ Approved from first link');
-  } else {
-    console.info('❌ Request not found in first review link');
-  }
+  } 
 
   // Step 5: Approve from second link
-  console.info(`Navigating to second review link...`);
   await page.goto(secondReviewLink);
   await page.locator(`//th[@aria-label='Sort by Title']`).waitFor({ state: 'visible' });
 
@@ -98,29 +86,22 @@ test('Verify that using the quick review page, you are able to approve the reque
   const pendingRequestIndex2 = uniqueRequest !== null ? pendingRequests2.indexOf(uniqueRequest) : -1;
 
   if (pendingRequestIndex2 !== -1) {
-    console.info('Approving request from role 2...');
     await actionDrpDwn.nth(pendingRequestIndex2).selectOption({ label: 'Approve' });
     await aprovalBtn.click();
     await page.locator(`span#confirm_saveBtnText`).click();
     await page.locator(`div#confirmProgress`).waitFor({ state: 'visible' });
-    console.info('✅ Approved from second link');
-  } else {
-    console.info('❌ Request not found in second review link');
-  }
+  } 
 
   // Step 6: Verify final status
-  console.info('Verifying final status...');
   await page.goto(requestListingUrl);
   await searchBar.type(uniqueRequest || '', { delay: 200 });
   await magnifierIcon.waitFor({ state: 'visible' });
 
   const titleNumberInRequest = await TitleNumberInRequestLoc.allInnerTexts();
-  console.info(`Found title numbers: ${titleNumberInRequest}`);
   const indexOfStatus = titleNumberInRequest.indexOf(titleNumber);
 
   expect(indexOfStatus).toBeGreaterThan(-1);
   await expect(finalStatus.nth(indexOfStatus)).toHaveText('Pending Step 2');
-  console.info('✅ Final status is correct');
 });
 
 test('Verify that using the proposal page, you are able to approve the request', async ({ page }) => {
@@ -161,7 +142,6 @@ await setupProposedBtn.click();
 await roleDrpDwn.selectOption({ label: role1 });
 
 // Step 2: Find unique request
-  console.info('Looking for unique request...');
 
   await page.locator(`//th[@aria-label='Sort by Title']`).waitFor({ state: 'visible' });
   const listOfRequests = await listOfRequestsLoc.allInnerTexts();
@@ -176,7 +156,6 @@ await roleDrpDwn.selectOption({ label: role1 });
   const titleNumber = await TitleNumberOfRequests.nth(uniqueRequestIndex).innerText();
 
   if (uniqueRequestIndex !== -1) {
-    console.info('Approving request from role 1...');
     await actionDrpDwn.nth(uniqueRequestIndex).selectOption({ label: 'Approve' });
     await page.locator('button#btn_prepareProposal').click();
     await page.locator('th').first().waitFor({ state: 'visible' });
@@ -184,23 +163,21 @@ await roleDrpDwn.selectOption({ label: role1 });
     await page.locator(`#confirm_saveBtnText`).click();
     await page.locator(`#confirmProgress`).waitFor({ state: 'visible' });
     await closeBtn.click();
-    console.info('✅ Approved from first role');
   }
   else {
-    console.error('❌ Unique request not found in the first role');
+    throw new Error('❌ Unique request not found in the first role');
     return;
   }
   await page.goBack();
 
 await roleDrpDwn.selectOption({ label: role2 });
 // Step 2: Find unique request
-  console.info('Looking for unique request...');
   await page.locator(`//th[@aria-label='Sort by Title']`).waitFor({ state: 'visible' });
 
   const listOfRequests2 = await listOfRequestsLoc.allInnerTexts();
   let indexOfRequest2 = listOfRequests2.indexOf(uniqueRequest || '');
   if (indexOfRequest2 === -1) {
-    console.error('❌ Unique request not found in the second role');
+    throw new Error('❌ Unique request not found in the second role');
     return;
   } 
   else {
@@ -211,10 +188,8 @@ await roleDrpDwn.selectOption({ label: role2 });
     await page.locator(`#confirm_saveBtnText`).click();
     await page.locator(`#confirmProgress`).waitFor({ state: 'visible' });
     await closeBtn.click();
-    console.info('✅ Approved from second role');
   }
     // Step 6: Verify final status
-  console.info('Verifying final status...');
   await page.goto(requestListingUrl);
   await searchBar.type(uniqueRequest || '', { delay: 200 });
   await magnifierIcon.waitFor({ state: 'visible' });
@@ -224,7 +199,6 @@ await roleDrpDwn.selectOption({ label: role2 });
 
   expect(indexOfStatus).toBeGreaterThan(-1);
   await expect(finalStatus.nth(indexOfStatus)).toHaveText('Pending Step 2');
-  console.info('✅ Final status is correct');
   
 });
 
