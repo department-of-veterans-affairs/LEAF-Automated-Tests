@@ -70,8 +70,12 @@ func postNewGroup() string {
 	return c
 }
 
-func postNewTag(groupID string) string {
+// postNewTag creates a new tag for the given groupID
+func postNewTag(groupID string, tag string) string {
 	postData := url.Values{}
+	if tag != "" {
+		postData.Set("tag", tag)
+	}
 	postData.Set("CSRFToken", CsrfToken)
 
 	res, _ := client.PostForm(RootOrgchartURL+`api/group/`+groupID+`/tag`, postData)
@@ -97,9 +101,14 @@ func importGroup(groupID string) string {
 	return c
 }
 
-func removeNexusGroup(postUrl string) error {
+// changed this method so that it could be used more universally, with the url being passed in
+// more variables could be needed to go with the url
+func removeFromNexus(postUrl string, tag string) error {
 
 	data := url.Values{}
+	if tag != "" {
+		data.Set("tag", tag)
+	}
 	data.Set("CSRFToken", CsrfToken)
 
 	req, err := http.NewRequest("DELETE", postUrl, strings.NewReader(data.Encode()))
@@ -144,7 +153,7 @@ func TestGroup_syncServices(t *testing.T) {
 	groupID := postNewGroup()
 	id, _ := strconv.Atoi(groupID)
 	var passed = false
-	postNewTag(groupID)
+	postNewTag(groupID, "")
 	importGroup(groupID)
 
 	// check that the group exists in both nexus and portal
@@ -176,7 +185,7 @@ func TestGroup_syncServices(t *testing.T) {
 	}
 
 	// remove this group from the nexus
-	err := removeNexusGroup(fmt.Sprintf("%sapi/group/%s", RootOrgchartURL, groupID))
+	err := removeFromNexus(fmt.Sprintf("%sapi/group/%s", RootOrgchartURL, groupID), "")
 
 	if err != nil {
 		t.Error(err)
@@ -217,5 +226,51 @@ func TestGroup_syncServices(t *testing.T) {
 
 	if passed == true {
 		t.Errorf("Portal group was not removed and should have been")
+	}
+}
+
+// A test to remove a tag from the nexus group
+func TestGroup_removeTag(t *testing.T) {
+	// add a tag to a group
+	id := "34"
+	id_int, _ := strconv.Atoi(id)
+	passed := false
+	tag_name := "Academy_Demo1"
+	postNewTag(id, tag_name)
+
+	// check to make sure tag was added
+	o_groups := getNexusGroup(RootOrgchartURL + `api/group/list`)
+
+	for _, o_group := range o_groups {
+		if id_int == o_group.GroupID {
+			passed = true
+			break
+		}
+	}
+
+	if passed == false {
+		t.Errorf("The tag was not found in this group")
+	}
+
+	// remove the tag
+	err := removeFromNexus(fmt.Sprintf("%sapi/group/%s/tag?", RootOrgchartURL, id), tag_name)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	// check to make sure tag was removed
+	passed = false
+	o_groups = getNexusGroup(RootOrgchartURL + `api/group/list`)
+
+	for _, o_group := range o_groups {
+		if (id_int == o_group.GroupID) && (tag_name == o_group.GroupTitle) {
+			passed = true
+			break
+		}
+	}
+
+	if passed == true {
+		t.Errorf("The tag was not removed from this group")
 	}
 }

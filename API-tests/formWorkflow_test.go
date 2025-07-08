@@ -80,4 +80,78 @@ func TestFormWorkflow_ApplyAction(t *testing.T) {
 	if res.StatusCode != http.StatusConflict {
 		t.Errorf("api/formWorkflow/8/apply ('page is out of date') StatusCode = %v, want = %v", res.StatusCode, http.StatusConflict)
 	}
+
+	// Test "valid action with stepID"
+	postData.Set("dependencyID", "-2")
+	postData.Set("stepID", "3")
+	postData.Set("actionType", "Note")
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/504/apply`, postData)
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("api/formWorkflow/504/apply ('valid action with stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusOK)
+	}
+
+	// Test "invalid action with wrong stepID"
+	postData.Set("dependencyID", "-2")
+	postData.Set("stepID", "1")
+	postData.Set("actionType", "Note")
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/504/apply`, postData)
+	if res.StatusCode != http.StatusConflict {
+		t.Errorf("api/formWorkflow/504/apply ('invalid action with wrong stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusConflict)
+	}
+
+	// Test duplicate "valid action with stepID"
+	postData.Set("dependencyID", "-1")
+	postData.Set("stepID", "1")
+	postData.Set("actionType", "approve")
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/496/apply`, postData)
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("api/formWorkflow/504/apply ('duplicate valid action with stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusOK)
+	}
+	res, _ = client.PostForm(RootURL+`api/formWorkflow/496/apply`, postData)
+	if res.StatusCode != http.StatusAccepted {
+		t.Errorf("api/formWorkflow/504/apply ('duplicate valid action with stepID') StatusCode = %v, want = %v", res.StatusCode, http.StatusAccepted)
+	}
+}
+
+func TestFormWorkflow_currentStepRequestorFollowupNonAdmin(t *testing.T) {
+	res := getFormWorkflow(RootURL + `api/formWorkflow/530/currentStep?masquerade=nonAdmin`)
+
+	got := res[-2].UserMetadata.Email
+	want := "Alysa.Dare@fake-email.com"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = res[-2].UserMetadata.FirstName
+	want = "Alysa"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = res[-2].UserMetadata.LastName
+	want = "Dare"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = *res[-2].ApproverName
+	want = "Alysa Dare"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	got = *res[-2].ApproverUID
+	want = "Alysa.Dare@fake-email.com"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
+
+	// Request with an initiator who has a disabled account
+	res = getFormWorkflow(RootURL + `api/formWorkflow/509/currentStep?masquerade=nonAdmin`)
+
+	got = *res[-2].ApproverName
+	want = "Tracy O'Hane"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Description = %v, want = %v", got, want)
+	}
 }

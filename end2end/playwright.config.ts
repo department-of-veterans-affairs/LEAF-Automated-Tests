@@ -17,7 +17,7 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   retries: 2,
-  // repeatEach: 3, // only temporarily enable to find flaky tests
+  //repeatEach: 3, // only temporarily enable to find flaky tests
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -45,9 +45,12 @@ export default defineConfig({
     */
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      //dependencies: ['reset test DB'],
-    },
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: true,
+        viewport: { width: 1800, height: 900 }, // Standard screen size
+      },
+    }
 
     /*
     {

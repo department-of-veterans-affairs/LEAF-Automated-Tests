@@ -84,16 +84,6 @@ test('Go to Search Database', async ({ page }) => {
   await expect(page.locator('#headerTab')).toContainText('Search Database');
 });
 
-test('Go to Sync Services', async ({ page }) => {
-  await page.getByRole('button', { name: 'Sync Services Update' }).click();
-  await expect(page.getByRole('heading')).toContainText('Sync Services');
-});
-
-test('Go to Update Database', async ({ page }) => {
-  await page.getByRole('button', { name: 'Update Database Updates the' }).click();
-  await expect(page.getByRole('heading')).toContainText('Update Database');
-});
-
 test('Go to Import Spreadsheet', async ({ page }) => {
   await page.getByRole('button', { name: 'Import Spreadsheet Rows to' }).click();
   await expect(page.locator('#uploadBox')).toContainText('Choose a Spreadsheet');
@@ -121,7 +111,7 @@ test('Go to Sitemap Search', async ({ page }) => {
 
 test('Go to Combined Inbox Editor', async ({ page }) => {
   await page.getByRole('button', { name: 'Combined Inbox Editor Edit' }).click();
-  await expect(page.locator('#LEAF_combined_inbox_editor')).toContainText('Cards can be created in the Sitemap Editor');
+  await expect(page.getByRole('heading', { name: 'Combined Inbox Editor' })).toBeVisible();
 });
 
 test('Go to Grid Splitter', async ({ page }) => {

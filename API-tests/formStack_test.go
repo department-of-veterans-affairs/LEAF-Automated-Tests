@@ -25,7 +25,6 @@ func postNewForm() string {
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("name", "Test New Form")
 	postData.Set("description", "Test New Form Description")
-	postData.Set("parentID", "")
 
 	res, _ := client.PostForm(RootURL+`api/formEditor/new`, postData)
 	bodyBytes, _ := io.ReadAll(res.Body)
