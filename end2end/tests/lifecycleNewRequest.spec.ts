@@ -238,21 +238,7 @@ test('Negative Currency Allowed in New Request', async () => {
  *  Verify that a negative amount is allowed for currency
  *  when editing a request
  */
-// test("Negative Currency Allowed When Editing a Request", async () => {
-    
-//     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-//     await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
-//     await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
-//     await page.getByLabel('currency').click();
-//     await page.getByLabel('currency').click();
 
-//     // Change the currency amount to -50
-//     await page.getByLabel('currency').fill('-50');
-
-//     // Save the changes and verify the amount has changed to -50
-//     await page.getByRole('button', { name: 'Save Change' }).click();
-//     await expect(page.locator('#data_37_1')).toContainText('-$50.00');
-// })
 test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
@@ -275,6 +261,18 @@ test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
 
   const updatedField = page.locator('#data_37_1');
   await expect(updatedField).toHaveText('-$50.00', { timeout: 10000 });
+});
+
+/**
+ * Test for LEAF 4913 
+ */
+test('Closing pop up window does not cause active form to disappear', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=965');
+  await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'View History' }).click();
+  await expect(page.getByText('History of Request ID#:')).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
 });
 
 /**
