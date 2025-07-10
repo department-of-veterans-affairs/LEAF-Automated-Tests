@@ -266,10 +266,11 @@ test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
 /**
  * Test for LEAF 4913 
  */
-test('Closing pop up window does not cause active form to disappear', async ({ page }) => {
+test('Closing pop up window does not cause active form to disappear', async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=965');
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'View History' }).click();
+  //await page.getByRole('button', { name: 'View History' }).click();
+  await page.getByText('View History').click();
   await expect(page.getByText('History of Request ID#:')).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
