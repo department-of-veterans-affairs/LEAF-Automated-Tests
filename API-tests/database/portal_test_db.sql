@@ -13391,6 +13391,7 @@ INSERT INTO `users` (`userID`, `groupID`, `backupID`, `primary_admin`, `locallyM
 ('VTRJPSBRANDEE',	203,	'tester',	0,	0,	1),
 ('VTRJPSBRANDEE',	204,	'tester',	0,	0,	1),
 ('VTRJPSBRANDEE',	205,	'tester',	0,	0,	1),
+('VTRNYKMILLICENT', 206,'',	0, 1, 1),
 ('VTRNYKMILLICENT',	53,	'',	0,	0,	1),
 ('VTROJQREBECCA',	202,	'',	0,	0,	1),
 ('VTROTABRANDI',	202,	'',	0,	0,	1),
