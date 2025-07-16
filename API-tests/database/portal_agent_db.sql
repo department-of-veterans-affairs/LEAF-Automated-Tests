@@ -240,7 +240,7 @@ CREATE TABLE `dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `dependencies` (`dependencyID`, `description`) VALUES
-(-4,  'LEAF Agent');
+(-4,  'LEAF Agent'),
 (-3,	'Group Designated by the Requestor'),
 (-2,	'Requestor Followup'),
 (-1,	'Person Designated by the Requestor'),
