@@ -14,10 +14,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const HostURL = "https://host.docker.internal"
-const RootURL = "https://host.docker.internal/Test_Request_Portal/"
-const NationalOrgchartURL = "https://host.docker.internal/LEAF_NationalNexus/"
-const RootOrgchartURL = "https://host.docker.internal/Test_Nexus/"
+const HostURL = os.Getenv("APP_URL_NEXUS")
+const RootURL = HostURL + "Test_Request_Portal/"
+const NationalOrgchartURL = HostURL + "LEAF_NationalNexus/"
+const RootOrgchartURL = HostURL + "Test_Nexus/"
 
 var dbHost = os.Getenv("MYSQL_HOST")
 var dbUsername = os.Getenv("MYSQL_USER")
