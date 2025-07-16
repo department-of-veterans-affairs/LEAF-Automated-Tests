@@ -31,7 +31,7 @@ func TestPlatform_getOrgchartTags(t *testing.T) {
 	portals := getOrgchartImportTags(RootOrgchartURL + `api/platform/portal`)
 
 	count := len(portals)
-	retrieved := 1
+	retrieved := 2
 
 	if !cmp.Equal(count, retrieved) {
 		t.Errorf("Array size = %v, wanted = %v", count, retrieved)
