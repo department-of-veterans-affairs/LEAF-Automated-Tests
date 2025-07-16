@@ -240,6 +240,7 @@ CREATE TABLE `dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `dependencies` (`dependencyID`, `description`) VALUES
+(-4,  'LEAF Agent');
 (-3,	'Group Designated by the Requestor'),
 (-2,	'Requestor Followup'),
 (-1,	'Person Designated by the Requestor'),
@@ -374,6 +375,7 @@ CREATE TABLE `indicators` (
   `timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `disabled` int unsigned NOT NULL DEFAULT '0',
   `is_sensitive` tinyint NOT NULL DEFAULT '0',
+  `trackChanges` tinyint NOT NULL DEFAULT '1',
   PRIMARY KEY (`indicatorID`),
   KEY `categoryID` (`categoryID`),
   KEY `parentID` (`parentID`),
@@ -558,7 +560,7 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`setting`, `data`) VALUES
 ('adPath',	'{}'),
-('dbversion',	'2025020100'),
+('dbversion',	'2025042400'),
 ('emailBCC',	'{}'),
 ('emailCC',	'{}'),
 ('heading',	'LEAF Agent Repository'),
