@@ -6,5 +6,3 @@ COPY api-test-helper app
 COPY API-tests API-tests
 
 WORKDIR /go/app
-RUN mkdir /.cache && \
-    chown -R 1001:1001 /go /.cache
