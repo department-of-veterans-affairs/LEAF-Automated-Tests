@@ -6,4 +6,5 @@ COPY api-test-helper app
 COPY API-tests API-tests
 
 WORKDIR /app
-CMD ["go", "run", "."]
+RUN mkdir /.cache && \
+    chown -R 1001:1001 /app /API-tests /go /.cache
