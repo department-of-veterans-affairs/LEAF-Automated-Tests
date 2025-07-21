@@ -191,8 +191,10 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
 await expect(page.locator('#bodyarea')).toBeVisible();
   await expect(page.locator('#bodyarea')).toContainText(cancelMsg);
   });
-});
+}); //End Testing of 4891
 
+//LEAF - 4888
+test.describe('LEAF-4888 If/then condition', () => {
 //LEAF - 4888 If/then condition This added test verifies when a user selects both "hide except" and "show except" they recieve a warning message
 test('Verify warning message is displayed', async ({ page }) => {
 
@@ -316,4 +318,6 @@ test('Verify warning message is displayed', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Delete this form' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes' }).click();
 });
+});
+//End of Testing 4888
 
