@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-
+test.describe.configure({ mode: 'serial' });
 test('Verify that using the quick review page, you are able to approve the request', async ({ page }) => {
   // Locators
   const formsDrpDwn = page.locator('select#forms');
