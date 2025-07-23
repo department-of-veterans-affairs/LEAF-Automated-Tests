@@ -94,9 +94,7 @@ test('Verify that using the quick review page, you are able to approve the reque
 
   // Step 6: Verify final status
   await page.goto(requestListingUrl);
-  // Using delay to mimic human typing; ensures that search results have time to load dynamically.
-  // Without delay, the search input may complete before results are available, leading to test flakiness.
-  await searchBar.type(uniqueRequest || '', { delay: 200 });
+  await searchBar.type(uniqueRequest || '');
   await magnifierIcon.waitFor({ state: 'visible' });
 
   const titleNumberInRequest = await TitleNumberInRequestLoc.allInnerTexts();
@@ -193,10 +191,7 @@ await roleDrpDwn.selectOption({ label: role2 });
   }
     // Step 6: Verify final status
   await page.goto(requestListingUrl);
-  // Using delay to mimic human typing; ensures that search results have time to load dynamically.
-  // Without delay, the search input may complete before results are available, leading to test flakiness.
-
-  await searchBar.type(uniqueRequest || '', { delay: 200 });
+  await searchBar.type(uniqueRequest || '');
   await magnifierIcon.waitFor({ state: 'visible' });
 
   const titleNumberInRequest = await TitleNumberInRequestLoc.allInnerTexts();
