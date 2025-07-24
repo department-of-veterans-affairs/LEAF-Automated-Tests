@@ -416,7 +416,13 @@ test.afterAll(async () => {
 
     // Cancel created form
     await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true});
+    // await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true}); { delay: 200 }
+    const searchBar = page.locator('div#searchContainer div input');
+    const magnifierIcon = page.locator('img.searchIcon').nth(0);
+
+    await searchBar.type(uniqueText + ' to Create');
+    await magnifierIcon.waitFor({ state: 'visible' });
+    await page.locator('((//td)[2] //a)[2]').first().click();
     await page.getByRole('button', { name: 'Cancel Request' }).click({force:true});
     await page.getByPlaceholder('Enter Comment').click();
     await page.getByPlaceholder('Enter Comment').fill('No longer needed');
@@ -425,7 +431,12 @@ test.afterAll(async () => {
 
     // Cancel the form used for testing negative currency
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    // await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    await searchBar.clear();
+    await searchBar.type(uniqueText + ' to Test Negative Currency');
+    await magnifierIcon.waitFor({ state: 'visible' }); 
+    await page.locator('((//td)[2] //a)[2]').first().click();
+
     await page.getByRole('button', { name: 'Cancel Request' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
 
