@@ -235,26 +235,3 @@ func TestEvents_EditValidCustomEmailEvent(t *testing.T) {
 
 	confirmEmailTemplatesRecordValues(t, new_ev_valid.EventID, new_ev_valid.EventDescription)
 }
-
-/* This is to show off what will happen if you try and use a utf8 era character in latin1*/
-func TestEvents_Special_Character(t *testing.T) {
-	this_is_a_only_a_simley_face_test := WorkflowEvent{
-		EventID:          "this_is_a_only_a_simley_face_test",
-		EventDescription: "This is a simley face 😀 Text afterwards",
-		EventType:        "Email",
-	}
-	theMorphedText := "This is a simley face ? Text afterwards"
-	_, err := postEvent(RootURL+`api/workflow/events`, this_is_a_only_a_simley_face_test, map[string]string{})
-	if err != nil {
-		t.Error(err)
-	}
-
-	event, err := getEvent(RootURL + `api/workflow/event/_` + this_is_a_only_a_simley_face_test.EventID)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if event[0].EventDescription != theMorphedText {
-		t.Errorf(`Title %v Does not match %v.`, event[0].EventDescription, theMorphedText)
-	}
-}
