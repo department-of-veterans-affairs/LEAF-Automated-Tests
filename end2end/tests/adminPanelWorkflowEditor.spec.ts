@@ -158,6 +158,7 @@ test('Copy workflow', async ({ page }) => {
     await page.reload();
     const copyWorkflowButton = page.locator('#btn_duplicateWorkflow');
     await expect(copyWorkflowButton).toBeVisible();
+    await page.waitForLoadState('domcontentloaded')
     await copyWorkflowButton.click();
 
     // Wait for the "Duplicate Workflow" dialog to appear
@@ -168,6 +169,8 @@ test('Copy workflow', async ({ page }) => {
     // Confirm that the copied workflow appears in the list
     await saveButton.click();
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText('Submit', { exact: true })).toBeVisible();
     await page.click("div.jtk-overlay");
     await page.locator("div.workflowStepInfo button.buttonNorm").last().click();
     await page.click("span#confirm_saveBtnText:first-child");

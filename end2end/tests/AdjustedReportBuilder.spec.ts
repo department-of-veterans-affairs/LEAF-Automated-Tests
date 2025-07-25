@@ -156,6 +156,12 @@ test('Redirect to search filter and Generate Report with Approval History column
   const dataFieldLink = page.locator('a span', { hasText: 'Any standard data field' });
   await expect(dataFieldLink).toBeVisible();
   await dataFieldLink.click();
+
+  // Select the role option
+  const roleOption = page.locator('ul.chosen-results li.active-result:nth-child(1)').first();
+  await expect(roleOption).toBeVisible();
+  await roleOption.click();
+
   // Proceed to the next step
   const nextStepButton = page.getByRole('button', { name: 'Next Step' });
   await expect(nextStepButton).toBeVisible();
@@ -207,17 +213,6 @@ test('Update and revert report title from pop-up window', async ({ page }) => {
   await expect(initialReportTitle).toHaveText('Available for test case');
 });
 
-// test('Navigation to record page on UID link click', async ({ page }) => {
-//   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
-
-//   // UID Link
-//   const UID = page.getByRole('link', { name: '956' });
-//   await UID.waitFor();
-//   await UID.click();
-
-//   // Validate the record page opens with the correct UID
-//   await expect(page.locator('#headerTab')).toContainText('Request #956');
-// });
 
 test('Navigation to record page on UID link click', async ({ page }) => {
   await page.goto("https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJHSAHASQBEQAaEAez2gEMwKpsBCAXjJBjoGMALbKCHAoAbAG4Qs5AOZ0I2AIIA5EgF9S6LIhAYIwiJEmVqUOg2xtynMLyQAGabIXKQKgLrkAVhTQA7BChwwOgBXBHJfNDA0UyhFGhg5dxwGMCRgNRBhNBhIpABGW0LyLJywAHkAMwq4fTsVIA%3D%3D%3D&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAi2QoAri2a0G%2BMMzboOeHn0iwEKDDgXRiEHeln1Gi6stU8AukA");
