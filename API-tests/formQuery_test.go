@@ -249,14 +249,7 @@ func TestFormQuery_FindTwoSteps(t *testing.T) {
 /* post a new employee to an orgchart format question and then confirm expected values on orgchart property */
 func TestFormQuery_Employee_Format__Orgchart_Has_Expected_Values(t *testing.T) {
 	mock_orgchart_employee := FormQuery_Orgchart_Employee{
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 		EmpUID:     201,
->>>>>>> main
-=======
-		EmpUID:     201,
->>>>>>> c36e84eefe0d12e0e276ff517aba8001d017fae9
 		FirstName:  "Ramon",
 		LastName:   "Watsica",
 		MiddleName: "Yundt",
