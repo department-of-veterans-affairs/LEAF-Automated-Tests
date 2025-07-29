@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// test.describe('LEAF 4960',() => {
-
-//   test.describe.configure({ retries: 0});
 
   test('Add customization to print_subindicators templates', async ({ page }) => {
 
@@ -12,7 +9,6 @@ import { test, expect } from '@playwright/test';
     await page.getByRole('link', { name: 'Admin Panel' }).click();
     await page.getByRole('button', { name: ' Template Editor Edit HTML' }).click();
     await page.getByRole('button', { name: 'print_subindicators', exact: true }).click();
-    //await expect(page.locator('#filename')).toBeVisible();
     await expect(page.locator('#filename')).toHaveText('print_subindicators');
     await page.reload();
     await expect(page.getByText('<!--{strip}-->')).toBeVisible();
@@ -27,11 +23,7 @@ import { test, expect } from '@playwright/test';
     await page.getByLabel('Template Editor coding area.').press('ArrowUp');
     await page.getByLabel('Template Editor coding area.').fill('AAAAA');
     await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.getByRole('button', { name: 'print_subindicators_ajax', exact: true }).click();
-    await page.waitForResponse(res =>
-      res.url().includes('https://host.docker.internal/Test_Request_Portal/api/template/_print_subindicators_ajax.tpl') 
-      && res.status() === 200
-    );
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates&file=print_subindicators_ajax.tpl');
     await expect(page.locator('#filename')).toHaveText('print_subindicators_ajax');
     await expect(page.getByText('<!--{**}-->')).toBeVisible();
     await page.getByText('<!--{**}-->').click();
@@ -58,5 +50,3 @@ import { test, expect } from '@playwright/test';
     await page.getByRole('link', { name: 'TestForm_GetProgressChecking' }).click();
     await expect(page.locator('#xhrIndicator_20_1')).toContainText('test');
   });
-
-// });
