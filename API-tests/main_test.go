@@ -33,7 +33,7 @@ var tr = &http.Transport{
 var cookieJar, _ = cookiejar.New(nil)
 var client = &http.Client{
 	Transport: tr,
-	Timeout:   time.Second * 5,
+	Timeout:   time.Second * 10,
 	Jar:       cookieJar,
 }
 
