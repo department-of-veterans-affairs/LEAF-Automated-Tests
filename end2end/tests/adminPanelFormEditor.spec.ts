@@ -306,7 +306,7 @@ test('Verify warning message is displayed', async ({ page }) => {
 
 //Verify error is displayed
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByText('⚠️ Having both \'hide except\'')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save' })).toBeHidden();
   await expect(page.getByText('Close')).toBeVisible();
   await page.getByLabel('Close').click();
 
