@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 
   /**
    * Test for LEAF 4960
+   * Ensure changes to print_subindicators and print_subindicators_ajax templates are applied
   */
   test('Add customization to print_subindicators templates', async ({ page }) => {
 
