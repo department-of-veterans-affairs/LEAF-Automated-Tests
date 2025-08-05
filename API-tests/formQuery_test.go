@@ -686,7 +686,7 @@ func TestLargeFormQuery_SmallQuery(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if res.Header.Get("LEAF_Is_Large_Query") != "false" {
+	if res.Header.Get("LEAF_Large_Query") != "false" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 }
@@ -705,7 +705,7 @@ func TestLargeFormQuery_SmallQuery_Indi_lt10_Limit1001(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if res.Header.Get("LEAF_Is_Large_Query") != "false" {
+	if res.Header.Get("LEAF_Large_Query") != "false" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 }
@@ -724,7 +724,7 @@ func TestLargeFormQuery_LargeQuery_NoLimit(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if res.Header.Get("LEAF_Is_Large_Query") != "true" {
+	if res.Header.Get("LEAF_Large_Query") != "true" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 
@@ -744,7 +744,7 @@ func TestLargeFormQuery_LargeQuery_LimitGT110000(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if res.Header.Get("LEAF_Is_Large_Query") != "true" {
+	if res.Header.Get("LEAF_Large_Query") != "true" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 
@@ -764,7 +764,7 @@ func TestLargeFormQuery_LargeQuery_Indi_10_Limit1001(t *testing.T) {
 		t.Errorf("Record 958 should be readable")
 	}
 
-	if res.Header.Get("LEAF_Is_Large_Query") != "true" {
+	if res.Header.Get("LEAF_Large_Query") != "true" {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 
