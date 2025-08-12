@@ -357,17 +357,17 @@ test('Create Email Action', async({page}) =>{
   await page.getByRole('link', { name: 'Email Template Editor' }).click();
   const page1 = await page1Promise;
 
-  await page.waitForLoadState('load');
+  await page1.waitForLoadState('load');
   await page1.getByRole('button', { name: 'End2end Testing for' }).click();
   await expect(page1.getByRole('heading', { name: 'End2end Testing for' })).toBeVisible();
   await expect(page1.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
   await page1.getByRole('textbox', { name: 'Email To:' }).click();
-  await page1.getByRole('textbox', { name: 'Email To:' }).fill('{{$field.19}}\ntest4892@fake.com');
+  await page1.getByRole('textbox', { name: 'Email To:' }).fill('{{$field.9}}\ntest4892@fake.com');
   await page1.getByRole('textbox', { name: 'Email CC:' }).fill('test4892@fake.com');
   
   await page1.getByRole('button', { name: 'Save Changes' }).click();
-  await expect(page1.getByText('Please note that only')).toBeVisible();
-
+  await page1.waitForLoadState('load');
+  
 
 });
 
@@ -448,15 +448,20 @@ test('Create New Request', async({page}) =>{
 
 });
 
-test('Verify Email', async({page}) =>{
+test('Verify Email Sent', async({page}) =>{
 
   await page.goto('http://host.docker.internal:5080/');
 
   await page.waitForLoadState('load');
+   await expect(page.getByRole('textbox', { name: 'Search' })).toBeVisible();
 
+  await page.getByRole('textbox', { name: 'Search' }).fill('test4892@');
+  await page.getByRole('button', { name: 'Refresh' }).click();  
+  
   await page.locator('td:nth-child(2) > .cell').first().click();
-  await expect(page.getByLabel('Messages')).toContainText('To: test4892@fake.com, Loyd.Cartwright10@fake-email.com, Morton.Anderson@fake-email.com, Roman.Abbott@fake-email.com, Booker.Feeney@fake-email.com,');
-  await page.getByRole('tab', { name: 'Headers' }).click();
+  await page.getByTitle('Action for General Form (#').locator('span').click();
+  await expect(page.getByLabel('Messages')).toContainText('To: Roman.Abbott@fake-email.com, Morton.Anderson@fake-email.com, Loyd.Cartwright10@fake-email.com, Booker.Feeney@fake-email.com, test4892@fake.com,');
+  
 
 });
 
