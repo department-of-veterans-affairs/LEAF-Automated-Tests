@@ -671,3 +671,101 @@ func TestForm_QueryJoinStatus(t *testing.T) {
 		break
 	}
 }
+
+func TestLargeFormQuery_SmallQuery(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status","initiatorName"],"sort":{},"limit":10000,"getData":["9","8","10","4","5","7","3","6","2"]}&x-filterData=recordID,title,stepTitle,lastStatus,lastName,firstName`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if res.Header.Get("LEAF_Large_Query") != "false" {
+		t.Errorf("bad headers: %v", res.Header)
+	}
+}
+
+func TestLargeFormQuery_SmallQuery_Indi_lt10_Limit1001(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["9","8","10","4","5","7","3","6"],"limit":1001}&x-filterData=recordID,title`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if res.Header.Get("LEAF_Large_Query") != "false" {
+		t.Errorf("bad headers: %v", res.Header)
+	}
+}
+
+func TestLargeFormQuery_LargeQuery_NoLimit(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status","initiatorName"],"sort":{},"getData":["9","8","10","4","5","7","3","6","2"]}&x-filterData=recordID,title,stepTitle,lastStatus,lastName,firstName`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if res.Header.Get("LEAF_Large_Query") != "true" {
+		t.Errorf("bad headers: %v", res.Header)
+	}
+
+}
+
+func TestLargeFormQuery_LargeQuery_LimitGT110000(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["status","initiatorName"],"sort":{},"getData":["9","8","10","4","5","7","3","6","2"],"limit":10001}&x-filterData=recordID,title,stepTitle,lastStatus,lastName,firstName`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if res.Header.Get("LEAF_Large_Query") != "true" {
+		t.Errorf("bad headers: %v", res.Header)
+	}
+
+}
+
+func TestLargeFormQuery_LargeQuery_Indi_10_Limit1001(t *testing.T) {
+	url := RootURL + `api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["9","8","10","4","5","7","3","6","2","-7","-5","-6","-2","-1","-4","14","15","12","1"],"limit":1001}&x-filterData=recordID,title`
+
+	url = strings.Replace(url, " ", "%20", -1)
+	res, _ := client.Get(url)
+	b, _ := io.ReadAll(res.Body)
+
+	var formQueryResponse FormQueryResponse
+	_ = json.Unmarshal(b, &formQueryResponse)
+
+	if _, exists := formQueryResponse[958]; !exists {
+		t.Errorf("Record 958 should be readable")
+	}
+
+	if res.Header.Get("LEAF_Large_Query") != "true" {
+		t.Errorf("bad headers: %v", res.Header)
+	}
+
+}
