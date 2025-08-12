@@ -207,7 +207,7 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	22p controls 23c.  23c has subquestions 24, 25, (26p, 27c, 28). 23 is visible if 22 is >= '42'
 	-26p controls 27c.  27c has subquestion 28. 27 is visible if 26 includes 'E & "F"'
 	form_dac2a has 2 required questions
-	30p (not required) controls 31c.  31c has subquestion 32.  31 is visisble if 30p is 3
+	30p (not required) controls 31c.  31c has subquestion 32.  31 is visisble if 30p is 2 or 3
 	Format information is noted when data is posted  */
 
 	//create the new request and get the recordID for progress and domodify urls, check intial progress.
@@ -430,7 +430,20 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
 
-	//fill staple 30 to display 31c, 32 (11/13)
+	//fill staple 30 to display 31c, 32 (11/13). show triggered by 2 or 3. conditions added individually (back compat check)
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("30", "2") //dropdown 1,2,3
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"85"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+	//refill 30
 	postData = url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("30", "3") //dropdown 1,2,3
@@ -443,6 +456,7 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	if !cmp.Equal(got, want) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
+
 	postData = url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("31", "test 31") //text
