@@ -203,7 +203,7 @@ func TestForm_FilterChildkeys(t *testing.T) {
 func TestForm_GetProgress_ReturnValue(t *testing.T) {
 	/* Setup form_7664a, with staple form_dac2a.
 	form_7664a has 11 required questions with different formats (format influences logic).
-	17p controls 18c.  18c has subquestions 19, 20.  18 is visible if 17 is '2'
+	17p controls 18c.  18c has subquestions 19, 20.  18 is visible if 17 is '2' or '3'
 	22p controls 23c.  23c has subquestions 24, 25, (26p, 27c, 28). 23 is visible if 22 is >= '42'
 	-26p controls 27c.  27c has subquestion 28. 27 is visible if 26 includes 'E & "F"'
 	form_dac2a has 2 required questions
@@ -261,10 +261,23 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
 
-	//fill 17 to display 18,19,20 (2/5)
+	//fill 17 to display 18,19,20 (2/5).
 	postData = url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
-	postData.Set("17", "2") //dropdown 1,2,3
+	postData.Set("17", "2") //dropdown 1,2,3. Both 2 and 3 should result in shown state
+	res, err = client.PostForm(urlPostDoModify, postData)
+	if err != nil {
+		t.Error(urlPostDoModify + "Error sending post request")
+	}
+	got, res = httpGet(urlGetProgress)
+	want = `"40"`
+	if !cmp.Equal(got, want) {
+		t.Errorf("progress check got = %v, want = %v", got, want)
+	}
+	//refill 17 with 3
+	postData = url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("17", "3") //dropdown 1,2,3
 	res, err = client.PostForm(urlPostDoModify, postData)
 	if err != nil {
 		t.Error(urlPostDoModify + "Error sending post request")

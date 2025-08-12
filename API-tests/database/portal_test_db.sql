@@ -6243,7 +6243,7 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (15,	'Reviewer 2',	'orgchart_employee',	'',	'',	14,	'form_f8b95',	NULL,	NULL,	NULL,	NULL,	1,	0,	'2023-10-25 22:56:33',	0,	0),
 (16,	'Section 1',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2024-12-09 13:38:21',	0,	0),
 (17,	'dropdown parent',	'dropdown\r\n\r\n1\r\n2\r\n3',	'',	'',	16,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
-(18,	'radio child (show if parent 2)',	'radio\r\nA\r\nB\r\nC',	'',	'',	17,	'form_7664a',	'',	'',	'[{\"childIndID\":18,\"parentIndID\":17,\"selectedOp\":\"==\",\"selectedParentValue\":\"2\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"radio\",\"parentFormat\":\"dropdown\"}]',	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
+(18,	'radio child (show if parent 2)',	'radio\r\nA\r\nB\r\nC',	'',	'',	17,	'form_7664a',	'',	'',	'[{\"childIndID\":18,\"parentIndID\":17,\"selectedOp\":\"==\",\"selectedParentValue\":\"2<br \\/>\\n3\",\"selectedChildValue\":\"\",\"selectedOutcome\":\"show\",\"crosswalkFile\":\"\",\"crosswalkHasHeader\":false,\"level2IndID\":null,\"childFormat\":\"radio\",\"parentFormat\":\"dropdown\"}]',	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
 (19,	'normal nested currency sub question',	'currency',	'',	'',	18,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
 (20,	'normal nested text sub question',	'text',	'',	'',	19,	'form_7664a',	'',	'',	NULL,	NULL,	1,	-128,	'2024-12-09 13:38:21',	0,	0),
 (21,	'Section 2',	'',	'',	'',	NULL,	'form_7664a',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2024-12-09 13:38:21',	0,	0),
