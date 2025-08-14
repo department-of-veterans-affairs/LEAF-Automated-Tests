@@ -431,8 +431,8 @@ test('Create New Request', async({page}) =>{
 
   //3. Assigned Group
     
-  await expect(page.getByText('Form completion progress: 50% Next Question')).toBeVisible();
-
+  await expect(page.locator('#xhr div').filter({ hasText: 'Assigned Group* Required' }).nth(3)).toBeVisible();
+   await expect(page.getByRole('searchbox', { name: 'Search for user to add as' })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search for user to add as' }).click();
   await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('g');
   await page.getByRole('cell', { name: serviceGroup }).click();
@@ -481,6 +481,8 @@ test('Clean up Test Data', async({page}) =>{
   await expect(page.getByText('Inbox Review and apply')).toBeVisible();
   await page.getByRole('textbox', { name: 'Enter your search text' }).click();
   await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestTitle);
+
+  await page.waitForLoadState('load');
 
   await page.getByRole('cell', { name: dynRegexrequestTitle }).click();
   await expect(page.getByText('Group A')).toBeVisible();
