@@ -1,6 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 
-test.describe.configure({ mode: 'serial'});
+test.describe.configure({ mode: 'serial', retries: 0});
 
 let page: Page;
 
@@ -317,14 +317,16 @@ test.describe('Archive and Restore Question',() => {
     // Ensure page has completely loaded before clicking the Next Question button
     await expect(page.locator('#loadingIndicator_15')).not.toBeVisible();
     await page.locator('#nextQuestion2').click();
-        
+    await page.locator(`(//div[@class='printmainform'])[1]`).waitFor({ state: 'visible' });
     // Verify the request is populated with the correct users
-    await expect(page.locator('#data_14_1')).toContainText('Adam Bauch');
-    await expect(page.locator('#data_15_1')).toContainText('Dorian Balistreri');
+    await expect(page.locator(`(//span[@class='printResponse'])[1] //div //a`)).toContainText('Adam Bauch');
+    await expect(page.locator(`(//span[@class='printResponse'])[2] //div //a`)).toContainText('Dorian Balistreri');
 
     // Submit the request and verify it has been submitted
-    await page.getByRole('button', { name: 'Submit Request' }).click();
-    await expect(page.locator('#workflowbox_dep-1')).toContainText('Pending action from Adam Bauch');
+    await page.locator(`//button[@title='Submit Form']`).waitFor({ state: 'visible' });
+    await page.locator(`//button[@title='Submit Form']`).click({ force: true });
+    await page.locator(`//div[@id='workflowcontent'] //div //span`).waitFor({ state: 'visible' });
+    await expect(page.locator(`//div[@id='workflowcontent'] //div //span`)).toContainText('Pending action from Adam Bauch');
   });
 
   /**

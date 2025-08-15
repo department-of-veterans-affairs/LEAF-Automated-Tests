@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 
     // Confirm customization has not been added
     await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=966');
-    await expect(page.locator('#xhrIndicator_20_1')).toHaveText('test');
+    await expect(page.locator(`(//div[@class='printResponse'] //span)[8]`)).toHaveText('test');
 
     // Go to Template Editor
     await page.getByRole('link', { name: 'Home' }).click();
@@ -30,7 +30,7 @@ import { test, expect } from '@playwright/test';
     await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
     await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
     await page.getByLabel('Template Editor coding area.').press('ArrowUp');
-    await page.getByLabel('Template Editor coding area.').fill('AAAAA');
+    await page.getByLabel('Template Editor coding area.').fill('JOHN');
     await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Add 'BBBBB' to the beginning of the print_subindicators_ajax template
@@ -45,13 +45,13 @@ import { test, expect } from '@playwright/test';
     await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
     await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
     await page.getByLabel('Template Editor coding area.').press('ArrowUp');
-    await page.getByLabel('Template Editor coding area.').fill('BBBBB');
+    await page.getByLabel('Template Editor coding area.').fill('DOE');
     await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Confirm the 'AAAAA' and 'BBBBB' are visible on the request
     await page.getByRole('link', { name: 'Home' }).click();
     await page.getByRole('link', { name: 'TestForm_GetProgressChecking' }).click();
-    await expect(page.locator('#xhrIndicator_20_1')).toContainText('BBBBB test AAAAA');
+    await expect(page.locator('#xhrIndicator_20_1')).toContainText('DOE test JOHN');
 
     // Restore the templates back to their original states
     await page.getByRole('link', { name: 'Admin Panel' }).click();

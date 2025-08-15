@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe.configure({ mode: 'default' });
+test.describe.configure({ mode: 'serial' });
 
 test.describe('Update heading of a General Form then reset back to orginal heading', () => {
  test('change field heading', async ({ page }) => {
