@@ -289,18 +289,20 @@ test('Verify warning message is displayed', async ({ page }) => {
   await page.getByLabel('Select an outcome').selectOption('show');
   await page.getByLabel('select controller question').selectOption(mainQuestionId);
   await page.getByLabel('select condition').selectOption('!=');
-  await page.getByLabel('select a value').selectOption(mainOption1);
+  await page.getByRole('searchbox', { name: 'parent value choices'}).click();
+  await page.getByRole('option', { name: mainOption1 + ' Press to select' }).click();
   await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
   await page.getByRole('button', { name: 'Save' }).click();
 
-  await expect(page.getByText('This field will be hidden')).toBeVisible();
+  await expect(page.getByText('This field will be shown IF')).toBeVisible();
   await expect(page.getByRole('button', { name: 'New Condition' })).toBeVisible();
   await page.getByRole('button', { name: 'New Condition' }).click();
 //Create a second condition
   await page.getByLabel('Select an outcome').selectOption('hide');
-   await page.getByLabel('select controller question').selectOption(mainQuestionId);
+  await page.getByLabel('select controller question').selectOption(mainQuestionId);
   await page.getByLabel('select condition').selectOption('==');
-  await page.getByLabel('select a value').selectOption(mainOption2);
+  await page.getByRole('searchbox', { name: 'parent value choices'}).click();
+  await page.getByRole('option', { name: mainOption2 + ' Press to select' }).click();
   await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
   await page.getByRole('button', { name: 'Save' }).click();
 

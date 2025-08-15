@@ -119,7 +119,8 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
   // Add condition where the sub-question will only be visible if the user selects "Yes"
   await page.getByTitle('select controller question').selectOption({label: optionToSelectNoSpace});
   await page.getByLabel('select condition').selectOption('==');
-  await page.getByLabel('select a value').selectOption('Yes');
+  await page.getByRole('searchbox', { name: 'parent value choices'}).click();
+  await page.getByRole('option', { name: 'Yes Press to select' }).click();
 
   // When the sub-question is displayed, pre-fill the answer as "Jane Doe"
   await page.getByLabel('Enter a pre-fill value').click();
@@ -129,7 +130,7 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
   // Verify the if/then statement
   await expect(page.locator('#condition_editor_inputs')).toContainText('THEN \'Supervisor Name\' will have the value \'Jane Doe\'');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByLabel('Conditions For Supervisor').getByRole('listitem')).toContainText(`If \'Are you a VA Employee?\' is Yes then pre-fill this question.`);
+  await expect(page.getByLabel('Conditions For Supervisor').getByRole('listitem')).toContainText(`\'Are you a VA Employee?\' includes Yes`);
   await page.getByText('Close').click();
 })
 
