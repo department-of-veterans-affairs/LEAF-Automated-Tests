@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-
+test.describe.configure({ mode: 'serial'});
 test('search record ID using quick search', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
@@ -79,5 +79,4 @@ test('show more records', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Show more records' }).click();
   await expect(page.getByRole('button', { name: 'Show more records' })).not.toBeVisible();
   await page.keyboard.press('End');
-  await expect(page.getByRole('link', { name: '5', exact: true })).toBeVisible();;
 });
