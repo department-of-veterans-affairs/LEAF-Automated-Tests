@@ -297,10 +297,9 @@ await page.waitForLoadState();
 
 });
 
- });
+
  //End of Creation and Customization
 
-test.describe('Creating and Validating Form Displays', () => {
 
 //Create a New MUltipleperson request
 test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
@@ -700,11 +699,7 @@ test('View Stapled Request', async ({ page }, testInfo) => {
  
 });
 
-});
 //End of Form Verification
-
-
-test.describe('Clean up all test data', () =>{ 
 
 //Cleanup Remove Request
 

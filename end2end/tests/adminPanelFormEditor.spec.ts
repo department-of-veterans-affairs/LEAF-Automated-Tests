@@ -6,9 +6,9 @@ test.describe('Update heading of a General Form then reset back to orginal headi
   test('change field heading', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
 
-    let randNum = Math.random();
-    let uniqueText = `Single line text ${randNum}`;
-    let originalText = `Single line Text`;
+  let randNum = Math.random();
+  let uniqueText = `Single line text ${randNum}`;
+  let originalText = `Single line text`;
 
     await page.getByRole('button', { name: ' Form Editor Create and' }).click();
     await page.waitForLoadState('domcontentloaded');
@@ -59,32 +59,35 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await page.locator('label').filter({ hasText: 'General Form' }).locator('span').click();
     await page.getByRole('button', { name: 'Click here to Proceed' }).click();
 
-    await page.waitForLoadState('load');
-    await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-    await expect(page.locator('#xhr')).toBeVisible();
-
-    //1. Single line Text
-    await page.getByRole('textbox', { name: 'Single line Text', exact: true }).fill(singleLineText);
-    await page.getByRole('textbox', { name: 'Multi line text' }).click();
-    await page.getByRole('textbox', { name: 'Multi line text' }).fill(multiLineText);
-    await page.getByRole('textbox', { name: 'Numeric' }).click();
-    await page.getByRole('textbox', { name: 'Numeric' }).fill(numericText);
-    await page.getByRole('textbox', { name: 'Single line text B' }).click();
-    await page.getByRole('textbox', { name: 'Single line text B' }).fill(singleLineText);
-    await page.locator('#radio_options_7 label').filter({ hasText: radioTxt }).locator('span').click();
-    await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.locator('#nextQuestion2').click();
-
-    await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-    //2. Assigned Person  
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).click();
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).fill('tes');
-    await page.getByRole('cell', { name: assignedPersonOne }).click();
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).click();
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).fill('h');
-    await page.getByRole('cell', { name: assignedPersonTwo }).click();
-    await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.locator('#nextQuestion2').click();
+  await page.waitForLoadState('load');
+  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+   await expect(page.locator('#xhr')).toBeVisible();
+  
+//1. Single line Text
+  await expect(page.getByRole('textbox', { name: 'Single line text', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Single line text', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Single line text', exact: true }).fill(singleLineText);
+ 
+  await page.getByRole('textbox', { name: 'Multi line text' }).click();
+  await page.getByRole('textbox', { name: 'Multi line text' }).fill(multiLineText);
+  await page.getByRole('textbox', { name: 'Numeric' }).click();
+  await page.getByRole('textbox', { name: 'Numeric' }).fill(numericText);
+  await page.getByRole('textbox', { name: 'Single line text B' }).click();
+  await page.getByRole('textbox', { name: 'Single line text B' }).fill(singleLineText);
+  await page.locator('#radio_options_7 label').filter({ hasText: radioTxt }).locator('span').click();
+  await expect(page.locator('#nextQuestion2')).toBeVisible();
+  await page.locator('#nextQuestion2').click();
+ 
+  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+//2. Assigned Person  
+  await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).fill('tes');
+  await page.getByRole('cell', { name: assignedPersonOne }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).fill('h');
+  await page.getByRole('cell', { name: assignedPersonTwo}).click();
+  await expect(page.locator('#nextQuestion2')).toBeVisible();
+  await page.locator('#nextQuestion2').click();
 
     await expect(page.getByText('Form completion progress: 50% Next Question')).toBeVisible();
     //3. Assigned Group  
