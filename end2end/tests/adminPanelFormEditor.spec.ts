@@ -8,7 +8,7 @@ test.describe('Update heading of a General Form then reset back to orginal headi
 
   let randNum = Math.random();
   let uniqueText = `Single line text ${randNum}`;
-  let originalText = `Single line Text`;
+  let originalText = `Single line text`;
 
   await page.getByRole('button', { name: ' Form Editor Create and' }).click();
   await page.waitForLoadState('domcontentloaded');
@@ -64,7 +64,10 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
    await expect(page.locator('#xhr')).toBeVisible();
   
 //1. Single line Text
-  await page.getByRole('textbox', { name: 'Single line Text', exact: true }).fill(singleLineText);
+  await expect(page.getByRole('textbox', { name: 'Single line text', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Single line text', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Single line text', exact: true }).fill(singleLineText);
+ 
   await page.getByRole('textbox', { name: 'Multi line text' }).click();
   await page.getByRole('textbox', { name: 'Multi line text' }).fill(multiLineText);
   await page.getByRole('textbox', { name: 'Numeric' }).click();

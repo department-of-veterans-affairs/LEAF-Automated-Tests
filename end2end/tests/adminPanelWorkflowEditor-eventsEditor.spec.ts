@@ -2,8 +2,9 @@ import { test, expect, Locator } from '@playwright/test';
 
 //This test 
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'default' });
 
+test.describe('Events Editor', () => {
 // Global Variables
   let randNum = Math.random();
   let uniqueText = `Event ${randNum}`;
@@ -305,4 +306,4 @@ test('Verify Event Removed from Workflow Action', async ({ page }, testInfo) => 
    await page.getByLabel('Close Modal').click();
   
   });
-  
+});
