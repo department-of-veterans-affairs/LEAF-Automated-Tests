@@ -2,8 +2,9 @@ import { test, expect, Locator } from '@playwright/test';
 
 //This test when a user is being diabled and the groups and 
 // positions are then assigned to the new User
+test.describe('Account Updater with Positions & Groups', () => {
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'default' });
 
 //Check to make sure the inital user 
 test('check User Account', async ({ page }, testInfo) => {
@@ -19,6 +20,7 @@ test('check User Account', async ({ page }, testInfo) => {
   await page.keyboard.type('username.disabled:vtrfaufelecia');
   await expect(page.locator('#employeeBody')).toBeVisible();
   await page.getByRole('link', { name: 'Schultz, Phuong Boyer.' }).click();
+
   await expect(page.locator('#maincontent')).toBeVisible();
  
 
@@ -80,6 +82,7 @@ const previewChange:Locator = page1.getByRole('button', {name: 'Preview Changes'
 await previewChange.hover();
 await previewChange.click ();
 
+await page.waitForLoadState('domcontentloaded');
 //Old Account with Groups & Positions Veirfy Goups and Positions have value
 
 //Group
@@ -160,6 +163,7 @@ const previewChange:Locator = page1.getByRole('button', {name: 'Preview Changes'
 await previewChange.hover();
 await previewChange.click ();
 
+await page.waitForLoadState('domcontentloaded');
 //Old Account with Groups & Positions Verify Goups and Positions have value
 
 //Group
@@ -191,5 +195,7 @@ await expect(page1.locator('#positions_updated')).toContainText('Removed vtrvxhc
 //No processing errors
 await expect(page.locator('#no_errors')).toContainText('no errors');
 
+
+});
 
 });
