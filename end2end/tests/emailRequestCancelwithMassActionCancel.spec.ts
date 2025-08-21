@@ -20,16 +20,44 @@ test('Cancel Submitted Request', async ({ page }, testInfo) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 
     //Verify Request is Cancelled
-    await expect(page.getByText('Request #112 has been')).toBeVisible();
+    await expect(page.getByText('Request #112 has been cancelled!')).toBeVisible();
 
     await page.goto('http://host.docker.internal:5080/');
 
   //Wait for page to load
   await page.waitForLoadState('load');
 
+   //Search Message Table 
+
+  const table = page.locator('//*[@id="pane-messages"]/div/div[1]/div/div[2]/div[1]/div[3]/div/div[1]/div/table');
+  const rows = table.locator('//*[@id="pane-messages"]/div/div[1]/div/div[2]/div[1]/div[3]/div/div[1]/div/table/tbody/tr');
+  const cols = rows.first().locator("td");
+  let uniqueDescr = 'The request for General Form (#112) has been canceled.';
+
+   const subjectMatch = rows.filter({
+      has: page.locator("td"),
+      hasText: uniqueDescr
+      });
+
+ console.log ('?', uniqueDescr);
+
+
     await page.getByText('leaf.noreply@fake-email.com').first().click();
 
-    await expect(page.getByLabel('Messages')).toContainText('The request for General Form (#112) has been canceled.');
+
+     await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
+    - paragraph: "From: leaf.noreply@va.gov"
+    - paragraph:
+      - text: "To:"
+      - strong: tester.tester@fake-email.com
+      - text: ","
+    - paragraph: "Subject: The request for General Form (#112) has been canceled."
+    `);
+
+  //Cleanup the inbox
+     await page.getByRole('button', { name: 'Delete' }).click();
+
+   
 
   //Cleanup
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');

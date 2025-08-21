@@ -59,9 +59,9 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await page.locator('label').filter({ hasText: 'General Form' }).locator('span').click();
     await page.getByRole('button', { name: 'Click here to Proceed' }).click();
 
-  await page.waitForLoadState('load');
+  await page.waitForLoadState('domcontentloaded');
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-   await expect(page.locator('#xhr')).toBeVisible();
+  await expect(page.locator('#xhr')).toBeVisible();
   
 //1. Single line Text
   await expect(page.getByRole('textbox', { name: 'Single line text', exact: true })).toBeVisible();
