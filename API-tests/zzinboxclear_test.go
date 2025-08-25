@@ -8,10 +8,8 @@ import (
 )
 
 const (
-	smtp4devBaseURL = "http://host.docker.internal:5080" // Default smtp4dev address.  Change if yours is different.
+	smtp4devBaseURL = "http://host.docker.internal:5080"
 )
-
-const defaultMailbox = "default" // Or whatever the correct identifier is
 
 // ClearInbox clears all emails from the smtp4dev inbox.
 func ClearInbox() error {
