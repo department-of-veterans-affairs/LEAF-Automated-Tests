@@ -183,7 +183,6 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
 
    await expect(page.locator('#maintabs div').filter({ hasText: 'Messages Sessions' }).nth(2)).toBeVisible();
 
-  await page.getByText('The request for General Form (#113) has been canceled.').TO;
   await page.getByText('The request for General Form (#113) has been canceled.').click();
 
     await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
@@ -200,7 +199,7 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
     await page.waitForLoadState('load');
     
     
-// await expect(page.getByLabel('Messages')).toContainText('The request for General Form (#114) has been canceled.');
+//await expect(page.getByLabel('Messages')).toContainText('The request for General Form (#114) has been canceled.');
 
 
    await page.getByText('leaf.noreply@fake-email.com').first().click();
@@ -216,7 +215,6 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
       
    await page.getByRole('button', { name: 'Delete' }).click();
   
- 
   
   //Reset  the Request
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
@@ -241,6 +239,7 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
   await page.getByRole('button', { name: 'Yes' }).click();
 
+ 
   await page.waitForLoadState('load');
   await expect(page.getByRole('heading', { name: 'Mass Action' })).toBeVisible();
   await expect(page.locator('#errorMessage')).toContainText('No Results');
@@ -334,7 +333,7 @@ await page.locator('#selectAllRequests').check();
   
 });
 
-//End of TC-003
+//End of TC-004
 
 }); //End of describe
 
