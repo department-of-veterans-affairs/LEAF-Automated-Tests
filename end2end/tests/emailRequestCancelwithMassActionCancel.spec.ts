@@ -183,6 +183,7 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
 
    await expect(page.locator('#maintabs div').filter({ hasText: 'Messages Sessions' }).nth(2)).toBeVisible();
 
+  await page.getByText('The request for General Form (#113) has been canceled.').TO;
   await page.getByText('The request for General Form (#113) has been canceled.').click();
 
     await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
