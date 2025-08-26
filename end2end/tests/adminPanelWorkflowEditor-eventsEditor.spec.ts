@@ -2,7 +2,7 @@ import { test, expect, Locator } from '@playwright/test';
 
 //This test 
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'default' });
 
 // Global Variables
   let randNum = Math.random();
