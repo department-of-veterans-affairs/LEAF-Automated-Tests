@@ -453,15 +453,31 @@ test('Verify Email Sent', async({page}) =>{
   await page.goto('http://host.docker.internal:5080/');
 
   await page.waitForLoadState('load');
-   await expect(page.getByRole('textbox', { name: 'Search' })).toBeVisible();
-
-  await page.getByRole('textbox', { name: 'Search' }).fill('test4892@');
-  await page.getByRole('button', { name: 'Refresh' }).click();  
-  
-  await page.locator('td:nth-child(2) > .cell').first().click();
-  await page.getByTitle('Action for General Form (#').locator('span').click();
-  await expect(page.getByLabel('Messages')).toContainText('To: Roman.Abbott@fake-email.com, Morton.Anderson@fake-email.com, Loyd.Cartwright10@fake-email.com, Booker.Feeney@fake-email.com, test4892@fake.com,');
-  
+ 
+ await page.getByText('Action for General Form (#').click();
+ 
+  await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
+    - paragraph: "From: tester.tester@fake-email.com"
+    - paragraph:
+      - text: "To:"
+      - strong: Roman.Abbott@fake-email.com
+      - text: ","
+      - strong: Morton.Anderson@fake-email.com
+      - text: ","
+      - strong: Loyd.Cartwright10@fake-email.com
+      - text: ","
+      - strong: Booker.Feeney@fake-email.com
+      - text: ","
+      - strong: test4892@fake.com
+      - text: ","
+    - paragraph:
+      - text: "To:"
+      - strong: test4892@fake.com
+      - text: ","
+    - paragraph: "/Subject: Action for General Form \\\\(#\\\\d+\\\\) in AS - Service/"
+    `);
+  //Cleanup the inbox
+     await page.getByRole('button', { name: 'Delete' }).click();
 
 });
 
