@@ -454,10 +454,10 @@ test('Verify Email Sent', async({page}) =>{
 
   await page.waitForLoadState('load');
  
- await page.getByText('Action for General Form (#').click();
- 
+  await page.getByText('leaf.noreply@fake-email.com').first().click();
+
   await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
-    - paragraph: "From: tester.tester@fake-email.com"
+    - paragraph: "From: leaf.noreply@va.gov"
     - paragraph:
       - text: "To:"
       - strong: Roman.Abbott@fake-email.com
@@ -470,11 +470,9 @@ test('Verify Email Sent', async({page}) =>{
       - text: ","
       - strong: test4892@fake.com
       - text: ","
-    - paragraph:
-      - text: "To:"
-      - strong: test4892@fake.com
+      - strong: tester.tester@fake-email.com
       - text: ","
-    - paragraph: "/Subject: Action for General Form \\\\(#\\\\d+\\\\) in AS - Service/"
+    - paragraph: "/Subject: The request for General Form \\\\(#\\\\d+\\\\) has been canceled\\\\./"
     `);
   //Cleanup the inbox
      await page.getByRole('button', { name: 'Delete' }).click();
