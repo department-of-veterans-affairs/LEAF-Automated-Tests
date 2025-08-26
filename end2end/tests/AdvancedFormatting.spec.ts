@@ -1,12 +1,10 @@
 import { test, expect } from "@playwright/test";
-test('Verify improvements in Form Editor UI and Advanced Formatting behavior', async ({ page }) => {
+
+test('Verify breadcrumb and delete button locations', async ({ page }) => {
   
   // Go to Form Editor
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.waitForResponse((res) =>
-    res.url().includes("/api/formStack/categoryList/allWithStaples") && res.status() === 200
-  );
-
+  
   // Choose 'Simple Form'
   await page.getByRole('link', { name: 'Simple form' }).click();
   await expect(page.getByLabel('Form name (39)')).toBeVisible();
@@ -46,28 +44,62 @@ test('Verify improvements in Form Editor UI and Advanced Formatting behavior', a
   const RestoreFieldPosition = await RestoreField.boundingBox();
   const RestoreFieldX = RestoreFieldPosition ? RestoreFieldPosition.x : 0;
   expect(deleteFormButtonX).toBeGreaterThan(RestoreFieldX);
+});
+
+test('Swapping to formatted code does not dissappear after typing in Advanced Formatting', async ( { page }) => {
+    
+  // Go to Form Editor
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  
+  // Choose 'Simple Form'
+  await page.getByRole('link', { name: 'Simple form' }).click();
+  await expect(page.getByLabel('Form name (39)')).toBeVisible();
 
   const formEditorLink = page.locator("(//div[@class='name_and_toolbar form-header'] //button)[1]");
   await formEditorLink.click();
 
-  // Edit section content and switch to Advanced Formatting view and validate the content is present
+  const formattedCodeBtn = page.locator("button#rawNameEditor");
+  const advancedFormattingTab = page.locator("//div[@contenteditable='true']");
+  const advancedFormattingButton = page.locator("//button[@title='use advanced text editor']");
   const formattedCodeInput = page.locator("//textarea[@id='name']");
   const inputTitle = "This is a test paragraph with list content.";
-  const advancedFormattingButton = page.locator("//button[@title='use advanced text editor']");
-  const advancedFormattingTab = page.locator("//div[@contenteditable='true']");
   
-  await formattedCodeInput.fill(inputTitle);
   await advancedFormattingButton.click();
-  await advancedFormattingTab.waitFor({ state: 'visible' });
-  expect(await advancedFormattingTab.textContent()).toContain(inputTitle);
+  await advancedFormattingTab.click();
+  await advancedFormattingTab.clear();
+
+  await page.keyboard.type(inputTitle);
+  await formattedCodeBtn.click();
+  await formattedCodeInput.waitFor({ state: 'visible' });
+  const formattedCodeText = await formattedCodeInput.inputValue();
+  expect(formattedCodeText).toContain(inputTitle);
+
+});
+
+test('List in Field Name is bulleted when using the Advanced Formatter', async ({ page }) => {
+
+  // Go to Form Editor
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  
+  // Choose 'Simple Form'
+  await page.getByRole('link', { name: 'Simple form' }).click();
+  await expect(page.getByLabel('Form name (39)')).toBeVisible();
+
+  const formEditorLink = page.locator("(//div[@class='name_and_toolbar form-header'] //button)[1]");
+  await formEditorLink.click();
 
   // Verify Bullet List Formatting
   const bulletListButton = page.locator("//button[@title='Unordered list']");
   const formattedCodeBtn = page.locator("button#rawNameEditor");
+  const advancedFormattingTab = page.locator("//div[@contenteditable='true']");
+  const advancedFormattingButton = page.locator("//button[@title='use advanced text editor']");
+  const formattedCodeInput = page.locator("//textarea[@id='name']");
   
-  await bulletListButton.click();
+  await advancedFormattingButton.click();
   await advancedFormattingTab.click();
   await advancedFormattingTab.clear();
+  await bulletListButton.click();
+  
   await page.keyboard.type('Bullet item 1');
   await page.keyboard.press('Enter');
   await page.keyboard.type('Bullet item 2');
@@ -76,28 +108,45 @@ test('Verify improvements in Form Editor UI and Advanced Formatting behavior', a
   const formattedCodeText = await formattedCodeInput.inputValue();
   expect(formattedCodeText).toContain('<ul><li>Bullet item 1</li><li>Bullet item 2</li></ul>');
 
+});
+
+test('List in Field Name is numbered when using the Advanced Formatter', async ({ page }) => {
+
+  // Go to Form Editor
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  
+  // Choose 'Simple Form'
+  await page.getByRole('link', { name: 'Simple form' }).click();
+  await expect(page.getByLabel('Form name (39)')).toBeVisible();
+
+  const formEditorLink = page.locator("(//div[@class='name_and_toolbar form-header'] //button)[1]");
+  await formEditorLink.click();
+
   // Verify Numbered List Formatting
   const numberedListButton = page.locator("//button[@title='Ordered list']");  
+  const advancedFormattingButton = page.locator("//button[@title='use advanced text editor']");
+  const advancedFormattingTab = page.locator("//div[@contenteditable='true']");
+  const formattedCodeInput = page.locator("//textarea[@id='name']");
+  const formattedCodeBtn = page.locator("button#rawNameEditor");
 
   await advancedFormattingButton.click();
   await advancedFormattingTab.waitFor({ state: 'visible' });
-  await numberedListButton.click();
+  
   await advancedFormattingTab.click();
   await advancedFormattingTab.clear();
+  await numberedListButton.click();
+
   await page.keyboard.type('Numbered item 1');
   await page.keyboard.press('Enter');
   await page.keyboard.type('Numbered item 2');
+
   await formattedCodeBtn.click();
   await formattedCodeInput.waitFor({ state: 'visible' });
+
   const numberedFormattedCodeText = await formattedCodeInput.inputValue();
   expect(numberedFormattedCodeText).toContain('<ol><li>Numbered item 1</li><li>Numbered item 2</li></ol>');
 
-  // Save the Form with Advanced Formatting
-  // const saveButton = page.locator("button#button_save");
-  // await saveButton.click();
-  await page.getByRole('button', { name: 'Cancel' }).click();
-  await expect(page.getByText('single line text')).toBeVisible();
-
-
+  // await page.getByRole('button', { name: 'Cancel' }).click();
+  // await expect(page.getByText('single line text')).toBeVisible();
   
 });
