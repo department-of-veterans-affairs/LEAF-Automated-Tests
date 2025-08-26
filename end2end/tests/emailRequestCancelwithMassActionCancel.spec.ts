@@ -2,7 +2,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe.configure({ mode: 'default' });
 
-test.describe('Cancel Request, View Email and Clean up', () => {
+test.describe('LEAF - 4872, Canel Submitted Request, Cancel unSubmitted Request, MassAction Cancel', () => {
+
+
+
 test('Cancel Submitted Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=112');
@@ -25,17 +28,28 @@ test('Cancel Submitted Request', async ({ page }, testInfo) => {
   await page.goto('http://host.docker.internal:5080/');
 
   //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
-
+  await page.waitForLoadState('load');
   await page.getByText('leaf.noreply@fake-email.com').first().click();
 
- await expect(page.getByLabel('Messages')).toContainText('The request for General Form (#112) has been canceled.');
+ // await expect(page.getByLabel('Messages')).toContainText('The request for General Form (#112) has been canceled.');
 
-  //Cleanup
+ await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
+    - paragraph: "From: leaf.noreply@va.gov"
+    - paragraph:
+      - text: "To:"
+      - strong: tester.tester@fake-email.com
+      - text: ","
+    - paragraph: "Subject: The request for General Form (#112) has been canceled."
+    `);
+
+  //Cleanup the inbox
+     await page.getByRole('button', { name: 'Delete' }).click();
+
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
   
   //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('load');
+  
   
   await expect(page.getByLabel('Choose Action')).toBeVisible();
   await page.getByLabel('Choose Action').selectOption('restore');
@@ -54,10 +68,8 @@ test('Cancel Submitted Request', async ({ page }, testInfo) => {
 
 
 });
-});
 //End of TC-001
 
-test.describe('Cancel Unsubmitted Request and View Email', () => {
 test('Cancel unSubmitted Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -117,64 +129,94 @@ test('Cancel unSubmitted Request', async ({ page }, testInfo) => {
   //Wait for page to load
   await page.waitForLoadState('domcontentloaded');
 
-  await page.getByText('leaf.noreply@fake-email.com').first().click();
-
-  await expect(page.getByLabel('Messages')).not.toContainText(subjectTxt);
+  await expect(page.getByRole('cell', { name: subjectTxt}).locator('div')).not.toBeVisible();
 
 });
-});
+
 //End of TC-002
 
-
-test.describe('Cancel Mass Action Request, View Email and Clean up', () => {
 test('Cancel MassAction Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
   
-  //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
+  let massCancel = 'LEAF-4872 Mass Cancelation';
+ 
+  let txtBoxMsg = 'Cancel #113 & #114';
+  let ckbox113 = '113 General Form LEAF-4872';
+  let ckbox114 = '114 General Form LEAF-4872';
+  
+
+  
+   //Wait for page to load
+  await page.waitForLoadState('load');
 
   await expect(page.getByLabel('Choose Action')).toBeVisible();
   
-  //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
-
   await page.getByLabel('Choose Action').selectOption('cancel');
-
-    //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByRole('button', { name: 'Take Action' }).first()).toBeVisible();
-   
+  
   await expect(page.getByRole('textbox', { name: 'Comment * required' })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Comment * required' }).fill('Cancel #113 & #114');
+  await page.getByRole('textbox', { name: 'Comment * required' }).fill(txtBoxMsg);
+  
+  await page.getByRole('textbox', { name: 'Enter your search text' }).fill('LEAF-4872 Mass Cancelation');
+  await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toHaveValue(massCancel);
 
+  await page.waitForLoadState('load');
+  await expect(page.getByRole('button', { name: 'Take Action' }).first()).toBeVisible();
+     
+  await page.getByRole('row', { name: ckbox113 }).getByRole('checkbox').check();
+  await page.getByRole('row', { name: ckbox114 }).getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
 
-  await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toBeVisible();
-
-  await page.getByRole('textbox', { name: 'Enter your search text' }).click();
-  await page.getByRole('textbox', { name: 'Enter your search text' }).fill('LEAF-4872');
-
-
-  await page.locator('input#selectAllRequests').click();
-
-  await page.getByRole('button', { name: 'Take Action' }).first().click();
   await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes' }).click();
 
 
    //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
-  await page.locator("div.progress").waitFor({ state: 'visible' });
-  
+  await page.waitForLoadState('load');
+  await expect(page.getByRole('heading', { name: 'Mass Action' })).toBeVisible();
+
+  //Check the inbox
   await page.goto('http://host.docker.internal:5080/');
-    
+   
    //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
+   await page.waitForLoadState('load');
 
-  await page.getByText('leaf.noreply@fake-email.com').first().click();
+   await expect(page.locator('#maintabs div').filter({ hasText: 'Messages Sessions' }).nth(2)).toBeVisible();
 
-  await expect(page.locator('iframe').contentFrame().getByText('Reason for cancelling: Cancel #113 & #114')).toBeVisible();
+  await page.getByText('The request for General Form (#113) has been canceled.').click();
 
+    await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
+    - paragraph: "From: leaf.noreply@va.gov"
+    - paragraph:
+      - text: "To:"
+      - strong: tester.tester@fake-email.com
+      - text: ","
+    - paragraph: "Subject: The request for General Form (#113) has been canceled."
+    `);
+
+    await page.getByRole('button', { name: 'Delete' }).click();
+
+    await page.waitForLoadState('load');
+    
+    
+//await expect(page.getByLabel('Messages')).toContainText('The request for General Form (#114) has been canceled.');
+
+
+   await page.getByText('leaf.noreply@fake-email.com').first().click();
+    //Check for #114
+     await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
+    - paragraph: "From: leaf.noreply@va.gov"
+    - paragraph:
+      - text: "To:"
+      - strong: tester.tester@fake-email.com
+      - text: ","
+    - paragraph: "Subject: The request for General Form (#114) has been canceled."
+    `);
+      
+   await page.getByRole('button', { name: 'Delete' }).click();
+  
+  
+  //Reset  the Request
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
   
  //Wait for page to load
@@ -190,29 +232,35 @@ test('Cancel MassAction Request', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: 'Take Action' }).first()).toBeVisible();
 
    await page.getByRole('textbox', { name: 'Enter your search text' }).click();
-  await page.getByRole('textbox', { name: 'Enter your search text' }).fill('Leaf-4872');
+  await page.getByRole('textbox', { name: 'Enter your search text' }).fill(massCancel);
 
   await page.locator('input#selectAllRequests').click();
 
   await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
   await page.getByRole('button', { name: 'Yes' }).click();
 
-  await page.waitForLoadState('domcontentloaded');
-  await page.locator("div.progress").waitFor({ state: 'visible' });
-
+ 
+  await page.waitForLoadState('load');
+  await expect(page.getByRole('heading', { name: 'Mass Action' })).toBeVisible();
+  await expect(page.locator('#errorMessage')).toContainText('No Results');
 
 });
+//End of TC-003
+
 test('Suppress Cancel MassAction Request', async ({ page }, testInfo) => {
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
   
+  let supressMassCancel = `Leaf-4872 Supress Mass Cancelation`;
+  let txtBoxMsg2 = 'Cancel #115';
+  let subjectSupress = 'The request for General Form (#115) has been canceled.'
+  
+
+
   //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('load');
 
   await expect(page.getByLabel('Choose Action')).toBeVisible();
-  
-  //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
 
   await page.getByLabel('Choose Action').selectOption('cancel');
 
@@ -221,14 +269,18 @@ test('Suppress Cancel MassAction Request', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: 'Take Action' }).first()).toBeVisible();
    
   await expect(page.getByRole('textbox', { name: 'Comment * required' })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Comment * required' }).fill('Cancel #115');
+  await page.getByRole('textbox', { name: 'Comment * required' }).fill(txtBoxMsg2);
+
 
   await page.getByRole('textbox', { name: 'Enter your search text' }).click();
-  await page.getByRole('textbox', { name: 'Enter your search text' }).fill('Leaf-4872');
-  await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toHaveValue('Leaf-4872');
+  await page.getByRole('textbox', { name: 'Enter your search text' }).fill(supressMassCancel);
+  await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toHaveValue(supressMassCancel);
 
+  await expect(page.getByRole('checkbox', { name: 'Suppress Email Notification' })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Suppress Email Notification' }).check();
+  //const ckboxMsg115 = new RegExp (`/#LeafFormGrid\\d+_115_checkbox/`);
 
-  await page.locator("input.massActionRequest").nth(0).click();
+await page.locator('#selectAllRequests').check();
 
   await page.getByRole('button', { name: 'Take Action' }).first().click();
 
@@ -239,15 +291,21 @@ test('Suppress Cancel MassAction Request', async ({ page }, testInfo) => {
   await page.waitForLoadState('domcontentloaded');
   await expect(page.getByText('1 successes and 0 failures of 1 total.')).toBeVisible();
   
+
+  //Check Inbox
   await page.goto('http://host.docker.internal:5080/');
     
-   //Wait for page to load
+
+  //Wait for page to load
   await page.waitForLoadState('domcontentloaded');
-  await page.getByText('leaf.noreply@fake-email.com').first().click();
+
+  await expect(page.getByRole('cell', { name: subjectSupress}).locator('div')).not.toBeVisible();
+
+  //Reset Request
   await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
   
- //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
+  //Wait for page to load
+  await page.waitForLoadState('load');
 
   await expect(page.getByLabel('Choose Action')).toBeVisible();
 
@@ -255,20 +313,27 @@ test('Suppress Cancel MassAction Request', async ({ page }, testInfo) => {
   await page.getByLabel('Choose Action').selectOption('restore');
 
   
-    //Wait for page to load
+  //Wait for page to load
   await page.waitForLoadState('domcontentloaded');
   await expect(page.getByRole('button', { name: 'Take Action' }).first()).toBeVisible();
 
-   await page.getByRole('textbox', { name: 'Enter your search text' }).click();
-  await page.getByRole('textbox', { name: 'Enter your search text' }).fill('Leaf-4872');
-  await page.locator("input.massActionRequest").nth(0).click();
+  await page.getByRole('textbox', { name: 'Enter your search text' }).fill(supressMassCancel);
+
+  await page.locator('#selectAllRequests').check();
+  
   await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
+  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes' }).click();
 
   
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByText('1 successes and 0 failures of 1 total.')).toBeVisible();
+  await page.waitForLoadState('load');
+  await expect(page.getByRole('heading', { name: 'Mass Action' })).toBeVisible();
+
+
   
 });
-});
+
+//End of TC-004
+
+}); //End of describe
 
