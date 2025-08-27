@@ -22,6 +22,9 @@ test.only('Conditional Question Display State', async ({ page }) => {
     const c28_checkbox = "28";
 
     const sectionThreeEdit =  page.locator("#PHindicator_29_1 button");
+    const p30_dropdown = "30";
+    const p31_text = "31";
+    const p32_text = "32";
 
 
     const checkDisplayState = async (
@@ -65,51 +68,41 @@ test.only('Conditional Question Display State', async ({ page }) => {
     let visibleIDs: Array<string> = [];
 
     /* ######## SECTION 1 ########
-       controller: dropdown, 1,2,3. controlled question should be visible if 2 or 3
+       controller: dropdown, 1,2,3
+       controlled question should be visible if 2 or 3
+       both triggers are on the same condition
     */
-
-    //hide 
     let dialog = await getDialog(sectionOneEdit);
 
     await dialog.locator(`.response.blockIndicator_${p17_dropdown} a.chosen-single`).click();
     await dialog.getByRole('option', { name: '1' }).click();
 
     hiddenIDs = [ c18_radio, c19_currency, c20_text ];
-
-    //modal labels and inputs
     hiddenIDs.forEach(id => {
         checkDisplayState(page, `.sublabel.blockIndicator_${id}`, false);
         checkDisplayState(page, `.response.blockIndicator_${id}`, false);
     });
-
-    //save with required questions hidden
     await saveChange(dialog, page, []);
 
-    //print view questions also have correct display state
+    //print view
     hiddenIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, false));
-    
 
-    //First show trigger (2)
+    //first show trigger (2)
     dialog = await getDialog(sectionOneEdit);
 
     await dialog.locator(`.response.blockIndicator_${p17_dropdown} a.chosen-single`).click();
     await dialog.getByRole('option', { name: '2' }).click();
 
-    //modal labels and inputs
     visibleIDs = [ c18_radio, c19_currency, c20_text ];
     visibleIDs.forEach(id => {
         checkDisplayState(page, `.sublabel.blockIndicator_${id}`, true);
         checkDisplayState(page, `.response.blockIndicator_${id}`, true);
     });
-
-    //attempt to save with required questions visisble
     await saveChange(dialog, page, visibleIDs);
 
-    //fill required questions
+    //fill visible required questions
     await page.locator(`#radio_options_${c18_radio} label`).filter({ hasText: 'A' }).locator('span').click();
-    await page.getByRole('textbox', { name: 'normal nested currency sub' }).click();
     await page.getByRole('textbox', { name: 'normal nested currency sub' }).fill('2');
-    await page.getByRole('textbox', { name: 'normal nested text sub' }).click();
     await page.getByRole('textbox', { name: 'normal nested text sub' }).fill('test progress');
 
     await saveChange(dialog, page, []);
@@ -119,7 +112,7 @@ test.only('Conditional Question Display State', async ({ page }) => {
     //second show trigger (3)
     dialog = await getDialog(sectionOneEdit);
 
-    await dialog.locator('.response.blockIndicator_17 a.chosen-single').click();
+    await dialog.locator(`.response.blockIndicator_${p17_dropdown} a.chosen-single`).click();
     await dialog.getByRole('option', { name: '3' }).click();
 
     visibleIDs.forEach(id => {
@@ -138,44 +131,42 @@ test.only('Conditional Question Display State', async ({ page }) => {
     */
     dialog = await getDialog(sectionTwoEdit);
 
-    await page.getByRole('textbox', { name: 'numeric parent' }).click();
-    await page.getByRole('textbox', { name: 'numeric parent' }).fill('41');
+    await page.locator(`.blockIndicator_${p22_numeric} input[name="${p22_numeric}"]`).fill('41');
     await page.keyboard.press('Tab');
 
-    //modal conditional labels and inputs are hidden
+    //expect modal conditional/nested labels and inputs are hidden
     hiddenIDs = [ c23_org_emp, c24_date, c25_textarea, cp26_checkboxes, c27_multiselect, c28_checkbox ];
     hiddenIDs.forEach(id => {
         checkDisplayState(page, `.sublabel.blockIndicator_${id}`, false);
         checkDisplayState(page, `.response.blockIndicator_${id}`, false);
     });
-
-    //save with required questions hidden
     await saveChange(dialog, page, []);
 
-    //print view
     hiddenIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, false));
 
     //show 1st set of subquestions
     dialog = await getDialog(sectionTwoEdit);
 
-    await page.getByRole('textbox', { name: 'numeric parent' }).click();
-    await page.getByRole('textbox', { name: 'numeric parent' }).fill('42');
+    await page.locator(`.blockIndicator_${p22_numeric} input[name="${p22_numeric}"]`).fill('42');
     await page.keyboard.press('Tab');
 
     hiddenIDs = [ c27_multiselect, c28_checkbox ];
     visibleIDs = [ c23_org_emp, c24_date, c25_textarea, cp26_checkboxes ];
 
-    //save with unfilled required questions visible
+    hiddenIDs.forEach(id => {
+        checkDisplayState(page, `.sublabel.blockIndicator_${id}`, false);
+        checkDisplayState(page, `.response.blockIndicator_${id}`, false);
+    });
+    visibleIDs.forEach(id => {
+        checkDisplayState(page, `.sublabel.blockIndicator_${id}`, true);
+        checkDisplayState(page, `.response.blockIndicator_${id}`, true);
+    });
     await saveChange(dialog, page, visibleIDs);
 
     //fill through the second controller, where controller has value that still hides remaining two
-    await page.getByRole('searchbox', { name: 'Search for user to add as' }).click();
     await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('userName:tester');
     await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
-    await page.getByRole('textbox', { name: 'normal nested date sub' }).click();
-    await page.getByRole('textbox', { name: 'normal nested date sub question' }).click();
     await page.getByRole('textbox', { name: 'normal nested date sub question' }).fill('12/04/2024');
-    await page.getByRole('textbox', { name: 'normal nested multitext sub' }).click();
     await page.getByRole('textbox', { name: 'normal nested multitext sub' }).fill('test');
     await page.locator('label').filter({ hasText: 'C & D' }).locator('span').click();
 
@@ -183,8 +174,7 @@ test.only('Conditional Question Display State', async ({ page }) => {
         checkDisplayState(page, `.sublabel.blockIndicator_${id}`, false);
         checkDisplayState(page, `.response.blockIndicator_${id}`, false);
     });
-
-    await saveChange(dialog, page, []); //no unfilled visible required
+    await saveChange(dialog, page, []);
     
     visibleIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, true));
     hiddenIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, false));
@@ -194,13 +184,15 @@ test.only('Conditional Question Display State', async ({ page }) => {
 
     await page.locator('label').filter({ hasText: 'E & "F"' }).locator('span').click();
     visibleIDs = [ c23_org_emp, c24_date, c25_textarea, cp26_checkboxes, c27_multiselect, c28_checkbox ];
-
+    visibleIDs.forEach(id => {
+        checkDisplayState(page, `.sublabel.blockIndicator_${id}`, true);
+        checkDisplayState(page, `.response.blockIndicator_${id}`, true);
+    });
     await saveChange(dialog, page, [ c27_multiselect, c28_checkbox ]);
 
     await page.getByRole('searchbox', { name: 'multiselect child (show if' }).click();
     await page.getByRole('option', { name: 'apple Press to select', exact: true }).click();
     await page.locator('.blockIndicator_28 label').filter({ hasText: 'test' }).locator('span').click();
-
 
     await saveChange(dialog, page, []);
     
@@ -208,6 +200,56 @@ test.only('Conditional Question Display State', async ({ page }) => {
 
 
     /* ######## SECTION 3 (staple) ########
-       controller: dropdown, 1,2,3. controlled question should be visible if 2 or 3
+        controller: dropdown, 1,2,3
+        controlled question should be visible if 2 or 3
+        triggers are on the separate conditions
     */
+    dialog = await getDialog(sectionThreeEdit);
+
+    await dialog.locator(`.response.blockIndicator_${p30_dropdown} a.chosen-single`).click();
+    await dialog.getByRole('option', { name: '1' }).click();
+
+    hiddenIDs = [ p31_text, p32_text ];
+    hiddenIDs.forEach(id => {
+        checkDisplayState(page, `.sublabel.blockIndicator_${id}`, false);
+        checkDisplayState(page, `.response.blockIndicator_${id}`, false);
+    });
+    await saveChange(dialog, page, []);
+
+    hiddenIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, false));
+
+    //first show trigger (2)
+    dialog = await getDialog(sectionThreeEdit);
+
+    await dialog.locator(`.response.blockIndicator_${p30_dropdown} a.chosen-single`).click();
+    await dialog.getByRole('option', { name: '2' }).click();
+
+    visibleIDs = [ p31_text, p32_text ];
+    visibleIDs.forEach(id => {
+        checkDisplayState(page, `.sublabel.blockIndicator_${id}`, true);
+        checkDisplayState(page, `.response.blockIndicator_${id}`, true);
+    });
+    await saveChange(dialog, page, visibleIDs);
+
+    await page.locator(`.blockIndicator_${p31_text} input[name="${p31_text}"]`).fill(`test ${p31_text}`);
+    await page.locator(`.blockIndicator_${p32_text} input[name="${p32_text}"]`).fill(`test ${p32_text}`);
+
+    await saveChange(dialog, page, []);
+
+    visibleIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, true));
+
+    //second show trigger (3)
+    dialog = await getDialog(sectionThreeEdit);
+
+    await dialog.locator(`.response.blockIndicator_${p30_dropdown} a.chosen-single`).click();
+    await dialog.getByRole('option', { name: '3' }).click();
+
+    visibleIDs = [ p31_text, p32_text ];
+    visibleIDs.forEach(id => {
+        checkDisplayState(page, `.sublabel.blockIndicator_${id}`, true);
+        checkDisplayState(page, `.response.blockIndicator_${id}`, true);
+    });
+    await saveChange(dialog, page, []);
+
+    visibleIDs.forEach(id => checkDisplayState(page, `#subIndicator_${id}_1`, true));
 });
