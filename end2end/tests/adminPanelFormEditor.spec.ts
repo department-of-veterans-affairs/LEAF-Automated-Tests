@@ -135,18 +135,30 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
      await page.goto('http://host.docker.internal:5080/');
     
    //Wait for page to load
-  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('load');
 
-  await page.getByText('leaf.noreply@fake-email.com').first().click();
-  
-   await expect(page.getByRole('tab', { name: 'View' })).toBeVisible();
-  await page.getByRole('tab', { name: 'View' }).click();
+  await expect(page.locator('#maintabs div').filter({ hasText: 'Messages Sessions' }).nth(2)).toBeVisible();
 
-  await expect(page.getByLabel('Messages')).toContainText('To: tester.tester@fake-email.com, Donte.Glover@fake-email.com,');
-  await expect(page.getByLabel('Messages')).toContainText('To: Rhona.Goodwin@fake-email.com,');
-  await expect(page.getByLabel('Messages')).toContainText('Subject: Reminder for General Form');
+   await page.getByText('leaf.noreply@fake-email.com').first().click();
 
- 
+    await expect(page.getByLabel('Messages')).toMatchAriaSnapshot(`
+    - paragraph: "From: leaf.noreply@va.gov"
+    - paragraph:
+      - text: "To:"
+      - strong: tester.tester@fake-email.com
+      - text: ","
+      - strong: Donte.Glover@fake-email.com
+      - text: ","
+    - paragraph:
+      - text: "To:"
+      - strong: Rhona.Goodwin@fake-email.com
+      - text: ","
+    - paragraph: "/Subject: Reminder for General Form \\\\(#\\\\d+\\\\)/"
+    `);
+
+    await page.getByRole('button', { name: 'Delete' }).click();
+
+
   });
 
   test('Cancel Request', async ({ page }, testInfo) => {
