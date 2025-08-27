@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /* The form and request used for this test are defined in the dev boilerplate. Record and indicator IDs are known and constant.
 Modals execute the same code as the form (edit) view, so this tests both edit and print view. */
 
-test.only('Conditional Question Display State', async ({ page }) => {
+test('Conditional Question Display State', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=100');
 
     const sectionOneEdit =  page.locator("#PHindicator_16_1 button");
