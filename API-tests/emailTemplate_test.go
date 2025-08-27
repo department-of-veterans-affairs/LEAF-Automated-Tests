@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -27,15 +28,8 @@ func TestEmailTemplatesPost(t *testing.T) {
 	postData.Set("emailCcFile", emailCcFile) // Empty string is better for empty values
 	postData.Set("emailCcFileName", `LEAF_notify_next_emailCc.tpl`)
 
-	//client.Header.Set("Referer", RootURL)
-	// Make the POST request
 	res, err := client.PostForm(RootURL+`api/emailTemplates/_LEAF_notify_next_body.tpl`, postData)
-	//req, err := http.NewRequest("POST", fullURL, strings.NewReader(postData.Encode()))
-	//req, err := &http.NewRequest("POST", fullURL, strings.NewReader(postData.Encode()))
-	//req.Header.Set("HTTP_REFERER", RootURL+`admin`)
-	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	//res, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("Error making POST request: %v", err)
 	}
@@ -83,6 +77,45 @@ func TestEmailTemplatesPost(t *testing.T) {
 
 	if !cmp.Equal(EmailTemplate.SubjectFile, subjectFile) {
 		t.Errorf("Did not find expected SubjectFile.  got = %v, want = %v", EmailTemplate.SubjectFile, subjectFile)
+	}
+
+	data := url.Values{}
+	data.Set("CSRFToken", CsrfToken)
+	deleteUrl := RootURL + `api/emailTemplates/_LEAF_notify_next_body.tpl?subjectFileName=LEAF_notify_next_subject.tpl&emailToFileName=LEAF_notify_next_emailTo.tpl&emailCcFileName=LEAF_notify_next_emailCc.tpl&CSRFToken=` + CsrfToken
+
+	req, err := http.NewRequest("DELETE", deleteUrl, strings.NewReader(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	_, err = client.Do(req)
+	if err != nil {
+		t.Fatalf("Error making DELETE request: %v", err)
+	}
+	res, _ = client.Get(RootURL + `api/emailTemplates/_LEAF_notify_next_body.tpl`)
+	b, _ = io.ReadAll(res.Body)
+
+	var EmailTemplateDel EmailTemplateResponse
+
+	err = json.Unmarshal(b, &EmailTemplate)
+	t.Log(EmailTemplateDel)
+
+	if err != nil {
+		t.Fatalf("Error making GET request: %v", err)
+	}
+
+	if cmp.Equal(EmailTemplateDel.EmailCcFile, emailCcFile) {
+		t.Errorf("Did not find expected EmailCcFile.  got = %v, want = %v", EmailTemplateDel.EmailCcFile, emailCcFile)
+	}
+
+	if cmp.Equal(EmailTemplateDel.EmailToFile, emailToFile) {
+		t.Errorf("Did not find expected EmailToFile.  got = %v, want = %v", EmailTemplateDel.EmailToFile, emailToFile)
+	}
+
+	if cmp.Equal(EmailTemplateDel.File, file) {
+		t.Errorf("Did not find expected File.  got = %v, want = %v", EmailTemplateDel.File, file)
+	}
+
+	if cmp.Equal(EmailTemplateDel.SubjectFile, subjectFile) {
+		t.Errorf("Did not find expected SubjectFile.  got = %v, want = %v", EmailTemplateDel.SubjectFile, subjectFile)
 	}
 
 }
