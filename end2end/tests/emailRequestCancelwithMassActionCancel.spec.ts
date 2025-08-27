@@ -132,15 +132,6 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
       // Generate unique comment with timestamp
       const cancelComment = `Cancel Request ${requestId} - ${testId}`;
       
-      // Handle UI overlay by waiting and trying escape
-      try {
-        await page.waitForSelector('.ui-widget-overlay', { state: 'hidden', timeout: 3000 });
-      } catch {
-        console.log(`UI overlay still present, attempting to dismiss it for test ${testId}`);
-        await page.keyboard.press('Escape');
-        await page.waitForTimeout(1000);
-      }
-      
       // Extra wait for dialog animation in Docker
       await page.waitForTimeout(2000);
       
@@ -243,11 +234,12 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
   test('Cancel MassAction Request', async ({ page }) => {
     const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const testTitle1 = `LEAF-4872-Mass1-${testId}`;
-    const testTitle2 = `LEAF-4872-Mass2-${testId}`;
     
-    const requestId1 = await createNewRequest(page, testId, testTitle1);
-    const requestId2 = await createNewRequest(page, testId, testTitle2);
+    // Use hard-coded IDs that should be available from setup process
+    const requestId1 = '113';
+    const requestId2 = '114';
+    
+    console.log(`Using setup records ${requestId1} and ${requestId2} for mass action test ${testId}`);
 
     try {
       await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
@@ -263,70 +255,108 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
       await commentField.click();
       await commentField.fill(cancelComment);
       
-      // Search using broader patterns
-      const searchText = `LEAF-4872-Mass-${testId}`;
-      await page.getByRole('textbox', { name: 'Enter your search text' }).fill(searchText);
-      await page.waitForTimeout(3000);
-      
+      // Search for the hard-coded test records
+      await page.getByRole('textbox', { name: 'Enter your search text' }).fill('LEAF-4872');
+      await page.waitForTimeout(2000);
       await page.keyboard.press('Enter');
       await page.waitForTimeout(2000);
 
-      const request1Row = page.locator(`tr:has-text("${requestId1}"), tr:has-text("${testTitle1}")`);
-      const request2Row = page.locator(`tr:has-text("${requestId2}"), tr:has-text("${testTitle2}")`);
-      
       let foundRequests = 0;
       
+      // Look for the specific checkboxes by row content (from original test pattern)
+      const request1Row = page.getByRole('row', { name: new RegExp(`${requestId1}.*General Form.*LEAF-4872`) });
+      const request2Row = page.getByRole('row', { name: new RegExp(`${requestId2}.*General Form.*LEAF-4872`) });
+      
       if (await request1Row.count() > 0) {
-        await request1Row.locator('input[type="checkbox"]').first().check();
+        await request1Row.getByRole('checkbox').check();
         foundRequests++;
         console.log(`Found and selected request ${requestId1}`);
       } else {
-        // Try searching by ID only
-        await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestId1);
-        await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
-        
-        const idRow = page.locator(`tr:has-text("${requestId1}")`);
-        if (await idRow.count() > 0) {
-          await idRow.locator('input[type="checkbox"]').first().check();
-          foundRequests++;
-          console.log(`Found request ${requestId1} by ID search`);
-        }
+        console.error(`Could not find request ${requestId1} in mass action results`);
       }
       
       if (await request2Row.count() > 0) {
-        await request2Row.locator('input[type="checkbox"]').first().check();
+        await request2Row.getByRole('checkbox').check();
         foundRequests++;
         console.log(`Found and selected request ${requestId2}`);
       } else {
-        // Try searching by ID only
-        await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestId2);
-        await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
-        
-        const idRow = page.locator(`tr:has-text("${requestId2}")`);
-        if (await idRow.count() > 0) {
-          await idRow.locator('input[type="checkbox"]').first().check();
-          foundRequests++;
-          console.log(`Found request ${requestId2} by ID search`);
-        }
+        console.error(`Could not find request ${requestId2} in mass action results`);
       }
 
+      // This should be a hard failure if the setup records aren't found
       if (foundRequests === 0) {
-        console.warn(`No test requests found for mass action in test ${testId}. This may be expected if requests are not immediately available.`);
-        return;
+        throw new Error(`Setup records ${requestId1} and ${requestId2} not found in mass action search. Check test setup.`);
       }
 
       await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
       await page.getByRole('button', { name: 'Yes' }).click();
       
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(2000);
 
-      console.log(`Mass cancelled ${foundRequests} requests in test ${testId}`);
+      console.log(`Mass cancelled ${foundRequests} setup records in test ${testId}`);
+
+      // CHECK FOR EMAILS (this is the critical part that was being skipped)
+      await page.goto('http://host.docker.internal:5080/');
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // Check for first email
+      const email1Subject = `The request for General Form (#${requestId1}) has been canceled.`;
+      const email1Link = page.getByText(email1Subject);
+      
+      if (await email1Link.count() > 0) {
+        await email1Link.click();
+        await expect(page.getByLabel('Messages')).toContainText(email1Subject);
+        await page.getByRole('button', { name: 'Delete' }).click();
+        console.log(`Email verified and deleted for request ${requestId1}`);
+        await page.waitForTimeout(1000);
+      } else {
+        throw new Error(`Expected cancellation email not found for request ${requestId1}`);
+      }
+
+      if (foundRequests > 1) {
+        const email2Subject = `The request for General Form (#${requestId2}) has been canceled.`;
+        const email2Link = page.getByText(email2Subject);
+        
+        if (await email2Link.count() > 0) {
+          await email2Link.click();
+          await expect(page.getByLabel('Messages')).toContainText(email2Subject);
+          await page.getByRole('button', { name: 'Delete' }).click();
+          console.log(`Email verified and deleted for request ${requestId2}`);
+        } else {
+          throw new Error(`Expected cancellation email not found for request ${requestId2}`);
+        }
+      }
+
+      // Restore both requests to reset them for next test run
+      try {
+        await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
+
+        await page.getByLabel('Choose Action').selectOption('restore');
+        await page.getByRole('textbox', { name: 'Enter your search text' }).fill('LEAF-4872');
+        await page.waitForTimeout(2000);
+
+        // Use select all to restore both at once
+        await page.locator('#selectAllRequests').check();
+        await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
+        await page.getByRole('button', { name: 'Yes' }).click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
+        
+        console.log(`Restored setup records ${requestId1} and ${requestId2} for test ${testId}`);
+        
+      } catch (restoreError) {
+        console.warn(`Could not restore setup records for test ${testId}:`, restoreError);
+      }
 
     } catch (error) {
       console.error(`Mass action test ${testId} failed:`, error);
+      // Cleanup emails even if test failed
+      await cleanupEmails(page, `General Form (#${requestId1})`);
+      await cleanupEmails(page, `General Form (#${requestId2})`);
       throw error;
     }
   });
