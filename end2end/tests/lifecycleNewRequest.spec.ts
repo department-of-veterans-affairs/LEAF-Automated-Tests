@@ -1,16 +1,21 @@
 import { test, expect, Page } from '@playwright/test';
 
-test.describe.configure({ mode: 'serial'});
-
 let page: Page;
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
 });
 
+
+
 // Generate unique text to help ensure that fields are being filled correctly.
 let randNum = Math.random();
 let uniqueText = `My New Request ${randNum}`;
+
+
+test.describe('Submit a Request', () => {
+test.describe.configure({ mode: 'serial'});
+
 
 /**
  *  Verify the New Request page loads correctly
@@ -203,6 +208,25 @@ test('Cancel Requests', async () => {
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(0);
 });
 
+test.afterAll(async () => {
+
+    // Set status of Simple Form back to 'Available'
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+    await page.getByRole('link', { name: 'Simple form', exact: true }).click();
+    await page.getByLabel('Status:').selectOption('1');
+
+    // Cancel created form
+    await page.getByRole('link', { name: 'Home' }).click();
+    // await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true}); { delay: 200 }
+    const searchBar = page.locator('div#searchContainer div input');
+    const magnifierIcon = page.locator('img.searchIcon').nth(0);
+
+
+  });
+
+});
+
+test.describe('LEAF - 4665 Negative Currency', () => {
 /**
  *  Test for 4665
  *  Verify that a negative amount is allowed for currency
@@ -210,7 +234,16 @@ test('Cancel Requests', async () => {
  */
 test('Negative Currency Allowed in New Request', async () => {
     
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.waitForLoadState('load');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.getByText('New Request Start a new').click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
     await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
     await page.getByRole('option', { name: 'Concrete Music' }).click();
     await page.getByLabel('Title of Request').click();
@@ -239,9 +272,13 @@ test('Negative Currency Allowed in New Request', async () => {
  *  when editing a request
  */
 
+
 test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000);
 
+   
   const recordLink = page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' });
   await recordLink.waitFor({ state: 'visible', timeout: 10000 });
   await recordLink.click();
@@ -263,11 +300,38 @@ test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
   await expect(updatedField).toHaveText('-$50.00', { timeout: 10000 });
 });
 
+test.afterAll(async () => {
+
+        
+    // Cancel the form used for testing negative currency
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const searchBar = page.locator('div#searchContainer div input');
+    const magnifierIcon = page.locator('img.searchIcon').nth(0);
+   
+    // await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    await searchBar.type(uniqueText + ' to Test Negative Currency');
+    await magnifierIcon.waitFor({ state: 'visible' }); 
+    await page.locator('((//td)[2] //a)[2]').first().click();
+
+    await page.getByRole('button', { name: 'Cancel Request' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+  
+  });
+
+});
+
+test.describe('LEAF - 4913', () => {
+
 /**
  * Test for LEAF 4913 
  */
 test('Closing pop up window does not cause active form to disappear', async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=965');
+  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=495');
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
   //await page.getByRole('button', { name: 'View History' }).click();
   await page.getByText('View History').click();
@@ -275,6 +339,8 @@ test('Closing pop up window does not cause active form to disappear', async () =
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
 });
+});
+
 
 /**
  *    Set of tests which do the following:
@@ -287,7 +353,7 @@ test.describe('Archive and Restore Question',() => {
 
   // Subsequent tests will make changes that will cause previous tests 
   // to fail so no retries
-  test.describe.configure({ retries: 0});
+  //test.describe.configure({ retries: 0});
   
   /**
    *  Create and submit the initial request
@@ -297,6 +363,10 @@ test.describe('Archive and Restore Question',() => {
       
     // Create a new request with the form "Multiple Person Designated"
     await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+
     await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
     await page.getByRole('option', { name: 'Bronze Music' }).click();
     await page.getByLabel('Title of Request').click();
@@ -405,14 +475,9 @@ test.describe('Archive and Restore Question',() => {
     await expect(page.getByText('Reviewer 2')).toBeVisible();
     await expect(page.locator('#data_15_1')).toContainText('Dorian Balistreri');
   });
-});
 
-test.afterAll(async () => {
 
-    // Set status of Simple Form back to 'Available'
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Simple form', exact: true }).click();
-    await page.getByLabel('Status:').selectOption('1');
+  test.afterAll(async () => {
 
     // Cancel created form
     await page.getByRole('link', { name: 'Home' }).click();
@@ -429,18 +494,9 @@ test.afterAll(async () => {
     await page.getByRole('button', { name: 'Yes' }).click();
     await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
 
-    // Cancel the form used for testing negative currency
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    // await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
-    await searchBar.clear();
-    await searchBar.type(uniqueText + ' to Test Negative Currency');
-    await magnifierIcon.waitFor({ state: 'visible' }); 
-    await page.locator('((//td)[2] //a)[2]').first().click();
-
-    await page.getByRole('button', { name: 'Cancel Request' }).click();
-    await page.getByRole('button', { name: 'Yes' }).click();
-
     // Close the page
     await page.close();
   });
+});
+
 
