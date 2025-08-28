@@ -317,7 +317,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
       if (foundRequests > 1) {
         const email2Subject = `The request for General Form (#${requestId2}) has been canceled.`;
-        const email2Link = page.getByText(email2Subject);
+        const email2Link = page.getByText(email2Subject, {exact:true});
         
         if (await email2Link.count() > 0) {
           await email2Link.click();
