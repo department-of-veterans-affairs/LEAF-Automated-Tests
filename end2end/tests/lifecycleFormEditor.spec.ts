@@ -83,15 +83,14 @@ test('Add Sub-Question to Form', async ({ page }) => {
 
   // Add a sub-question to the form 
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: uniqueText }).click();
-  await page.getByLabel('add sub-question').click();
-  await page.getByLabel('Field Name').fill('Supervisor Name');
-  await page.getByLabel('Short label for spreadsheet').click();
-  await page.getByLabel('Short label for spreadsheet').fill('Supervisor');
+  await page.locator(`//a[normalize-space()='`+uniqueText+`']`).click();
+  await page.locator("button[title='add sub-question']").click();
+  await page.locator("#name").fill('Supervisor Name');
+  await page.locator('#description').fill('Supervisor');
 
   // Choose the input format of 'Text'
   await page.getByLabel('Input Format').selectOption('text');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.locator("#button_save").click();
 
   // Verify the sub-quesiton was added
   await expect(page.getByText('Supervisor Name')).toBeVisible();
@@ -222,9 +221,11 @@ test('Import Form', async ({ page }) => {
   await page.getByRole('button', { name: 'Import', exact: true }).click();
 
   // Verify the imported form is displayed
-  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText + ' (Copy)');
+  await page.locator('#categoryName').click();
+  await expect(page.locator('#categoryName')).toHaveValue(uniqueText + ' (Copy)');
 
   // Delete newly imported form to avoid confusion in future tests
   await page.getByLabel('delete this form').click();
   await page.getByRole('button', { name: 'Yes' }).click();
 });
+

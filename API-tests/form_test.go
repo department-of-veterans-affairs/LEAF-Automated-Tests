@@ -34,6 +34,33 @@ func TestForm_AdminCanEditData(t *testing.T) {
 	}
 }
 
+func TestForm_ElicitCSRFFailure(t *testing.T) {
+	postData := url.Values{}
+	postData.Set("CSRFToken", "definitely the wrong token")
+	postData.Set("3", "12345")
+
+	res, _ := client.PostForm(RootURL+`api/form/505`, postData)
+	got := res.StatusCode
+	want := 401
+
+	if !cmp.Equal(got, want) {
+		t.Errorf("Admin got = %v, want = %v", got, want)
+	}
+}
+
+func TestForm_ElicitCSRFFailure_null_csrf(t *testing.T) {
+	postData := url.Values{}
+	postData.Set("3", "12345")
+
+	res, _ := client.PostForm(RootURL+`api/form/505`, postData)
+	got := res.StatusCode
+	want := 401
+
+	if !cmp.Equal(got, want) {
+		t.Errorf("Admin got = %v, want = %v", got, want)
+	}
+}
+
 func TestForm_NonadminCannotEditData(t *testing.T) {
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)

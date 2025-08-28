@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func getPortalGroup(url string) PortalGroupResponse {
@@ -90,7 +92,7 @@ func postNewTag(groupID string, tag string) string {
 }
 
 func importGroup(groupID string) string {
-	res, _ := client.Get(RootURL+`api/system/importGroup/`+groupID)
+	res, _ := client.Get(RootURL + `api/system/importGroup/` + groupID)
 	bodyBytes, _ := io.ReadAll(res.Body)
 
 	var c string
@@ -272,5 +274,54 @@ func TestGroup_removeTag(t *testing.T) {
 
 	if passed == true {
 		t.Errorf("The tag was not removed from this group")
+	}
+}
+
+// This is a copy of TestGroup_removeTag, however the intent is to exercise a deprecated HTTP DELETE handler where
+// the CSRFToken is passed through the URL instead of the HTTP body
+// This test should be removed when there are no remaining instances where the deprecated handler is used
+func TestGroup_removeTagUsingDeprecatedMethod(t *testing.T) {
+	// add a tag to a group
+	id := "34"
+	id_int, _ := strconv.Atoi(id)
+	passed := false
+	tag_name := "Deprecated_Method"
+	postNewTag(id, tag_name)
+
+	// check to make sure tag was added
+	o_groups := getNexusGroup(RootOrgchartURL + `api/group/list`)
+
+	for _, o_group := range o_groups {
+		if id_int == o_group.GroupID {
+			passed = true
+			break
+		}
+	}
+
+	if passed == false {
+		t.Errorf("The tag was not found in this group")
+	}
+
+	// remove the tag using deprecated method
+	err := removeFromNexus(fmt.Sprintf("%sapi/group/%s/tag?", RootOrgchartURL, id), tag_name)
+	data := url.Values{}
+	data.Set("tag", tag_name)
+
+	req, err := http.NewRequest("DELETE", RootOrgchartURL+"api/group/"+id+"/tag?CSRFToken="+CsrfToken, strings.NewReader(data.Encode()))
+	if err != nil {
+		t.Error(err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+	defer resp.Body.Close()
+
+	got := resp.StatusCode
+	want := 200
+
+	if !cmp.Equal(got, want) {
+		t.Errorf("TestGroup_removeTagUsingDeprecatedMethod HTTP response code: got = %v, want = %v", got, want)
 	}
 }

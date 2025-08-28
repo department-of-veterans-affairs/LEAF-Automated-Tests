@@ -1,94 +1,79 @@
 import { defineConfig, devices } from '@playwright/test';
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  retries: 2,
-  //repeatEach: 3, // only temporarily enable to find flaky tests
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  
+  // ✅ FIXED: Reduced retries to identify real issues faster
+  retries: process.env.CI ? 2 : 1,
+  
+  // ✅ FIXED: Limit workers to prevent resource contention
+  workers: process.env.CI ? 1 : 3, // Max 3 workers locally
+  
+  // ✅ FIXED: Increase global timeout for slower Docker environment
+  timeout: 60000, // 60 seconds per test
+  
+  // ✅ FIXED: Expect timeout for assertions
+  expect: {
+    timeout: 10000 // 10 seconds for assertions
+  },
+  
   reporter: [
     ['list'], 
-    ['html', { open: 'never' }]
+    ['html', { open: 'never' }],
+    // ✅ ADD: JSON reporter for CI analysis
+    ['json', { outputFile: 'test-results.json' }]
   ],
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://127.0.0.1:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    // ✅ FIXED: Comprehensive timeout settings
+    actionTimeout: 15000,        // 15s for actions (clicking, filling, etc.)
+    navigationTimeout: 30000,    // 30s for page navigation
+    
+    // ✅ FIXED: Always capture traces on failure for debugging
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    
     ignoreHTTPSErrors: true,
+    
+    // ✅ FIXED: Ensure fresh context for each test
+    contextOptions: {
+      ignoreHTTPSErrors: true,
+      // Clear all storage between tests
+      storageState: undefined,
+    }
   },
-
-  /* Configure projects for major browsers */
+  
   projects: [
-    /*
-    {
-      name: 'reset test DB',
-      testMatch: /global\.setup\.ts/,
-    },
-    */
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         headless: true,
-        viewport: { width: 1800, height: 900 }, // Standard screen size
+        viewport: { width: 1800, height: 900 },
+        
+        // ✅ FIXED: Docker-optimized browser settings
+        launchOptions: {
+          args: [
+            '--disable-dev-shm-usage',                    // Critical for Docker
+            '--disable-background-timer-throttling',      // Prevent throttling
+            '--disable-backgrounding-occluded-windows',   // Keep windows active
+            '--disable-renderer-backgrounding',           // Prevent background throttling
+            '--disable-features=TranslateUI',            // Disable translate popup
+            '--disable-ipc-flooding-protection',         // Prevent IPC issues
+            '--disable-background-networking',           // Reduce background activity
+            '--disable-sync',                            // Disable Chrome sync
+            '--metrics-recording-only',                  // Reduce overhead
+            '--no-first-run',                           // Skip first run setup
+          ],
+          // ✅ FIXED: Increase timeouts for slower Docker environment
+          timeout: 60000,
+        }
       },
     }
-
-    /*
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    */
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });

@@ -238,22 +238,44 @@ test('Negative Currency Allowed in New Request', async () => {
  *  Verify that a negative amount is allowed for currency
  *  when editing a request
  */
-test("Negative Currency Allowed When Editing a Request", async () => {
-    
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
-    await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
-    await page.getByLabel('currency').click();
-    await page.getByLabel('currency').click();
 
-    // Change the currency amount to -50
-    await page.getByLabel('currency').fill('-50');
+test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
-    // Save the changes and verify the amount has changed to -50
-    await page.getByRole('button', { name: 'Save Change' }).click();
-    await expect(page.locator('#data_37_1')).toContainText('-$50.00');
-})
- 
+  const recordLink = page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' });
+  await recordLink.waitFor({ state: 'visible', timeout: 10000 });
+  await recordLink.click();
+
+  const editButton = page.getByRole('button', { name: 'Edit Basic input types field' });
+  await editButton.waitFor({ state: 'visible', timeout: 10000 });
+  await editButton.click();
+
+  const currencyInput = page.getByLabel('currency');
+  await currencyInput.waitFor({ state: 'visible', timeout: 10000 });
+  await currencyInput.click();
+  await currencyInput.fill('-50');
+
+  const saveButton = page.getByRole('button', { name: 'Save Change' });
+  await saveButton.waitFor({ state: 'visible', timeout: 10000 });
+  await saveButton.click();
+
+  const updatedField = page.locator('#data_37_1');
+  await expect(updatedField).toHaveText('-$50.00', { timeout: 10000 });
+});
+
+/**
+ * Test for LEAF 4913 
+ */
+test('Closing pop up window does not cause active form to disappear', async () => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=965');
+  await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
+  //await page.getByRole('button', { name: 'View History' }).click();
+  await page.getByText('View History').click();
+  await expect(page.getByText('History of Request ID#:')).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
+});
+
 /**
  *    Set of tests which do the following:
  *    1. Create a request with the "Multiple Person Designated" form
@@ -394,7 +416,13 @@ test.afterAll(async () => {
 
     // Cancel created form
     await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true});
+    // await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true}); { delay: 200 }
+    const searchBar = page.locator('div#searchContainer div input');
+    const magnifierIcon = page.locator('img.searchIcon').nth(0);
+
+    await searchBar.type(uniqueText + ' to Create');
+    await magnifierIcon.waitFor({ state: 'visible' });
+    await page.locator('((//td)[2] //a)[2]').first().click();
     await page.getByRole('button', { name: 'Cancel Request' }).click({force:true});
     await page.getByPlaceholder('Enter Comment').click();
     await page.getByPlaceholder('Enter Comment').fill('No longer needed');
@@ -403,7 +431,12 @@ test.afterAll(async () => {
 
     // Cancel the form used for testing negative currency
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    // await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
+    await searchBar.clear();
+    await searchBar.type(uniqueText + ' to Test Negative Currency');
+    await magnifierIcon.waitFor({ state: 'visible' }); 
+    await page.locator('((//td)[2] //a)[2]').first().click();
+
     await page.getByRole('button', { name: 'Cancel Request' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
 
