@@ -168,10 +168,10 @@ CREATE TABLE `data` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`) VALUES
-(1,	2,	1,	'https://host.docker.internal/Test_Request_Portal/',	NULL,	1747005203,	'tester'),
-(1,	3,	1,	'10',	NULL,	1747005203,	'tester'),
-(1,	4,	1,	'[{&quot;type&quot;:&quot;updateDataLLMCategorization&quot;,&quot;payload&quot;:{&quot;readIndicatorIDs&quot;:[4],&quot;writeIndicatorID&quot;:7,&quot;context&quot;:&quot;Categorize the request based on which category would best help the user. Consultations with our team provide guidance on how to use features, or to understand multiple issues.&quot;}},{&quot;type&quot;:&quot;routeConditionalData&quot;,&quot;payload&quot;:{&quot;actionType&quot;:&quot;concur&quot;,&quot;query&quot;:{&quot;terms&quot;:[{&quot;id&quot;:&quot;data&quot;,&quot;indicatorID&quot;:&quot;5&quot;,&quot;operator&quot;:&quot;&gt;&quot;,&quot;match&quot;:&quot;10000&quot;}]}}}]',	NULL,	1749682931,	'tester'),
-(1,	6,	1,	'1749683535',	NULL,	1749683535,	'*LEAF Agent*');
+(1,	2,	1,	'https://host.docker.internal/platform/agent/',	NULL,	1756342601,	'tester'),
+(1,	3,	1,	'1',	NULL,	1756342601,	'tester'),
+(1,	4,	1,	'[{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Review active tasks and decommission duplicates&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Ensure staged tasks were authored by a local admin&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Activate task&quot;}}]',	NULL,	1756343376,	'tester'),
+(1,	6,	1,	'1756330534',	NULL,	1756330534,	'*LEAF Agent*');
 
 DROP TABLE IF EXISTS `data_action_log`;
 CREATE TABLE `data_action_log` (
