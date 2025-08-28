@@ -70,8 +70,9 @@ test ('Create a New Form', async ({ page}, testinfo) => {
     //Question 3
     await page.locator('.trumbowyg-editor').fill(questionThrere);
     await page.getByLabel('Input Format').selectOption('orgchart_group');
-    await page.getByText(questionThrere).click();
-    await page.getByText(questionThrere).press('ControlOrMeta+a');
+    
+    await page.locator('.trumbowyg-editor').click();
+    await page.locator('.trumbowyg-editor').press('ControlOrMeta+a');
     await page.getByRole('button', { name: 'Formatting' }).click();
     await page.getByRole('button', { name: 'Paragraph' }).click();
     await page.getByRole('button', { name: 'Text color' }).click();
