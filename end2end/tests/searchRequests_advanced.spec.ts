@@ -20,7 +20,7 @@ async function fillAndVerifyField(page: any, locator: any, value: string, fieldN
   }
 }
  
-test('Search functionality with URL in title', async ({ page }) => {
+test('Advanced search functionality with URL in title', async ({ page }) => {
   // Generate unique test data (applying primer lessons)
   const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   const searchTestUrl = `https://www.va.gov/${testId}`;
@@ -45,7 +45,6 @@ test('Search functionality with URL in title', async ({ page }) => {
     // Get the current title to ensure proper cleanup
     const titleLink = record957Element.getByRole('link', {name: originalTitle}).first();
     await titleLink.waitFor({ state: 'visible' });
-    //originalTitleStored = await titleLink.textContent() || originalTitle;
    
     console.info(`Found record 957 with current title: "${originalTitle}"`);
     recordFound = true;
@@ -66,16 +65,14 @@ test('Search functionality with URL in title', async ({ page }) => {
     // Navigate back to home
     await page.getByRole('link', { name: 'Home' }).click();
     await dockerWait(page, 2000);
-
-    // const searchField = page.getByLabel('Enter your search text');
-    // await fillAndVerifyField(page, searchField, searchTestUrl, 'Search');
    
     // Perform search with unique URL using Advanced options
     await page.getByRole('button', { name: 'Advanced Options' }).click();
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
     await page.getByRole('option', { name: 'Title' }).click();
-    await page.getByLabel('text', { exact: true }).click();
-    await page.getByLabel('text', { exact: true }).fill('https://www.va.gov');
+
+    const searchField = page.getByLabel('text', { exact: true });
+    await fillAndVerifyField(page, searchField, searchTestUrl, 'Search');
     await page.getByRole('button', { name: 'Apply Filters' }).click();
    
     // Wait for search results with Docker optimization
