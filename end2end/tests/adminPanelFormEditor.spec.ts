@@ -333,3 +333,124 @@ test('Verify warning message is displayed', async ({ page }) => {
 });
 //End of Testing 4888
 
+//LEAF-5005 fix incorrect display of an alert dialog
+test.describe('LEAF-5005 Alert Dialog', () => {
+
+  // Helper to Create New Form
+  async function createNewForm(page: any,  formName: string, formDescription: string) {
+
+   await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
+   await page.waitForLoadState('networkidle');
+   await page.waitForTimeout(1000);
+
+   await page.getByRole('button', { name: 'Create Form' }).click();
+   
+   await page.waitForLoadState('networkidle');
+   await page.waitForTimeout(1000);
+
+   await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).click();
+   await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).fill(formName);
+   await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).click();
+   await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).fill(formDescription);
+   await page.getByRole('button', { name: 'Save' }).click();
+  }
+
+   async function createNewRequest(page: any, testId: string, title: string, serviceName: string, requestType: string ) {
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.getByText('New Request Start a new').click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
+    await page.getByRole('option', { name: serviceName}).click(); 
+    
+    // Reliable form filling with verification
+    const titleField = page.getByRole('textbox', { name: 'Title of Request' });
+    await titleField.waitFor({ state: 'visible' });
+    await titleField.click();
+    await titleField.fill('');
+    await titleField.fill(title);
+    
+    // Verify the value was set correctly
+    const actualValue = await titleField.inputValue();
+    if (actualValue !== title) {
+      throw new Error(`Title field not set correctly. Expected: ${title}, Got: ${actualValue}`);
+    }
+    
+    await page.locator('label').filter({ hasText: requestType }).locator('span').click();
+    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+    
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.waitForSelector('#headerTab', { timeout: 15000 });
+    const headerText = await page.textContent('#headerTab');
+    const requestId = headerText?.split('#')[1];
+    
+    if (!requestId) {
+      throw new Error(`Could not extract request ID for test ${testId}`);
+    }
+
+    console.log(`Created new request ${requestId} for test ${testId} (not submitted)`);
+    return requestId;
+  }
+  
+ test('Create Form & Verify Dialog message', async ({ page }) => {
+
+  //Create A New Form
+  const formName =`LEAF-5005_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const formDescription =`FormDescription_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const FormId = await createNewForm(page, formName, formDescription);
+  const headerName = 'Upload Question';
+  const sectionQuestion = 'Please upload your file?'; 
+ 
+  //FORM Details
+  await page.getByLabel('Workflow: No Workflow. Users').selectOption('1');
+  await page.getByLabel('Status:').selectOption('1');
+  await page.getByLabel('Form Type: StandardParallel').selectOption('parallel_processing');
+  await page.getByRole('button', { name: 'Add Section' }).click();
+  await page.getByRole('textbox', { name: 'Section Heading' }).click();
+  await page.getByRole('textbox', { name: 'Section Heading' }).fill(headerName);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Add Question to Section' }).click();
+  await page.getByLabel('Input Format').selectOption('fileupload');
+  await page.getByRole('button', { name: 'Save' }).click();
+  
+  //NEW Request
+  //Create New Request for new Form
+  //Generate unique test ID using timestamp
+    const testId = `LEAF-5005_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const serviceName = 'AS - Service';
+    const title = 'LEAF-5005';
+    const requestType = formName;
+    
+    const requestId = await createNewRequest(page, testId, title, serviceName, requestType);
+
+    //Create New Request
+
+ // await page.getByRole('button', { name: 'Upload a document' }).click();
+  await page.getByRole('button', { name: 'Upload a document' }).setInputFiles('LEAF-5005.txt');
+  await page.locator('#nextQuestion2').click();
+
+
+  await expect(page.getByText('Select a data field Assigned PersonAssigned Group Selected Employee(s):')).toBeVisible();
+  await page.getByRole('searchbox', { name: 'Search for user to add as' }).selectOption('8');
+  await page.locator('#indicator_selector').click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('gre');
+  await page.getByRole('cell', { name: 'Green, Erasmo Heidenreich.' }).click();
+  await page.getByLabel('Green, Erasmo Heidenreich.').getByRole('cell', { name: 'Select' }).click();
+  
+  await expect(page.getByRole('button', { name: 'Send Request to Selected' })).toBeVisible();
+  await page.getByRole('button', { name: 'Send Request to Selected' }).click();
+  
+  await expect(page.locator('#reportTitleDisplay')).toContainText('Requests have been assigned to these people');
+
+ });
+
+});
+//End of Testing 5005
+
