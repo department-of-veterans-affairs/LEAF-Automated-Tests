@@ -9,7 +9,8 @@
   "description": "",
   "devDependencies": {
     "@playwright/test": "^1.48.1",
-    "@types/node": "^22.1.0"
+    "@types/node": "^22.18.0",
+    "tsx": "^4.20.5"
   },
   "dependencies": {
     "app": "file:"
