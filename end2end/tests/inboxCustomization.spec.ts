@@ -646,7 +646,7 @@ test('Create a new Stapled Request', async ({ page }, testInfo) => {
  //Enter information for If then Form
   await expect(page.locator('a').filter({ hasText: 'Select an Option' })).toBeVisible();
   await page.locator('a').filter({ hasText: 'Select an Option' }).click();
-  await page.getByRole('option', { name: '2' }).click();
+  await page.getByRole('option', { name: '1' }).click();
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click({force:true});
 
