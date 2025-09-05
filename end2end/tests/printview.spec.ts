@@ -18,7 +18,10 @@ test('workflow form fields load after subsequent getWorkflow() executions', asyn
 
 test('links in user content are visible', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=15');
-  await expect(page.getByRole('link', { name: 'https://va.gov' }).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'https://va.gov' }).nth(3)).toBeVisible();
+
+  // there should be 5 links (nth is 0-index based)
+  await expect(page.getByRole('link', { name: 'https://va.gov' }).nth(4)).toBeVisible();
+
+  // check explicit tags
   await expect(page.locator('#data_4_1')).toContainText('<a href="https://va.gov">va.gov</a>');
 });
