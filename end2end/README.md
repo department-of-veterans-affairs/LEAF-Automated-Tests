@@ -62,7 +62,7 @@ As a stop gap you may need to run the sequential tests. There is a `sequential-r
 1. Login to your container should be `docker exec -it leaf-playwright-1 bash`
 2. Run the sequential test `npx tsx sequential-runner.ts tests/ --output my-test-report.txt`
     - You may be asked to install tsx.
-3. When complete you can look at the out file. `head -n 50 my-test-report.txt` will show something similar ![Sequential Playwrite test report](sequential-pw-test-report.png "Sequential Playwrite test report")
+3. When complete you can look at the out file. `head -n 20 my-test-report.txt` will show something similar ![Sequential Playwrite test report](sequential-pw-test-report.png "Sequential Playwrite test report")
 
 There may be cases where you will need to run a single test `npx playwright test tests/{nameofthetest}.ts`
 
