@@ -9,7 +9,7 @@ export async function awaitPromise(page: Page, includesString:string = '', callb
   const promiseToAwait = page.waitForResponse(res =>
     res.url().includes(includesString) && res.status() === 200
   );
-  callback(page);
+  await callback(page);
   await promiseToAwait;
 }
 
@@ -22,4 +22,10 @@ export function generateTestData() {
     uniqueText: `Single line text ${testId}`,
     testId: testId
   };
+}
+
+// Docker-optimized waiting function (from primer)
+export async function dockerWait(page: any, extraBuffer: number = 1000) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(extraBuffer);
 }

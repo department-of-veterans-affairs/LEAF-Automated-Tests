@@ -1,22 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { awaitPromise } from '../test_helpers/leaf_test_utils';
-
-// Docker-optimized waiting function (from primer)
-async function dockerWait(page: any, extraBuffer: number = 1000) {
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(extraBuffer);
-}
-
-// Generate unique test data (primer lesson)
-function generateTestData() {
-  const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-  return {
-    titleText: `LEAF-4891-${testId}`,
-    formName: `Test LEAF-4888-${testId}`,
-    uniqueText: `Single line text ${testId}`,
-    testId: testId
-  };
-}
+import { test, expect, Page } from '@playwright/test';
+import { awaitPromise, generateTestData, dockerWait } from '../test_helpers/leaf_test_utils';
 
 test.describe.configure({ mode: 'default' });
 
@@ -133,8 +116,6 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
   });
 
   test('Mass Action Email Reminder', async ({ page }) => {
-    const testData = generateTestData();
-
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
     await dockerWait(page, 2000);
     await expect(page.getByText('Choose Action -Select- Cancel')).toBeVisible();
@@ -151,8 +132,9 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await page.getByRole('spinbutton', { name: 'Days Since Last Action' }).fill('0');
     await expect(page.getByRole('button', { name: 'Search Requests' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Search Requests' }).click();
-    await dockerWait(page, 3000); // Extra time for search
+    await awaitPromise(page, "form/query?q", async (p:Page) => {
+      await p.getByRole('button', { name: 'Search Requests' }).click();
+    });
 
     // Check if any requests were found
     const selectAllCheckbox = page.locator('#selectAllRequests');
