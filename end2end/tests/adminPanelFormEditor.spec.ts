@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { awaitPromise } from '../test_helpers/leaf_test_utils';
 
 // Docker-optimized waiting function (from primer)
 async function dockerWait(page: any, extraBuffer: number = 1000) {
