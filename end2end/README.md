@@ -55,6 +55,18 @@ Tests must pass on repeated runs. This helps ensure that tests remain robust, an
 
 Including screenshots within tests is highly recommended, but not currently required. Screenshots provide value when reviewing tests, as it can be immediately apparent in a screenshot if a test is functioning correctly.
 
+## Sequential Testing
+
+As a stop gap you may need to run the sequential tests. There is a `sequential-runner.ts` that will allow for running tests in sequence. This will run the api tests from the script to help simplify things. This will take upwards of 50 minutes at the time of writing.
+
+1. Login to your container should be `docker exec -it leaf-playwright-1 bash`
+2. Run the sequential test `npx tsx sequential-runner.ts tests/ --output my-test-report.txt`
+    - You may be asked to install tsx.
+3. When complete you can look at the out file. `head -n 50 my-test-report.txt` will show something similar ![Sequential Playwrite test report](sequential-pw-test-report.png "Sequential Playwrite test report")
+
+There may be cases where you will need to run a single test `npx playwright test tests/{nameofthetest}.ts`
+
+
 
 ## Useful commands
 
