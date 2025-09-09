@@ -8,30 +8,26 @@ test.describe('Update heading of a General Form then reset back to original head
     const testData = generateTestData();
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
-    await dockerWait(page);
 
     let originalText = `Single line Text`;
 
     await page.getByRole('button', { name: 'Form Editor Create and' }).click();
-    await dockerWait(page);
+   
     await page.getByRole('link', { name: 'General Form' }).click();
-    await dockerWait(page);
     await page.getByTitle('edit indicator 3').click();
-    await dockerWait(page);
+ 
     await page.getByLabel('Section Heading').click();
     await page.getByLabel('Section Heading').fill(testData.uniqueText);
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+
     await expect(page.locator('#format_label_3')).toContainText(testData.uniqueText);
 
-    //Adding end2end testing for LEAF-4891
     //update the heading back to original name
     await page.getByTitle('edit indicator 3').click();
-    await dockerWait(page);
     await page.getByLabel('Section Heading').click();
     await page.getByLabel('Section Heading').fill(originalText);
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+ 
   });
 });
 
@@ -39,6 +35,7 @@ test.describe('Update heading of a General Form then reset back to original head
 test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email', () => {
   // Store request ID for cleanup
   let createdRequestId: string | null = null;
+  const requestText = `LEAF-4891`; // Use base search term
 
   test('Create a New Request', async ({ page }) => {
     const testData = generateTestData();
@@ -52,20 +49,18 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     let assignedPersonTwo = `Bauch, Herbert Purdy. Human`;  
 
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await dockerWait(page);
-
+ 
     await page.getByText('Start a new request').click();
-    await dockerWait(page, 2000);
+
 
     await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-    await dockerWait(page);
+ 
     await page.getByRole('option', { name: 'AS - Service' }).click();
     await page.getByRole('textbox', { name: 'Title of Request' }).click();
     await page.getByRole('textbox', { name: 'Title of Request' }).fill(testData.titleText);
     await page.locator('label').filter({ hasText: 'General Form' }).locator('span').click();
     await page.getByRole('button', { name: 'Click here to Proceed' }).click();
 
-    await dockerWait(page, 2000);
     await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
     await expect(page.locator('#xhr')).toBeVisible();
     
@@ -81,58 +76,65 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await expect(page.locator('#nextQuestion2')).toBeVisible();
     await page.locator('#nextQuestion2').click();
  
-    await dockerWait(page, 2000);
     await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+    await awaitPromise(page, "nationalEmployeeSelector", async(p:Page)=> {});
+
     //2. Assigned Person  
-    await page.getByRole('searchbox', { name: /Search for user to add as Assigned Person$/, exact: true }).click();
-    await page.getByRole('searchbox', { name: /Search for user to add as Assigned Person$/, exact: true }).fill('tes');
-    await dockerWait(page);
-    await page.getByRole('cell', { name: assignedPersonOne }).click();
+    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).click();
+    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).fill('tes');
+    await awaitPromise(page, "import", async (p:Page) => {
+      await p.getByRole('cell', { name: assignedPersonOne }).click();
+    })
+
     await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).click();
     await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).fill('h');
-    await dockerWait(page);
-    await page.getByRole('cell', { name: assignedPersonTwo}).click();
+    await awaitPromise(page, "import", async (p:Page) => {
+      await p.getByRole('cell', { name: assignedPersonTwo}).click();
+    });
     await expect(page.locator('#nextQuestion2')).toBeVisible();
     await page.locator('#nextQuestion2').click();
 
-    await dockerWait(page, 2000);
+    await awaitPromise(page, "groupSelector", async(p:Page)=> {});
     await expect(page.getByText('Form completion progress: 50% Next Question')).toBeVisible();
     //3. Assigned Group  
     await page.getByRole('searchbox', { name: 'Search for user to add as' }).click();
     await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('group');
-    await dockerWait(page);
-    await page.getByRole('cell', { name: groupText }).click();
+    await awaitPromise(page, "&tag=", async (p:Page) => {
+      await p.getByRole('cell', { name: groupText }).click();
+    });
     await expect(page.getByText('Search results found for term group#206 listed below Group TitleGroup A')).toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
     await page.locator('#nextQuestion2').click();
-    await dockerWait(page, 2000);
+
     await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
-    await page.getByRole('button', { name: 'Submit Request' }).click();
+    
+    await awaitPromise(page, "/submit", async (p:Page) => {
+      await p.getByRole('button', { name: 'Submit Request' }).click();
+    });
     
     // Store the request ID for other tests
-    await dockerWait(page, 3000);
+
     console.log(`Created request: ${testData.titleText}`);
   });
 
   test('Mass Action Email Reminder', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
-    await dockerWait(page, 2000);
+  
     await expect(page.getByText('Choose Action -Select- Cancel')).toBeVisible();
 
     //Start The Mass Email Reminder
     await page.getByLabel('Choose Action').selectOption('email');
-    await dockerWait(page);
+
     await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Enter your search text' }).click();
     // Use a broader search term to find the request created by any test run
-    await page.getByRole('textbox', { name: 'Enter your search text' }).fill('LEAF-4891');
+    await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestText);
 
     await page.getByRole('spinbutton', { name: 'Days Since Last Action' }).click();
     await page.getByRole('spinbutton', { name: 'Days Since Last Action' }).fill('0');
     await expect(page.getByRole('button', { name: 'Search Requests' })).toBeVisible();
 
-    await awaitPromise(page, "form/query?q", async (p:Page) => {
+    await awaitPromise(page, requestText, async (p:Page) => {
       await p.getByRole('button', { name: 'Search Requests' }).click();
     });
 
@@ -148,16 +150,16 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
 
     //Send out email Reminder
     await selectAllCheckbox.check();
-    await dockerWait(page);
+ 
     await expect(page.getByRole('button', { name: 'Take Action' }).nth(1)).toBeVisible();
     await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
-    await dockerWait(page);
+
     await expect(page.getByText('Are you sure you want to')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-    await page.getByRole('button', { name: 'Yes' }).click();
 
-    // Wait longer for email processing with more flexible verification
-    await dockerWait(page, 5000);
+    await awaitPromise(page, "/reminder/", async (p:Page) => {
+      await page.getByRole('button', { name: 'Yes' }).click();
+    });
     
     // Look for success indicators more flexibly
     const successTexts = [
@@ -168,7 +170,7 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     ];
     
     let successFound = false;
-    for (const successText of successTexts) {
+    for (let successText of successTexts) {
       const element = page.getByText(successText);
       if (await element.count() > 0) {
         await expect(element).toBeVisible();
@@ -185,11 +187,9 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
 
   test('Verify Email Sent', async ({ page }) => {
     await page.goto('http://host.docker.internal:5080/');
-    await dockerWait(page, 2000);
-
+ 
     await expect(page.locator('#maintabs div').filter({ hasText: 'Messages Sessions' }).nth(2)).toBeVisible();
     await page.getByText('leaf.noreply@fake-email.com').first().click();
-    await dockerWait(page);
 
     // Replace toMatchAriaSnapshot with more basic verification
     const messagesArea = page.getByLabel('Messages');
@@ -203,26 +203,22 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     console.log('Email verification completed with basic text checks');
 
     await page.getByRole('button', { name: 'Delete' }).click();
-    await dockerWait(page);
+
   });
 
   test('Cancel Request', async ({ page }, testInfo) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await dockerWait(page, 2000);
-    
-    let requestText = `LEAF-4891`; // Use base search term
   
     //Find the Request
     await expect(page.getByRole('button', { name: 'Advanced Options' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestText);
-    await dockerWait(page, 2000);
+ 
     await expect(page.getByRole('button', { name: 'Show more records' })).toBeVisible();
     
-    // FIX: Handle multiple requests with same base name
     const requestLinks = await page.getByRole('link', { name: new RegExp(requestText) }).all();
     
     if (requestLinks.length === 0) {
-      console.warn('No LEAF-4891 requests found. Skipping cancellation test.');
+      console.warn(`No ${requestText} requests found. Skipping cancellation test.`);
       test.skip(true, 'No requests available for cancellation test');
       return;
     }
@@ -231,8 +227,6 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     console.log(`Found ${requestLinks.length} requests matching ${requestText}`);
     await requestLinks[0].click();
 
-    //Wait for page to load
-    await dockerWait(page, 2000);
 
     let requestId = await page.textContent('#headerTab');
     console.log('Text inside span:', requestId);
@@ -247,14 +241,13 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     //Cancel The Request
     await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
     await page.getByRole('button', { name: 'Cancel Request' }).click();
-    await dockerWait(page);
+
     await expect(page.getByText('Are you sure you want to')).toBeVisible();
     await page.getByRole('textbox', { name: 'Enter Comment' }).click();
     await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Delete Request');
     await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
     await page.getByRole('button', { name: 'Yes' }).click();
 
-    await dockerWait(page, 3000);
     await expect(page.locator('#bodyarea')).toBeVisible();
     await expect(page.locator('#bodyarea')).toContainText(cancelMsg);
     
@@ -269,7 +262,6 @@ test('Verify warning message is displayed', async ({ page }) => {
   const testData = generateTestData();
 
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await dockerWait(page, 2000);
 
   //Variables
   const formName = testData.formName;
@@ -286,7 +278,6 @@ test('Verify warning message is displayed', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Create Form' })).toBeVisible();
     await page.getByRole('button', { name: 'Create Form' }).click();
 
-    await dockerWait(page, 2000);
     await expect(page.getByRole('heading', { name: 'New Form' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).click();
     await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).fill(formName);
@@ -294,19 +285,17 @@ test('Verify warning message is displayed', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).fill(formDescription);
     await page.getByRole('button', { name: 'Save' }).click();
 
-    await dockerWait(page, 2000);
     formCreated = true;
     await expect(page.getByRole('heading', { name: 'Admin  Form Browser  Form' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Add Section' }).click();
-    await dockerWait(page);
+
     await page.getByRole('textbox', { name: 'Section Heading' }).click();
     await page.getByRole('textbox', { name: 'Section Heading' }).fill(sectionHeading);
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+
 
     await page.getByRole('button', { name: 'Add Question to Section' }).click();
-    await dockerWait(page);
 
     //Get ID
     //Get Question ID number
@@ -327,10 +316,10 @@ test('Verify warning message is displayed', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Options (One option per line)' }).click();
     await page.getByRole('textbox', { name: 'Options (One option per line)' }).fill(questionOneInput);
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+
 
     await page.getByRole('button', { name: 'add sub-question' }).click();
-    await dockerWait(page);
+
 
     //Get Question ID number
     let questionId = await page.textContent('#leaf_dialog_content_drag_handle');
@@ -351,14 +340,14 @@ test('Verify warning message is displayed', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Options (One option per line)' }).click();
     await page.getByRole('textbox', { name: 'Options (One option per line)' }).fill(questionTwoInput);
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+
 
     await page.locator(editIdData).click();
     //Create the first condition
-    await dockerWait(page);
+
     await expect(page.locator('#condition_editor_inputs')).toBeVisible();
     await page.getByRole('button', { name: 'New Condition' }).click();
-    await dockerWait(page);
+
 
     await page.getByLabel('Select an outcome').selectOption('show');
     await page.getByLabel('select controller question').selectOption(mainQuestionId);
@@ -366,12 +355,12 @@ test('Verify warning message is displayed', async ({ page }) => {
     await page.getByLabel('select a value').selectOption(mainOption1);
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+
 
     await expect(page.getByText('This field will be hidden')).toBeVisible();
     await expect(page.getByRole('button', { name: 'New Condition' })).toBeVisible();
     await page.getByRole('button', { name: 'New Condition' }).click();
-    await dockerWait(page);
+
     //Create a second condition
     await page.getByLabel('Select an outcome').selectOption('hide');
     await page.getByLabel('select controller question').selectOption(mainQuestionId);
@@ -379,26 +368,26 @@ test('Verify warning message is displayed', async ({ page }) => {
     await page.getByLabel('select a value').selectOption(mainOption2);
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
     await page.getByRole('button', { name: 'Save' }).click();
-    await dockerWait(page, 2000);
+
 
     //Verify error is displayed
     await expect(page.getByRole('button', { name: 'Save' })).toBeHidden();
     await expect(page.getByText('Close')).toBeVisible();
     await page.getByLabel('Close').click();
-    await dockerWait(page);
+ 
 
   } finally {
     //Clean up Form - Always run cleanup
     if (formCreated) {
       try {
-        await dockerWait(page, 2000);
+
         await expect(page.getByRole('heading', { name: 'Admin  Form Browser  Form' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'delete this form' })).toBeVisible();
         await page.getByRole('button', { name: 'delete this form' }).click();
-        await dockerWait(page);
+
         await expect(page.getByRole('heading', { name: 'Delete this form' })).toBeVisible();
         await page.getByRole('button', { name: 'Yes' }).click();
-        await dockerWait(page, 2000);
+  
         console.log(`Successfully cleaned up form: ${formName}`);
       } catch (cleanupError) {
         console.error(`Form cleanup failed: ${cleanupError}`);
