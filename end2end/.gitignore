@@ -4,3 +4,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /forms/
+/playwright/end2end/test-results.json
+/my-test-report.txt
+/sequential-test-report.txt
+/test-results.json
