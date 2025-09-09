@@ -380,3 +380,27 @@ test('New Row Added in Correct Place After Sorting', async ({ page }) => {
   await page.getByRole('button', { name: 'Yes' }).click();
   
 });
+/**
+ * Test for LEAF 4969
+ */
+test('No Trailing Space After Resolver Name', async ({ page }) => {
+
+  // Go to Report Builder
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.getByText('Report Builder').click();
+
+  // Set filter to Current Status IS Resolved
+  await page.getByRole('cell', { name: 'IS NOT' }).locator('a').click();
+  await page.getByRole('option', { name: 'IS', exact: true }).click();
+  await page.getByRole('button', { name: 'Next Step' }).click();
+
+  // Add Resolved By as a column in the report
+  await page.getByTitle('Resolved By').locator('span').click();
+  await page.getByRole('button', { name: 'Generate Report' }).click();
+  
+  const resolvedBy = await page.locator('[id$="_9_resolvedBy"]');
+
+  // Verify that the Resolved By name does not end with a space
+  await expect(resolvedBy).toHaveText(/Tester Tester$/);
+  await expect(resolvedBy).not.toHaveText(/Tester Tester\s+$/);
+});
