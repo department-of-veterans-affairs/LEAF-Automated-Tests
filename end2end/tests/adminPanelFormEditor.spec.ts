@@ -84,8 +84,8 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await dockerWait(page, 2000);
     await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
     //2. Assigned Person  
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).click();
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).fill('tes');
+    await page.getByRole('searchbox', { name: /Search for user to add as Assigned Person$/, exact: true }).click();
+    await page.getByRole('searchbox', { name: /Search for user to add as Assigned Person$/, exact: true }).fill('tes');
     await dockerWait(page);
     await page.getByRole('cell', { name: assignedPersonOne }).click();
     await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).click();
