@@ -140,6 +140,8 @@ await StepDrpDwn.selectOption({ label: stepName });
 await setupProposedBtn.click();
 
 await roleDrpDwn.selectOption({ label: role1 });
+  await page.getByRole('textbox', { name: 'Title of proposal *required' }).click();
+  await page.getByRole('textbox', { name: 'Title of proposal *required' }).fill('asdf');
 
 // Step 2: Find unique request
 
