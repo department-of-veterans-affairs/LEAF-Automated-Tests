@@ -433,13 +433,11 @@ test.describe('LEAF-5005 Alert Dialog', () => {
   async function createNewForm(page: any,  formName: string, formDescription: string) {
 
    await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
-   await page.waitForLoadState('networkidle');
-   await page.waitForTimeout(1000);
+   await dockerWait(page);
 
    await page.getByRole('button', { name: 'Create Form' }).click();
    
-   await page.waitForLoadState('networkidle');
-   await page.waitForTimeout(1000);
+   await dockerWait(page);
 
    await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).click();
    await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).fill(formName);
@@ -451,12 +449,10 @@ test.describe('LEAF-5005 Alert Dialog', () => {
    async function createNewRequest(page: any, testId: string, title: string, serviceName: string, requestType: string ) {
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await dockerWait(page);
 
     await page.getByText('New Request Start a new').click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await dockerWait(page);
 
     await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
     await page.getByRole('option', { name: serviceName}).click(); 
@@ -494,8 +490,7 @@ test.describe('LEAF-5005 Alert Dialog', () => {
   //Cleanup Helper
    async function cleanUpRequest (page: any, requestId: string){
     await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await dockerWait(page);
 
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestId);
   await page.getByRole('link', { name: requestId }).click();
@@ -513,8 +508,7 @@ test.describe('LEAF-5005 Alert Dialog', () => {
 
    async function cleanUpForm(page: any, formName: string){
     await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await dockerWait(page);
 
     await page.getByRole('link', { name: formName}).click();
     await expect(page.getByRole('button', { name: 'delete this form' })).toBeVisible();
