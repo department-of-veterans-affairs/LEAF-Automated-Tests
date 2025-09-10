@@ -74,34 +74,34 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await page.getByRole('textbox', { name: 'Single line text B' }).fill(singleLineText);
     await page.locator('#radio_options_7 label').filter({ hasText: radioTxt }).locator('span').click();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.locator('#nextQuestion2').click();
- 
+    await awaitPromise(page, "nationalEmployeeSelector", async(p:Page)=> {
+      await p.locator('#nextQuestion2').click();
+    });
     await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-    await awaitPromise(page, "nationalEmployeeSelector", async(p:Page)=> {});
 
-    //2. Assigned Person  
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).click();
+    //2. Assigned Person
     await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).fill('tes');
     await awaitPromise(page, "import", async (p:Page) => {
       await p.getByRole('cell', { name: assignedPersonOne }).click();
     })
 
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).click();
     await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).fill('h');
     await awaitPromise(page, "import", async (p:Page) => {
-      await p.getByRole('cell', { name: assignedPersonTwo}).click();
+      await p.getByRole('cell', { name: assignedPersonTwo }).click();
     });
-    await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.locator('#nextQuestion2').click();
 
-    await awaitPromise(page, "groupSelector", async(p:Page)=> {});
+    await expect(page.locator('#nextQuestion2')).toBeVisible();
+    await awaitPromise(page, "groupSelector", async(p:Page)=> {
+      await p.locator('#nextQuestion2').click();
+    });
     await expect(page.getByText('Form completion progress: 50% Next Question')).toBeVisible();
+
     //3. Assigned Group  
-    await page.getByRole('searchbox', { name: 'Search for user to add as' }).click();
     await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('group');
     await awaitPromise(page, "&tag=", async (p:Page) => {
       await p.getByRole('cell', { name: groupText }).click();
     });
+
     await expect(page.getByText('Search results found for term group#206 listed below Group TitleGroup A')).toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
     await page.locator('#nextQuestion2').click();
@@ -158,7 +158,7 @@ test.describe('LEAF-4891 Create New Request, Send Mass Email, then Verify Email'
     await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
 
     await awaitPromise(page, "/reminder/", async (p:Page) => {
-      await page.getByRole('button', { name: 'Yes' }).click();
+      await p.getByRole('button', { name: 'Yes' }).click();
     });
     
     // Look for success indicators more flexibly
