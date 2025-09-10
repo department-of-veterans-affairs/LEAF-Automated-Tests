@@ -473,8 +473,7 @@ test.describe('LEAF-5005 Alert Dialog', () => {
     await page.locator('label').filter({ hasText: requestType }).locator('span').click();
     await page.getByRole('button', { name: 'Click here to Proceed' }).click();
     
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await dockerWait(page);
 
     await page.waitForSelector('#headerTab', { timeout: 15000 });
     const headerText = await page.textContent('#headerTab');
