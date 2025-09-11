@@ -555,7 +555,7 @@ test.describe('LEAF-5005 Alert Dialog', () => {
     //Create New Request
   
   await expect(page.getByRole('group', { name: 'File Attachment(s)' })).toBeVisible();
-  await page.getByLabel('', { exact: true }).setInputFiles(`./LEAF-Automated-Tests/end2end/artifacts/LEAF-5005.txt`);
+  await page.getByLabel('', { exact: true }).setInputFiles(`./artifacts/LEAF-5005.txt`);
   await expect(page.getByText('File LEAF-5005.txt has been')).toBeVisible();
   await expect(page.locator('#nextQuestion2')).toBeVisible();
   await page.locator('#nextQuestion2').click();
