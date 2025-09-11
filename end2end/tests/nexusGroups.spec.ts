@@ -9,7 +9,7 @@ test('Delete Group Tags', async ({ page }) => {
 
   try{
     // Search for groups
-    await page.goto('https://host.docker.internal/Test_Nexus/');
+    await page.goto('http://host.docker.internal/Test_Nexus/');
     await page.getByLabel('Search', { exact: true }).click();
     await page.keyboard.type('Group');
     await expect(page.getByText('Distribution Groups')).toBeVisible();
