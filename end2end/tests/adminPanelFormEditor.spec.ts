@@ -425,3 +425,162 @@ test('Verify warning message is displayed', async ({ page }) => {
 });
 });
 //End of Testing 4888
+
+//LEAF-5005 fix incorrect display of an alert dialog
+test.describe('LEAF-5005 Alert Dialog', () => {
+
+  // Helper to Create New Form
+  async function createNewForm(page: any,  formName: string, formDescription: string) {
+
+   await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
+   await dockerWait(page);
+
+   await page.getByRole('button', { name: 'Create Form' }).click();
+   
+   await dockerWait(page);
+
+   await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).click();
+   await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).fill(formName);
+   await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).click();
+   await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).fill(formDescription);
+   await page.getByRole('button', { name: 'Save' }).click();
+  }
+  //New Request Helper
+   async function createNewRequest(page: any, testId: string, title: string, serviceName: string, requestType: string ) {
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await dockerWait(page);
+
+    await page.getByText('New Request Start a new').click();
+    await dockerWait(page);
+
+    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
+    await page.getByRole('option', { name: serviceName}).click(); 
+    
+    // Reliable form filling with verification
+    const titleField = page.getByRole('textbox', { name: 'Title of Request' });
+    await titleField.waitFor({ state: 'visible' });
+    await titleField.click();
+    await titleField.fill('');
+    await titleField.fill(title);
+    
+    // Verify the value was set correctly
+    const actualValue = await titleField.inputValue();
+    if (actualValue !== title) {
+      throw new Error(`Title field not set correctly. Expected: ${title}, Got: ${actualValue}`);
+    }
+    
+    await page.locator('label').filter({ hasText: requestType }).locator('span').click();
+    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+    
+    await dockerWait(page);
+
+    await page.waitForSelector('#headerTab', { timeout: 15000 });
+    const headerText = await page.textContent('#headerTab');
+    const requestId = headerText?.split('#')[1];
+    
+    if (!requestId) {
+      throw new Error(`Could not extract request ID for test ${testId}`);
+    }
+
+    console.log(`Created new request ${requestId} for test ${testId} (not submitted)`);
+    return requestId;
+  }
+  //Cleanup Helper
+   async function cleanUpRequest (page: any, requestId: string){
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await dockerWait(page);
+
+    await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestId);
+  await page.getByRole('link', { name: requestId }).click();
+
+    const cancelledText = `Request #${requestId} has been cancelled!`;
+    const commentText = `Request Test Data Cleanup`;
+
+     await page.getByRole('button', { name: 'Cancel Request' }).click();
+    await page.getByRole('textbox', { name: 'Enter Comment' }).click();
+    await page.getByRole('textbox', { name: 'Enter Comment' }).fill(commentText);
+    await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await expect(page.locator('#bodyarea')).toContainText(cancelledText);
+   }
+
+   async function cleanUpForm(page: any, formName: string){
+    await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
+    await dockerWait(page);
+
+    await page.getByRole('link', { name: formName}).click();
+    await expect(page.getByRole('button', { name: 'delete this form' })).toBeVisible();
+    await page.getByRole('button', { name: 'delete this form' }).click();
+    await expect(page.getByRole('heading', { name: 'Delete this form' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+
+   }
+ 
+  
+ test('Verify Alert Dialog does not Appear', async ({ page }) => {
+
+  //Create A New Form
+  const formName =`LEAF-5005_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const formDescription =`FormDescription_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const FormId = await createNewForm(page, formName, formDescription);
+  const headerName = 'Upload Question';
+  const sectionQuestion = 'Please upload your file?'; 
+ 
+  //FORM Details
+  await page.getByLabel('Workflow: No Workflow. Users').selectOption('1');
+  await page.getByLabel('Status:').selectOption('1');
+  await page.getByLabel('Form Type: StandardParallel').selectOption('parallel_processing');
+  await page.getByRole('button', { name: 'Add Section' }).click();
+  await page.getByRole('textbox', { name: 'Section Heading' }).click();
+  await page.getByRole('textbox', { name: 'Section Heading' }).fill(headerName);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Add Question to Section' }).click();
+  await page.getByLabel('Input Format').selectOption('fileupload');
+  await page.getByRole('button', { name: 'Save' }).click();
+  
+  //NEW Request
+  //Create New Request for new Form
+  //Generate unique test ID using timestamp
+    const testId = `LEAF-5005_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const serviceName = 'AS - Service';
+    const title = 'LEAF-5005';
+    const requestType = formName;
+      
+    //Inital Request set up
+    const requestId = await createNewRequest(page, testId, title, serviceName, requestType);
+
+    //Create New Request
+  
+  await expect(page.getByRole('group', { name: 'File Attachment(s)' })).toBeVisible();
+  await page.getByLabel('', { exact: true }).setInputFiles(`./artifacts/LEAF-5005.txt`);
+  await expect(page.getByText('File LEAF-5005.txt has been')).toBeVisible();
+  await expect(page.locator('#nextQuestion2')).toBeVisible();
+  await page.locator('#nextQuestion2').click();
+
+  await expect(page.getByText('Select a data field Assigned PersonAssigned Group Selected Employee(s):')).toBeVisible();
+  await page.locator('#indicator_selector').selectOption('9');
+  await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('tes');
+  await page.locator('#btn200').click();
+  await expect(page.getByText('RemoveAS Test Group')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Send Request to Selected' }).click();
+  await expect(page.locator('#saveLinkContainer')).toContainText('Requests have been assigned to these people 1 recordsStop and show results');
+
+  //Clean Up
+  //Up the RequestID by 1
+  const number1 = 1;
+  const number2 = Number(requestId);
+  const sum = number1 + number2;
+  const updatedRequestId: string = String(sum);
+  await cleanUpRequest (page, updatedRequestId);
+
+  await cleanUpForm(page, formName);
+
+ });
+
+});
+//End of Testing 5005
+
