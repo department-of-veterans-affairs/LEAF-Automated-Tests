@@ -23,6 +23,7 @@ async function fillAndVerifyField(page: any, locator: any, value: string, fieldN
 async function findRecord(page: any, locator: any, recordName: string) {
   const recordCount = await locator.count();
 
+  // May need to remove this in order to use this function in clean up section
   if(recordCount === 0) {
     console.warn(recordName + ' not found. Skipping test - record may not exist in current environment.');
     test.skip(true, recordName + ' not available');
@@ -33,13 +34,13 @@ async function findRecord(page: any, locator: any, recordName: string) {
   return true;
 }
 
-async function changeTitleOfRecord(page: any, newTitle: string) {
+async function changeTitleOfRecord(page: any, newTitle: string, fieldName: string) {
 
   await page.getByRole('button', { name: 'Edit Title' }).click();
   await dockerWait(page);
    
   const titleField = page.locator('#title');
-  await fillAndVerifyField(page, titleField, newTitle, 'Title');
+  await fillAndVerifyField(page, titleField, newTitle, fieldName);
    
   await page.getByRole('button', { name: 'Save Change' }).click();
   await dockerWait(page, 2000); // Extra buffer for save operation
@@ -87,7 +88,7 @@ test('Advanced search functionality with URL in title', async ({ page }) => {
     await record957Element.click();
     await dockerWait(page, 2000);
 
-    await changeTitleOfRecord(page, searchTestUrl);
+    await changeTitleOfRecord(page, searchTestUrl, 'Title');
       
     // Navigate back to home
     await page.getByRole('link', { name: 'Home' }).click();
@@ -141,15 +142,7 @@ test('Advanced search functionality with URL in title', async ({ page }) => {
         }
        
         await dockerWait(page, 2000);
-       
-        await page.getByRole('button', { name: 'Edit Title' }).click();
-        await dockerWait(page);
-       
-        const titleField = page.locator('#title');
-        await fillAndVerifyField(page, titleField, originalTitle, 'Cleanup Title');
-       
-        await page.getByRole('button', { name: 'Save Change' }).click();
-        await dockerWait(page, 2000);
+        await changeTitleOfRecord(page, originalTitle, 'Cleanup Title');
        
         console.info(`Successfully restored title to: "${originalTitle}"`);
        
