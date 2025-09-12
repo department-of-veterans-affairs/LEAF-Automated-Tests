@@ -20,72 +20,34 @@ async function fillAndVerifyField(page: any, locator: any, value: string, fieldN
   }
 }
 
-async function findRecord() {
-    
+async function findRecord(page: any, locator: any, recordName: string) {
+  const recordCount = await locator.count();
+
+  if(recordCount === 0) {
+    console.warn(recordName + ' not found. Skipping test - record may not exist in current environment.');
+    test.skip(true, recordName + ' not available');
+    return false;
+  }
+
+  console.info(recordName + ' was found');
+  return true;
 }
- 
-test('Search functionality with URL in title', async ({ page }) => {
-  // Generate unique test data (applying primer lessons)
-  const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-  const searchTestUrl = `https://www.va.gov/${testId}`;
-  const originalTitle = 'Available for test case';
- 
-  let recordFound = false;
- 
-  try {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await dockerWait(page, 2000);
+
+async function changeTitleOfRecord(page: any, newTitle: string) {
+
+  await page.getByRole('button', { name: 'Edit Title' }).click();
+  await dockerWait(page);
    
-    // First, try to find record 957 and verify its current state
-    const record957Element = page.locator('[id$="_957_title"]');
-    const record957Count = await record957Element.count();
+  const titleField = page.locator('#title');
+  await fillAndVerifyField(page, titleField, newTitle, 'Title');
    
-    if (record957Count === 0) {
-      console.warn('Record 957 not found. Skipping test - record may not exist in current environment.');
-      test.skip(true, 'Record 957 not available');
-      return;
-    }
-   
-    // Get the current title to ensure proper cleanup
-    const titleLink = record957Element.getByRole('link', {name: originalTitle}).first();
-    await titleLink.waitFor({ state: 'visible' });
-   
-    console.info(`Found record 957 with current title: "${originalTitle}"`);
-    recordFound = true;
-   
-    // Change name of request to unique search URL
-    await titleLink.click();
-    await dockerWait(page, 2000);
-   
-    await page.getByRole('button', { name: 'Edit Title' }).click();
-    await dockerWait(page);
-   
-    const titleField = page.locator('#title');
-    await fillAndVerifyField(page, titleField, searchTestUrl, 'Title');
-   
-    await page.getByRole('button', { name: 'Save Change' }).click();
-    await dockerWait(page, 2000); // Extra buffer for save operation
-   
-    // Navigate back to home
-    await page.getByRole('link', { name: 'Home' }).click();
-    await dockerWait(page, 2000);
-   
-    // Perform search with unique URL
-    const searchField = page.getByLabel('Enter your search text');
-    await fillAndVerifyField(page, searchField, searchTestUrl, 'Search');
-   
-    // Wait for search results with Docker optimization
-    await dockerWait(page, 3000); // Extra buffer for search processing
-   
-    // Verify the search actually worked by checking for our specific record
-    const searchResultLink = page.getByRole('link', { name: '957' });
-    await expect(searchResultLink).toBeVisible({ timeout: 15000 });
-   
-    // Verify the URL title appears in results
-    const urlTitleLink = page.getByRole('link', { name: searchTestUrl });
-    await expect(urlTitleLink).toBeVisible({ timeout: 10000 });
-   
-    // More robust way to count results - check if search actually filtered
+  await page.getByRole('button', { name: 'Save Change' }).click();
+  await dockerWait(page, 2000); // Extra buffer for save operation
+
+}
+
+async function verifyNumberOfSearchResuts(page: any) {
+  // More robust way to count results - check if search actually filtered
     // Look for the results container and verify it has limited results
     const searchResults = page.locator('table tbody tr');
     await searchResults.first().waitFor({ state: 'visible' });
@@ -101,6 +63,57 @@ test('Search functionality with URL in title', async ({ page }) => {
     if (numRows >= 25) {
       throw new Error(`Search failed to filter results. Expected few results, got ${numRows}. Search may not have processed correctly.`);
     }
+
+    return numRows;
+}
+ 
+test('Advanced search functionality with URL in title', async ({ page }) => {
+  // Generate unique test data (applying primer lessons)
+  const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const searchTestUrl = `https://www.va.gov/${testId}`;
+  const originalTitle = 'Available for test case';
+ 
+  let recordFound = false;
+ 
+  try {
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await dockerWait(page, 2000);
+   
+    // First, try to find record 957 and verify its current state
+    const record957Element = page.locator('[id$="_957_title"]');
+    recordFound = await findRecord(page,record957Element, 'Record 957');
+       
+    // Change name of request to unique search URL
+    await record957Element.click();
+    await dockerWait(page, 2000);
+
+    await changeTitleOfRecord(page, searchTestUrl);
+      
+    // Navigate back to home
+    await page.getByRole('link', { name: 'Home' }).click();
+    await dockerWait(page, 2000);
+   
+    // Perform search with unique URL using Advanced options
+    await page.getByRole('button', { name: 'Advanced Options' }).click();
+    await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+    await page.getByRole('option', { name: 'Title' }).click();
+
+    const searchField = page.getByLabel('text', { exact: true });
+    await fillAndVerifyField(page, searchField, searchTestUrl, 'Search');
+    await page.getByRole('button', { name: 'Apply Filters' }).click();
+   
+    // Wait for search results with Docker optimization
+    await dockerWait(page, 3000); // Extra buffer for search processing
+   
+    // Verify the search actually worked by checking for our specific record
+    const searchResultLink = page.getByRole('link', { name: '957' });
+    await expect(searchResultLink).toBeVisible({ timeout: 15000 });
+   
+    // Verify the URL title appears in results
+    const urlTitleLink = page.getByRole('link', { name: searchTestUrl });
+    await expect(urlTitleLink).toBeVisible({ timeout: 10000 });
+
+    const numRows = await verifyNumberOfSearchResuts(page);
    
     // Verify our record 957 is in the results
     await expect(searchResultLink).toBeVisible();
@@ -140,14 +153,13 @@ test('Search functionality with URL in title', async ({ page }) => {
        
         console.info(`Successfully restored title to: "${originalTitle}"`);
        
-        // Clear search box for cleaner end state
+        // Reset the Advanced Options back to default and go back to regular search
         await page.getByRole('link', { name: 'Home' }).click();
+        await page.getByRole('cell', { name: 'Title' }).locator('a').click();
+        await page.getByRole('option', { name: 'Current Status' }).click();
+        
+        await page.getByRole('button', { name: 'Close advanced search' }).click();
         await dockerWait(page);
-       
-        const searchField = page.getByLabel('Enter your search text');
-        await searchField.click();
-        await searchField.press('ControlOrMeta+a');
-        await searchField.fill('');
        
         console.info('Test cleanup completed successfully');
        
@@ -158,4 +170,3 @@ test('Search functionality with URL in title', async ({ page }) => {
     }
   }
 });
-
