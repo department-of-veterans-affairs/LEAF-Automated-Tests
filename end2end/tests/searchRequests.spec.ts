@@ -67,7 +67,12 @@ async function verifyNumberOfSearchResuts(page: any) {
 
     return numRows;
 }
- 
+
+/**
+ * Test for LEAF 5003
+ * Verify that a request with a URL in the title can be
+ * searched for using the Advanced Search
+ */
 test('Advanced search functionality with URL in title', async ({ page }) => {
   // Generate unique test data (applying primer lessons)
   const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -164,6 +169,11 @@ test('Advanced search functionality with URL in title', async ({ page }) => {
   }
 });
 
+/**
+ * Test for LEAF 5003
+ * Verify that a request with a URL in the title can be
+ * searched for
+ */
 test('Search functionality with URL in title', async ({ page }) => {
   // Generate unique test data (applying primer lessons)
   const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
