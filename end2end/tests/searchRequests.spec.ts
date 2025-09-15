@@ -76,13 +76,13 @@ async function verifyNumberOfSearchResuts(page: any) {
 test('Advanced search functionality with URL in title', async ({ page }) => {
   // Generate unique test data (applying primer lessons)
   const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-  const searchTestUrl = `https://www.va.gov/${testId}`;
+  const searchTestUrl = `http://www.va.gov/${testId}`;
   const originalTitle = 'Available for test case';
  
   let recordFound = false;
  
   try {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.goto('http://host.docker.internal/Test_Request_Portal/');
     await dockerWait(page, 2000);
    
     // First, try to find record 957 and verify its current state
@@ -139,7 +139,7 @@ test('Advanced search functionality with URL in title', async ({ page }) => {
           await urlTitleLink.click();
         } else {
           // Fallback: navigate directly to the record
-          await page.goto('https://host.docker.internal/Test_Request_Portal/');
+          await page.goto('http://host.docker.internal/Test_Request_Portal/');
           await dockerWait(page, 2000);
           const record957Element = page.locator('[id$="_957_title"]');
           const titleLink = record957Element.getByRole('link').first();
@@ -177,13 +177,13 @@ test('Advanced search functionality with URL in title', async ({ page }) => {
 test('Search functionality with URL in title', async ({ page }) => {
   // Generate unique test data (applying primer lessons)
   const testId = `test_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-  const searchTestUrl = `https://www.va.gov/${testId}`;
+  const searchTestUrl = `http://www.va.gov/${testId}`;
   const originalTitle = 'Available for test case';
  
   let recordFound = false;
  
   try {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await page.goto('http://host.docker.internal/Test_Request_Portal/');
     await dockerWait(page, 2000);
    
     // First, try to find record 957 and verify its current state
@@ -235,7 +235,7 @@ test('Search functionality with URL in title', async ({ page }) => {
           await urlTitleLink.click();
         } else {
           // Fallback: navigate directly to the record
-          await page.goto('https://host.docker.internal/Test_Request_Portal/');
+          await page.goto('http://host.docker.internal/Test_Request_Portal/');
           await dockerWait(page, 2000);
           const record957Element = page.locator('[id$="_957_title"]');
           const titleLink = record957Element.getByRole('link').first();
