@@ -1,192 +1,231 @@
-import { test, expect, Locator } from '@playwright/test';
-
-//This test 
+import { test, expect, Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'default' });
 
+/**
+ * @param page Page instance from test
+ * @param includesString part of url from network call to wait for
+ * @param callback action to take prior to awaiting promise
+ * @param requestMethod http verb. GET, POST
+ */
+async function awaitPromise(
+  page: Page,
+  includesString:string = '',
+  callback:Function,
+  requestMethod:string = 'GET',
+) {
+  const promiseToAwait = page.waitForResponse(res =>
+    res.url().includes(includesString) &&
+    res.request().method() === requestMethod &&
+    res.status() === 200
+  );
+  await callback(page);
+  await promiseToAwait;
+}
+
+/**
+ * load the specific workflow by URL param
+ * @param page Page instance from test
+ * @param workflowID string - workflowID
+ */
+const loadWorkflow = async (page:Page, workflowID:string = '1') => {
+  const promiseToAwait = page.waitForResponse(res =>
+    res.url().includes(`workflow/${workflowID}/route`) &&
+    res.status() === 200
+  );
+  await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=${workflowID}`)
+  await promiseToAwait;
+}
+
 // Global Variables
-  let randNum = Math.random();
-  let uniqueText = `Event ${randNum}`;
-  let uniqueDescr = `Description ${randNum}`;
+const randNum = Date.now(); //timestamp. unique but shorter than random - name is limited to 25 chars
+const uniqueEventName = `Event ${randNum}`;
 
-//Create a New Event from the workflow
-test ('Create a New Event', async ({ page}, testinfo) => {
+let uniqueDescr = `Description ${randNum}`;
 
- await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
- 
-//Click on the Requestor 
+test.only('Create a New Event from a workflow action', async ({ page}) => {
+  await loadWorkflow(page);
+
+  //Click on the Requestor events
   await expect(page.getByText('Return to Requestor')).toBeVisible();
-  await page.getByText('Return to Requestor').click();
-
-//Add a new event
-  await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
-  await page.getByRole('button', { name: 'Add Event' }).click();
-
-
-  // Wait for the Create Event page to load
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-    await page.getByRole('button', { name: 'Create Event' }).click();
-    
-  //Enter Data for New Event
-
-    await page.getByLabel('Event Name:').click();
-    await page.getByLabel('Event Name:').fill(uniqueText);
-    await page.getByLabel('Short Description: Notify').fill(uniqueDescr);
-    await page.getByText('Notify Requestor Email: Notify Next Approver Email: Notify Group: None2911 TEST').click();
-    await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-    await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
-    await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
-   
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-  
-  //Save Event
-  await page.getByRole('button', { name: 'Save' }).click();
-   
-  await expect(page.getByRole('button', { name: 'Remove Action' })).toBeVisible();
- 
-  //Verify present
-  let eventTitle = `Email - ${uniqueDescr}`;
-  await expect(page.locator('#stepInfo_3')).toContainText(eventTitle);
-
-  //Add Screenshot
-  const newEventscreenshot = await page.screenshot();
-  await testinfo.attach('New Event', { body: newEventscreenshot, contentType: 'image/png' });
- 
-  await page.getByLabel('Close Modal').click();
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.getByText('Return to Requestor').click();
   });
 
-// End of 1st Test (Create New Event)
+  //Add a new event
+  await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.getByRole('button', { name: 'Add Event' }).click();
+  });
 
-// Select Newly Created Event from Icon
-test('Add Event from Action Icon', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-  await page.locator('#jsPlumb_1_51').click();
-  await page.getByRole('button', { name: 'Add Event' }).click();
-  await expect(page.getByRole('button', { name: 'Create Event' })).toBeVisible();
-  //await page.locator('a').
-
-  //locate the previous New Event and add it
   await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-  let eventTitle = `Email - ${uniqueDescr}`;
-  await page.getByLabel('Add Event').locator('a').click();
-  await page.getByRole('option', { name: eventTitle }).click();
-  
+  await awaitPromise(page, "groups", async (p:Page) => {
+    await p.getByRole('button', { name: 'Create Event' }).click();
+  });
 
-  await page.getByRole('button', { name: 'Save' }).click();
+  //Enter Data for New Event
+  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
 
- //Verify New Event is added to the workflow
- await expect(page.getByRole('button', { name: 'Remove Action' })).toBeVisible();
- await page.getByText(eventTitle).click();
+  expect(
+    await page.getByLabel('Event Name:').inputValue(), 'regex /[^a-z0-9]/gi to be applied to event name'
+  ).toBe(uniqueEventName.replace(/[^a-z0-9]/gi, '_'));
 
- const eventAdded = await page.screenshot();
-  await testInfo.attach('Event Added', { body: eventAdded, contentType: 'image/png' });
- //Close the modal and return
- await page.getByLabel('Close Modal').click();
-  
-});
-//End of select from ddrown
-
-//Check for duplicates
-test ('Verify Duplicate Event Name & Description are not Allowed', async ({ page }, testInfo) => {
-//Load Page
- 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-
-  //Add New Event
-  await page.getByRole('button', { name: 'Edit Events' }).click();
-  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
- 
-//Enter Data
-  await page.getByRole('button', { name: 'Create a new Event' }).click();
-  await page.getByLabel('Event Name:').click();
-  await page.getByLabel('Event Name:').fill(uniqueText);
-
-  await page.getByLabel('Short Description: Notify').fill(uniqueDescr);
+  await page.getByLabel('Short Description:').fill(uniqueDescr);
   await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
   await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
   await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
- 
- //Screehshot before Save
- const newEvent = await page.screenshot();
-  await testInfo.attach('New Event Created', { body: newEvent, contentType: 'image/png' });
-  
-  //Verify Duplicate Data
 
-      let diaMsg;
-      let dialogMsg = `Event name already exists.`;
-   //Read the modal then compare the values
-      page.on('dialog', async (dialog) => {
-        diaMsg = dialog.message();
-        await dialog.accept();
-      });
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.getByRole('button', { name: 'Save' }).click();
+  });
 
-  //SAVE
-  await page.getByRole('button', { name: 'Save' }).click();
-
-  await page.getByRole('button', { name: 'Close' }).click();
- 
+  //Verify present
+  await expect(page.locator('#stepInfo_3')).toContainText(`Email - ${uniqueDescr}`);
 });
 
-//Add Event From Side Bar 
-test ('Add Event from Side Navigation', async ({ page }, testInfo) => {
-  //Load Page
-   
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-    await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
-    await page.getByRole('button', { name: 'Edit Events' }).click();
+test.only('Create a New Event from Side Menu', async ({ page }) => {
+  const uniqueEventName2 = `Event2 - ${randNum}`;
+  const uniqueDescr2 = `Description2 - ${randNum}`;
+  await loadWorkflow(page);
 
-   
-    //Add New Event
-      await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
-      await page.getByRole('button', { name: 'Create a new Event' }).click();
-    
-    //Enter Data
-    
-    let uniqueText2 = `Event2 - ${uniqueText}`;
-    let uniqueDescr2 = `Description2 - ${uniqueDescr}`;
-  
-   
-      await page.getByLabel('Event Name:').click();
-      await page.getByLabel('Event Name:').fill(uniqueText2);
-    
-      await page.getByLabel('Short Description: Notify').fill(uniqueDescr2);
-      await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-      await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
-      await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
-  
-      await page.getByRole('button', { name: 'Save' }).click(); 
-   //Verify new  event is added
-  
-   await expect(page.locator('#ui-id-1')).toBeVisible();
-   await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
-  
-   //Screentshot
-  
-    const eventAdded = await page.screenshot();
-    await testInfo.attach('Event Added', { body: eventAdded, contentType: 'image/png' });
-  
-   // Verify
-   const table = page.locator("#events");
-   const rows = table.locator("tbody tr");
-   const cols = rows.first().locator("td");
-  
-   const eventMatch = rows.filter({
-      has: page.locator("td"),
-      hasText: uniqueText
-  
-   });
-  
-   await page.getByRole('button', { name: 'Close' }).click();
-   
+  await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
+  //open Edit Events modal
+  await awaitPromise(page, "customEvents", async (p:Page) => {
+    await p.getByRole('button', { name: 'Edit Events' }).click();
   });
+
+  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+  //open New Event modal
+  await awaitPromise(page, "groups", async (p:Page) => {
+    await p.getByRole('button', { name: 'Create a new Event' }).click();
+  });
+
+  //Enter Data
+  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName2);
+  const inputValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
+  expect(
+    await page.getByLabel('Event Name:').inputValue(), 'regex /[^a-z0-9]/gi to be applied to event name'
+  ).toBe(inputValue);
+  await page.getByLabel('Short Description:').fill(uniqueDescr2);
+  await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
+  await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
+  await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
+  await awaitPromise(page, "customEvents", async (p:Page) => {
+    await p.getByRole('button', { name: 'Save' }).click();
+  });
+
+  await expect(page.locator('#ui-id-1')).toBeVisible();
+
+  //Verify
+  await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+  const table = page.locator("#events");
+  await expect(table).toBeVisible();
+
+  const eventDisplayName = inputValue.replace(/_+/g, " ");
+  await expect(
+    table.getByText(eventDisplayName, { exact: true }),
+    'new event name, with underscores replaced with spaces, to be present in Event List'
+  ).toBeVisible();
+  await expect(
+    table.getByText(uniqueDescr2, { exact: true }),
+    'new event desription to be present in Event List'
+  ).toBeVisible();
+});
+
+
+test.only(`Add the first new event to a route action`, async ({ page }) => {
+  await loadWorkflow(page);
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.locator('#jsPlumb_1_51').click();
+  });
+  await awaitPromise(page, "workflow/events", async (p:Page) => {
+    await p.getByRole('button', { name: 'Add Event' }).click();
+  });
+
+  await expect(page.getByRole('button', { name: 'Create Event' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+
+  const eventTitle = `Email - ${uniqueDescr}`;
+  await page.getByLabel('Add Event').locator('a').click();
+  await page.getByRole('option', { name: eventTitle }).click();
+
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.getByRole('button', { name: 'Save' }).click();
+  });
+
+  await expect(page.getByText(eventTitle)).toBeInViewport();
+});
+
+
+test.only('Verify Duplicate Event Name is not Allowed', async ({ page }) => {
+  await loadWorkflow(page);
+  await awaitPromise(page, "customEvents", async (p:Page) => {
+    await p.getByRole('button', { name: 'Edit Events' }).click();
+  });
+  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+ 
+  //open new event modal and enter data
+  await awaitPromise(page, "groups", async (p:Page) => {
+    await p.getByRole('button', { name: 'Create a new Event' }).click();
+  });
+  //fill and attempt to save the same name entered in test 'Create a New Event'
+  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
+  await page.getByLabel('Short Description: Notify').fill('test ' + uniqueDescr);
+
+  //currently handled on back end. outcome should be an alert. read the modal compare the values
+  const expectedAlertMsg = `Event name already exists.`
+  page.on('dialog', async (dialog) => {
+    expect(dialog.type(), 'dialog type to be alert').toBe('alert');
+    expect(
+      dialog.message(), `alert dialog content to be: ${expectedAlertMsg}`
+    ).toBe(expectedAlertMsg);
+    await dialog.accept();
+  });
+
+  const alertPromise = page.waitForEvent('dialog');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await alertPromise;
+});
+
+test.only('Verify Duplicate Event Description is not Allowed', async ({ page }) => {
+  await loadWorkflow(page);
+  await awaitPromise(page, "customEvents", async (p:Page) => {
+    await p.getByRole('button', { name: 'Edit Events' }).click();
+  });
+  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+
+  await awaitPromise(page, "groups", async (p:Page) => {
+    await p.getByRole('button', { name: 'Create a new Event' }).click();
+  });
+  //fill and attempt to save the same description entered in test 'Create a New Event'
+  await page.getByLabel('Event Name:').pressSequentially('test ' + uniqueEventName);
+  await page.getByLabel('Short Description:').fill(uniqueDescr);
+
+  //alert for duplicate description
+  const expectedAlertMsg = `This description has already been used, please use another one.`;
+  page.on('dialog', async (dialog) => {
+    expect(dialog.type(), 'dialog type to be alert').toBe('alert');
+    expect(
+      dialog.message(), `alert dialog content to be: ${expectedAlertMsg}`
+    ).toBe(expectedAlertMsg);
+    await dialog.accept();
+  });
+
+  const alertPromise = page.waitForEvent('dialog');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await alertPromise;
+});
+
+
+
+
 
 
 //Edit Workflow event using the workflow Editor
 test('Edit Event ', async ({ page }, testInfo) => {
 
   //OPen Page
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+  await loadWorkflow(page);
 
   //Edit Event Button
   await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
@@ -231,7 +270,7 @@ test('Edit Event ', async ({ page }, testInfo) => {
 test('Remove Event ', async ({ page }, testInfo) => {
 
 //Open Page
-await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+await loadWorkflow(page);
 
 //Open Edit Events
 await page.getByRole('button', { name: 'Edit Events' }).isVisible();
@@ -287,7 +326,7 @@ await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible(
 test('Verify Event Removed from Workflow Action', async ({ page }, testInfo) => {
 
   //Open Page
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+  await loadWorkflow(page);
   
  
     //Verify Event is not attached to the workflow
@@ -310,7 +349,7 @@ test('Verify Event Removed from Workflow Action', async ({ page }, testInfo) => 
 
 test.describe('LEAF 4892 ', () => {
 
-  let requestId;
+  let requestId = "";
 
 test('Create Email Action', async({page}) =>{
 
@@ -442,7 +481,7 @@ test('Create New Request', async({page}) =>{
 
   await page.waitForSelector('#headerTab', { timeout: 15000 });
   const headerText = await page.textContent('#headerTab');
-  requestId = headerText?.split('#')[1];
+  requestId = headerText?.split('#')[1] ?? "";
 
   await expect(page.locator('#nextQuestion')).toBeVisible();
   await page.locator('#nextQuestion').click();
