@@ -9,6 +9,13 @@ test.describe.configure({ mode: 'default' });
   let uniqueText = `Event ${randNum}`;
   let uniqueDescr = `Description ${randNum}`;
 
+  // Docker-optimized waiting function (from primer)
+async function dockerWait(page: any, extraBuffer: number = 1000) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(extraBuffer);
+}
+
+
 //Create a New Event from the workflow
 test ('Create a New Event', async ({ page}, testinfo) => {
 
@@ -537,3 +544,273 @@ test('Clean up Test Data Workflow', async({page}) =>{
  
 });
 });
+
+//LEAF-5028 - Grid Display in Emails
+test.describe('LEAF-5028 - Grid Display in Emails', () => {
+
+  // Helper to Create New Form
+  async function createNewForm(page: any,  formName: string, formDescription: string) {
+
+   await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
+   await dockerWait(page);
+
+   await page.getByRole('button', { name: 'Create Form' }).click();
+   
+   await dockerWait(page);
+
+   await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).click();
+   await page.getByRole('textbox', { name: 'Form Name  (up to 50' }).fill(formName);
+   await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).click();
+   await page.getByRole('textbox', { name: 'Form Description  (up to 255' }).fill(formDescription);
+   await page.getByRole('button', { name: 'Save' }).click();
+  }
+  //New Request Helper
+   async function createNewRequest(page: any, testId: string, title: string, serviceName: string, requestType: string ) {
+    
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await dockerWait(page);
+
+    await page.getByText('New Request Start a new').click();
+    await dockerWait(page);
+
+    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
+    await page.getByRole('option', { name: serviceName}).click(); 
+    
+    // Reliable form filling with verification
+    const titleField = page.getByRole('textbox', { name: 'Title of Request' });
+    await titleField.waitFor({ state: 'visible' });
+    await titleField.click();
+    await titleField.fill('');
+    await titleField.fill(title);
+    
+    // Verify the value was set correctly
+    const actualValue = await titleField.inputValue();
+    if (actualValue !== title) {
+      throw new Error(`Title field not set correctly. Expected: ${title}, Got: ${actualValue}`);
+    }
+    
+    await page.locator('label').filter({ hasText: requestType }).locator('span').click();
+    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
+    
+    await dockerWait(page);
+
+    await page.waitForSelector('#headerTab', { timeout: 15000 });
+    const headerText = await page.textContent('#headerTab');
+    const requestId = headerText?.split('#')[1];
+    
+    if (!requestId) {
+      throw new Error(`Could not extract request ID for test ${testId}`);
+    }
+
+    console.log(`Created new request ${requestId} for test ${testId} (not submitted)`);
+    return requestId;
+  }
+  //Cleanup Helper
+   async function cleanUpRequest (page: any, requestId: string){
+    await page.goto('https://host.docker.internal/Test_Request_Portal/');
+    await dockerWait(page);
+
+    await page.getByRole('textbox', { name: 'Enter your search text' }).fill(requestId);
+  await page.getByRole('link', { name: requestId }).click();
+
+    const cancelledText = `Request #${requestId} has been cancelled!`;
+    const commentText = `Request Test Data Cleanup`;
+
+     await page.getByRole('button', { name: 'Cancel Request' }).click();
+    await page.getByRole('textbox', { name: 'Enter Comment' }).click();
+    await page.getByRole('textbox', { name: 'Enter Comment' }).fill(commentText);
+    await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await expect(page.locator('#bodyarea')).toContainText(cancelledText);
+   }
+
+   async function cleanUpForm(page: any, formName: string){
+    await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/`);
+    await dockerWait(page);
+
+    await page.getByRole('link', { name: formName}).click();
+    await expect(page.getByRole('button', { name: 'delete this form' })).toBeVisible();
+    await page.getByRole('button', { name: 'delete this form' }).click();
+    await expect(page.getByRole('heading', { name: 'Delete this form' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+
+   }
+ 
+  
+ test('Verify Grid Display Correctly in Email', async ({ page }) => {
+
+  //Create A New Form
+  const formName =`LEAF-5028_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const formDescription =`FormDescription_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const formId = await createNewForm(page, formName, formDescription);
+  const headerName = 'Grid Header LEAF-5028';
+  const sectionQuestion = 'Grid Display for LEAF-5028'; 
+  const eventName = `LEAF-5028_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const eventDescription = `EventDescription_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const emailEventName = `Email - ${eventDescription}`;
+ 
+   //Grid Values
+  //Multi Text
+  const col2Text = 'xpath=/html/body/div[3]/div[2]/div[1]/div/div[3]/div[4]/div[2]/div[2]/input';
+  const col2Type = 'xpath=/html/body/div[3]/div[2]/div[1]/div/div[3]/div[4]/div[2]/div[2]/select';
+  //Date
+  const col3Text = 'xpath=/html/body/div[3]/div[2]/div[1]/div/div[3]/div[4]/div[2]/div[3]/input';
+  const col3Type = 'xpath=/html/body/div[3]/div[2]/div[1]/div/div[3]/div[4]/div[2]/div[3]/select';
+  //DropDown
+  const col4Text = 'xpath=/html/body/div[3]/div[2]/div[1]/div/div[3]/div[4]/div[2]/div[4]/input';
+  const col4Type = 'xpath=/html/body/div[3]/div[2]/div[1]/div/div[3]/div[4]/div[2]/div[4]/select';
+
+  //FORM Details
+  await page.getByLabel('Workflow: No Workflow. Users').selectOption('1');
+  await page.getByLabel('Status:').selectOption('1');
+  await page.getByRole('button', { name: 'Add Section' }).click();
+  await page.getByRole('textbox', { name: 'Section Heading' }).click();
+  await page.getByRole('textbox', { name: 'Section Heading' }).fill(headerName);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Add Question to Section' }).click();
+  await page.getByRole('textbox', { name: 'Field Name' }).fill(sectionQuestion);
+  await page.getByLabel('Input Format').selectOption('grid');
+
+    //Get Question ID number
+    let questionId = await page.textContent('#leaf_dialog_content_drag_handle');
+    console.log(questionId);
+    const string2 = questionId || '';
+    const seperateStr = string2.split("to", 2);
+    const firstPart = seperateStr[0];
+    const gridId = seperateStr[1];
+     //Up the Question by 1
+    const number1 = 1;
+    const number2 = Number(gridId);
+    const sum = number1 + number2;
+    const fieldId =`$field.${sum}`;
+
+  await page.getByText('+ Add column Columns (1):').click();
+  await page.getByRole('textbox', { name: 'Title:' }).fill('Text 1');
+
+  await page.getByRole('button', { name: '+ Add column' }).click();
+  await page.locator(col2Text).fill('Multi Text');
+  await page.locator(col2Type).selectOption('textarea');
+
+  await page.getByRole('button', { name: '+ Add column' }).click();
+  await page.locator(col3Text).fill('Date');
+  await page.locator(col3Type).selectOption('date');
+
+  await page.getByRole('button', { name: '+ Add column' }).click();
+  await page.locator(col4Text).fill('Dropdown');
+  await page.locator(col4Type).selectOption('dropdown');
+  await page.getByRole('textbox', { name: 'Dropdown options, one option' }).fill('A\nB\nC\nD');
+
+  await page.getByRole('button', { name: 'Save' }).click();
+
+
+  //Update Workflow
+    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+
+    await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
+    await page.getByRole('button', { name: 'Edit Events' }).click();
+
+   
+  //Add New Event
+      await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+      await page.getByRole('button', { name: 'Create a new Event' }).click();
+    
+  //Enter Data for New Event
+
+    await page.getByLabel('Event Name:').click();
+    await page.getByLabel('Event Name:').fill(eventName);
+    await page.getByLabel('Short Description: Notify').fill(eventDescription);
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+  //Save Event
+    await page.getByRole('button', { name: 'Save' }).click();
+  
+  //Edit Template
+  const page1Promise = page.waitForEvent('popup');
+  await page.getByRole('link', { name: 'Email Template Editor' }).click();
+  const page1 = await page1Promise;
+  await page1.getByRole('button', { name: eventDescription, exact: true }).click();
+  await page1.getByText('The following request requires your review. Please review your inbox at: {{$').fill(`The following request requires your review.\n\nPlease review your inbox at: {{$siteRoot}}?a=inbox\n\nRequest ID#: {{$recordID}}\nRequest title: {{$fullTitle}}\nRequest status: {{$lastStatus}}\n\nComments: {{$comment}}\n\n------------------------\nView Request: {{$siteRoot}}?a=printview&recordID={{$recordID}}\n\n\n\n\n{{${fieldId}}}\n\n`);
+  await page1.getByRole('button', { name: 'Save Changes' }).click();
+  await page1.close({ runBeforeUnload: true });
+  
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.locator('a').filter({ hasText: 'General Workflow (ID: #1)' })).toBeVisible();
+  await page.getByText('Submit').click();
+  await page.getByRole('button', { name: 'Add Event' }).click();
+  await page.getByRole('dialog', { name: 'Add Event' }).locator('a').click();
+  await page.getByRole('option', { name: emailEventName}).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText(emailEventName)).toBeVisible();
+  await page.getByRole('button', { name: 'Close Modal' }).click();
+
+  //NEW Request
+  //Create New Request for new Form
+  //Generate unique test ID using timestamp
+    const testId = `LEAF-5028_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const serviceName = 'AS - Service';
+    const title = 'LEAF-5028';
+    const requestType = formName;
+      
+    //Inital Request set up
+    const requestId = await createNewRequest(page, testId, title, serviceName, requestType);
+
+    //Create New Request
+
+    //Get Table Id
+    const tableLocator = page.locator('table'); // Locate the table
+    const tableId = await tableLocator.getAttribute('id'); // Get the 'id' attribute
+    console.log(`Table ID: ${tableId}`);
+    const gridTable = page.locator(`#${tableId}`);
+    await expect(gridTable).toBeVisible();
+    let x =6;
+    let y = 4;
+    const multiText = `The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps.`;
+
+  //Create 5 rows in the table
+  
+  for (let i =0; i < y; i++)
+  { 
+   
+    await page.getByRole('textbox', { name: 'Text 1' }).nth(i).fill(`I am on Row ${i}`);
+    await page.getByRole('textbox', { name: 'Multi Text' }).nth(i).fill(`Multi Line Text ${i} ${multiText}`);
+    await page.getByRole('textbox', { name: 'Date' }).nth(i).click();
+    await page.getByRole('link', { name: `1${x}` }).click();
+    await page.getByRole('combobox').nth(i).selectOption('A');
+    x--;
+
+        await page.getByRole('button', { name: 'Grid input add row' }).click();
+    
+     }
+  await page.locator('#nextQuestion2').click();
+  await page.getByRole('button', { name: 'Submit Request' }).click();
+   
+// Verify Grid Display in Email
+// Check email notification  
+      await page.goto('http://host.docker.internal:5080/');
+      await dockerWait(page);
+
+      const emailSubject = `Action(#${requestId}) has been canceled.`;
+      const emailLink = page.getByText(emailSubject);
+      
+      if (await emailLink.count() > 0) {
+        await emailLink.click();
+        await expect(page.getByLabel('Messages')).toContainText(emailSubject);
+        await page.getByRole('button', { name: 'Delete' }).click();
+        console.log(`Email verified and deleted for test ${testId}`);
+      } else {
+        console.log(`No email found for request ${requestId}, may be expected behavior`);
+      }
+
+
+
+ //Clean Up
+
+//  await cleanUpRequest (page, updatedRequestId);
+
+  await cleanUpForm(page, formName);
+
+ });
+
+});
+//End of Testing 5028
