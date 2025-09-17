@@ -721,6 +721,8 @@ test.describe('LEAF-5028 - Grid Display in Emails', () => {
     await page.getByLabel('Event Name:').click();
     await page.getByLabel('Event Name:').fill(eventName);
     await page.getByLabel('Short Description: Notify').fill(eventDescription);
+    await page.getByLabel('Notify Group:', { exact: true }).selectOption('206');
+
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
   //Save Event
     await page.getByRole('button', { name: 'Save' }).click();
@@ -790,7 +792,7 @@ test.describe('LEAF-5028 - Grid Display in Emails', () => {
       await page.goto('http://host.docker.internal:5080/');
       await dockerWait(page);
 
-      const emailSubject = `Action(#${requestId}) has been canceled.`;
+      const emailSubject = `Action for LEAF-5028 (#${requestId}) in AS-Service`;
       const emailLink = page.getByText(emailSubject);
       
       if (await emailLink.count() > 0) {
