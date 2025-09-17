@@ -235,7 +235,7 @@ test('Create a read only workflow step', async ({ page }) => {
 
     // Select a requirement from the dropdown
     await page.locator('#dependencyID_chosen').click();
-    await page.locator("#dependencyID-chosen-search-result-3").click();
+    await page.locator("#dependencyID-chosen-search-result-4").click();
     await saveButton.click();
 
     // Reopen the step modal and verify the requirement was added
