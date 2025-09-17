@@ -389,11 +389,10 @@ test.describe('Events can be edited and deleted', () => {
 
 //uses uniqueEventName/uniqueDescr, still on return to requestor, to test email editor and group emails
 test.describe('Email events can be used to send or CC based on orgchart_group request data (LEAF 4892)', () => {
-  const groupId = 'group#202';
   const groupDisplayName = '2911 TEST Group';
   const subjectText = `${groupDisplayName} email ${uniqueEventName}`;
   const directEmailToCc = 'test4892@fake.com';
-  const emailToCC = '{{$field.9}}\n' + directEmailToCc;
+  const emailToCC = '{{$field.50}}\n' + directEmailToCc;
 
   const expectedFieldEmailRecipients = [
     'Roman.Abbott@fake-email.com', //direct groupId members
@@ -440,7 +439,7 @@ test.describe('Email events can be used to send or CC based on orgchart_group re
 
     let subjectArea = editorPage
       .locator('#divSubject')
-      .getByLabel('Template Editor coding area.')
+      .getByLabel('Template Editor coding area.');
 
     await subjectArea.press('ControlOrMeta+A');
     await subjectArea.press('Backspace');
@@ -450,23 +449,9 @@ test.describe('Email events can be used to send or CC based on orgchart_group re
   });
 
   test('Trigger event with email recipient based on request orgchart_group data', async({page}) => {
+    //Trigger event with Return to Requestor workflow action
     await page.goto(requestURL);
     await page.waitForLoadState('load');
-
-    await page.locator("#PHindicator_9_1 button").click();
-    const dialog = page.getByRole('dialog', { name: 'Editing #' });
-    await expect(dialog.locator('div[id$="_loadIndicator"]')).toBeHidden();
-
-    await dialog.getByRole('searchbox', { name: 'Search for user to add as' }).fill(groupId);
-    await dialog.getByRole('cell', { name: groupDisplayName }).click();
-
-    await expect(page.getByRole('searchbox', { name: 'Search for user to add as' })).toHaveValue(groupId);
-
-    await awaitPromise(page, 'getprintindicator', async (d:Locator) => {
-      await d.getByRole('button', { name: 'Save Change' }).click();
-    });
-
-    //Trigger event with Return to Requestor workflow action
     await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
   });
@@ -483,9 +468,9 @@ test.describe('Email events can be used to send or CC based on orgchart_group re
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(subjectText).first()).not.toBeVisible();
 
-    await page.getByText(`RETURNED: General Form (#${requestId}) to`).first().click();
+    await page.getByText(`RETURNED: Test Email Events (#${requestId}) to`).first().click();
     await page.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText(`RETURNED: General Form (#${requestId}) to`).first()).not.toBeVisible();
+    await expect(page.getByText(`RETURNED: Test Email Events (#${requestId}) to`).first()).not.toBeVisible();
 
     //resubmit request and move it back to 'Requestor Followup' to test Cc field
     await page.goto(requestURL);
@@ -538,9 +523,9 @@ test.describe('Email events can be used to send or CC based on orgchart_group re
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(subjectText).first()).not.toBeVisible();
 
-    await page.getByText(`RETURNED: General Form (#${requestId}) to`).first().click();
+    await page.getByText(`RETURNED: Test Email Events (#${requestId}) to`).first().click();
     await page.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText(`RETURNED: General Form (#${requestId}) to`).first()).not.toBeVisible();
+    await expect(page.getByText(`RETURNED: Test Email Events (#${requestId}) to`).first()).not.toBeVisible();
   });
 });
 
