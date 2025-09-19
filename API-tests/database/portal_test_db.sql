@@ -264,7 +264,7 @@ INSERT INTO `category_count` (`recordID`, `categoryID`, `count`) VALUES
 (120,	'form_5ea07',	1),
 (121,	'form_5ea07',	1),
 (122,	'form_5ea07',	1),
-(123,	'form_5ea07',	1),
+(123,	'form_512fa',	1),
 (124,	'form_5ea07',	1),
 (125,	'form_5ea07',	1),
 (126,	'form_5ea07',	1),
@@ -1738,11 +1738,13 @@ INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `ti
 (122,	5,	1,	'17313',	NULL,	1694021469,	'tester'),
 (122,	8,	1,	'99',	'{\"email\": \"Lovie.Mertz@fake-email.com\", \"lastName\": \"Mertz\", \"userName\": \"vtrdfdnatalie\", \"firstName\": \"Lovie\", \"middleName\": \"Nolan\"}',	1695331180,	'tester'),
 (122,	10,	1,	'209',	'{\"email\": \"Liberty.Boyer@fake-email.com\", \"lastName\": \"Boyer\", \"userName\": \"vtrnwbshavonda\", \"firstName\": \"Liberty\", \"middleName\": \"Wintheiser\"}',	1695339066,	'tester'),
-(123,	3,	1,	'53778',	NULL,	1694021469,	'tester'),
-(123,	4,	1,	'48391',	NULL,	1694021469,	'tester'),
-(123,	5,	1,	'93817',	NULL,	1694021469,	'tester'),
-(123,	8,	1,	'27',	'{\"email\": \"Boyd.Schaden@fake-email.com\", \"lastName\": \"Schaden\", \"userName\": \"vtryuydevona\", \"firstName\": \"Boyd\", \"middleName\": \"Breitenberg\"}',	1695331180,	'tester'),
-(123,	10,	1,	'106',	'{\"email\": \"Cory.Hartmann@fake-email.com\", \"lastName\": \"Hartmann\", \"userName\": \"vtrdpaashanti\", \"firstName\": \"Cory\", \"middleName\": \"Wilderman\"}',	1695339066,	'tester'),
+(123,	34,	1,	'53778',	NULL,	1694021469,	'tester'),
+(123,	35,	1,	'48391',	NULL,	1694021469,	'tester'),
+(123,	36,	1,	'93817',	NULL,	1694021469,	'tester'),
+(123,	48,	1,	'a:3:{s:5:\"cells\";a:1:{i:0;a:4:{i:0;s:16:\"test single line\";i:1;s:15:\"test\nmulti\nline\";i:2;s:10:\"09/17/2025\";i:3;s:1:\"2\";}}s:5:\"names\";a:5:{i:0;s:16:\"single line cell\";i:1;s:15:\"multi-line cell\";i:2;s:9:\"date cell\";i:3;s:13:\"dropdown cell\";i:4;s:1:\" \";}s:7:\"columns\";a:4:{i:0;s:8:\"col_2872\";i:1;s:8:\"col_ff50\";i:2;s:8:\"col_8d19\";i:3;s:8:\"col_58bf\";}}',	NULL,	1758137796,	'tester'),
+(123,	49,	1,	'27',	'{\"email\": \"Boyd.Schaden@fake-email.com\", \"lastName\": \"Schaden\", \"userName\": \"vtryuydevona\", \"firstName\": \"Boyd\", \"middleName\": \"Breitenberg\"}',	1695331180,	'tester'),
+(123,	50,	1,	'202',	NULL,	1695339066,	'tester'),
+(123,	53,	1,	'97',	NULL,	1695339066,	'tester'),
 (124,	3,	1,	'93121',	NULL,	1694021469,	'tester'),
 (124,	4,	1,	'14990',	NULL,	1694021469,	'tester'),
 (124,	5,	1,	'834',	NULL,	1694021469,	'tester'),
@@ -6273,7 +6275,8 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (49,	'orgchart employee (LEAF-orgchart, employee)',	'orgchart_employee',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-127,	'2025-01-05 23:52:04',	0,	0),
 (50,	'orgchart group (LEAF-orgchart, group)',	'orgchart_group',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0),
 (51,	'orgchart position (LEAF-orgchart, position)',	'orgchart_position',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-125,	'2025-01-05 23:52:04',	0,	0),
-(52,	'custom widget (LEAF-raw data)',	'raw_data',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-124,	'2025-01-05 23:52:04',	0,	0);
+(52,	'custom widget (LEAF-raw data)',	'raw_data',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-124,	'2025-01-05 23:52:04',	0,	0),
+(53,	'orgchart group 2 (LEAF-orgchart, group)',	'orgchart_group',	'',	'',	50,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
@@ -6448,7 +6451,7 @@ INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `prio
 (120,	1694021469,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (121,	1694021469,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (122,	1694021469,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(123,	1694021469,	0,	'tester',	'email based on orgchart_group data field value',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(123,	1694021469,	0,	'tester',	'Test Email Events',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (124,	1694021469,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (125,	1694021469,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (126,	1694021469,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021489,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
