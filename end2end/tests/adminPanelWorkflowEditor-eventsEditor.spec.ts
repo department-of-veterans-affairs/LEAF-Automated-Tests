@@ -140,7 +140,7 @@ const uniqueDescr2 = `Description2 ${randNum}`;
 const uniqueEventNameEdit = `Evt Edit ${randNum}`;
 const uniqueDescrEdit = `Descr Edit ${randNum}`;
 
-test.only('Create and add a new Event from a workflow action', async ({ page}) => {
+test('Create and add a new Event from a workflow action', async ({ page}) => {
   await loadWorkflow(page);
   await expect(page.getByText('Return to Requestor')).toBeVisible();
   await awaitPromise(page, "events", async (p:Page) => {
@@ -418,7 +418,7 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     'tester.tester@fake-email.com' //notify requetor is on the event itself
   ];
 
-  test.only('Customize Email Template content and trigger event', async({page}) => {
+  test('Customize Email Template content and trigger event', async({page}) => {
     await loadWorkflow(page);
     await awaitPromise(page, "customEvents", async (p:Page) => {
       await p.getByRole('button', { name: 'Edit Events' }).click();
@@ -475,7 +475,7 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
   });
 
-  test.only('Verify email sent, email recipients (To/Cc/notify), and email field content)', async({page}) => {
+  test('Verify email sent, email recipients (To/Cc/notify), and email field content)', async({page}) => {
     await page.goto('http://host.docker.internal:5080/');
     await page.waitForLoadState('load');
     await confirmEmailRecipients(page, subjectText, expectedToFieldEmailRecipients);
