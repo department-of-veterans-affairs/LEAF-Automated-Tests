@@ -432,6 +432,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByRole('button', { name: 'Save' }).click();
 
     // Add a new custom action 'Deny'
+    let awaitActionSave = page.waitForResponse(res => res.url().includes('workflow') && res.status() === 200);
     await page.locator(`//button[@id='btn_listActionType']`).click();
 
     await page.getByRole('button', { name: 'Create a new Action' }).click();
@@ -441,10 +442,11 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Action Past Tense *Required').fill('Denied');
     await page.getByLabel('Does this action represent').selectOption('-1');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await awaitActionSave;
 
     // Add a second custom action 'Reply'
 
-
+    awaitActionSave = page.waitForResponse(res => res.url().includes('workflow') && res.status() === 200);
     await page.waitForLoadState('networkidle');
     await page.locator(`//button[@id='btn_listActionType']`).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
@@ -452,18 +454,20 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Action *Required').press('Tab');
     await page.getByLabel('Action Past Tense *Required').fill('Replied');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await awaitActionSave;
 
     // Add a final custom action 'Backlog' 
 
     await page.waitForLoadState('networkidle');
 
-
+    awaitActionSave = page.waitForResponse(res => res.url().includes('workflow') && res.status() === 200);
     await page.locator(`//button[@id='btn_listActionType']`).click();
     await page.getByRole('button', { name: 'Create a new Action' }).click();
     await page.getByLabel('Action *Required').fill('Backlog');
     await page.getByLabel('Action *Required').press('Tab');
     await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await awaitActionSave;
 
     // Verify new actions appear
     const awaitActions = page.waitForResponse(res => res.url().includes('userActions') && res.status() === 200);
