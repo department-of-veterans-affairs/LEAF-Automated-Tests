@@ -140,7 +140,7 @@ const uniqueDescr2 = `Description2 ${randNum}`;
 const uniqueEventNameEdit = `Evt Edit ${randNum}`;
 const uniqueDescrEdit = `Descr Edit ${randNum}`;
 
-test('Create and add a new Event from a workflow action', async ({ page}) => {
+test.only('Create and add a new Event from a workflow action', async ({ page}) => {
   await loadWorkflow(page);
   await expect(page.getByText('Return to Requestor')).toBeVisible();
   await awaitPromise(page, "events", async (p:Page) => {
@@ -395,6 +395,9 @@ test.describe('Custom Email Event, custom template and emailing verification', (
   const directEmailCC = 'test4892.cc@fake.com';
   const emailTo = '{{$field.50}}\n' + directEmailTo;
   const emailCC = '{{$field.53}}\n' + directEmailCC;
+  const bodyContent = 
+    '<p>request fields</p>\n' +
+    '<div id="format_grid">{{$field.48}} checking</div>';
 
   const expectedToFieldEmailRecipients = [
     'Roman.Abbott@fake-email.com', //direct groupId 202 members
@@ -415,7 +418,7 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     'tester.tester@fake-email.com' //notify requetor is on the event itself
   ];
 
-  test('Customize Email Template content and trigger event', async({page}) => {
+  test.only('Customize Email Template content and trigger event', async({page}) => {
     await loadWorkflow(page);
     await awaitPromise(page, "customEvents", async (p:Page) => {
       await p.getByRole('button', { name: 'Edit Events' }).click();
@@ -455,8 +458,14 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     await subjectArea.press('Backspace');
     await subjectArea.fill(subjectText);
 
-    //TODO: set contentArea value
-
+    await editorPage.getByRole('button', { name: 'Use Code Editor' }).click();
+    
+    let bodyArea = editorPage
+      .locator('#code_mirror_template_editor');
+    await bodyArea.press('ControlOrMeta+A');
+    await bodyArea.press('Backspace');
+    await bodyArea.fill(bodyContent); 
+       
     await editorPage.getByRole('button', { name: 'Save Changes' }).click();
 
     //Trigger event with Return to Requestor workflow action
@@ -466,7 +475,7 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
   });
 
-  test('Verify email sent, email recipients (To/Cc/notify), and email field content)', async({page}) => {
+  test.only('Verify email sent, email recipients (To/Cc/notify), and email field content)', async({page}) => {
     await page.goto('http://host.docker.internal:5080/');
     await page.waitForLoadState('load');
     await confirmEmailRecipients(page, subjectText, expectedToFieldEmailRecipients);
@@ -474,8 +483,15 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     await confirmEmailRecipients(page, subjectText, expectedEventEmailRecipients);
 
     await page.getByText(subjectText).first().click();
-
-    //TODO: check email content for display of request fields
+       
+    const gridLocator = page.locator('iframe').contentFrame();
+    await expect(
+       gridLocator.getByRole('table'),
+    'The Grid is present'
+     ).toBeVisible();
+    
+     const rowCount = await gridLocator.locator('tr').count();
+    console.log(`Number of rows in the table: ${rowCount}`);
 
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(subjectText).first()).not.toBeVisible();
