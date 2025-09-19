@@ -405,77 +405,6 @@ test('Add email reminder to a step by specific days', async ({ page }) => {
     await expect(reminderImage).toBeVisible();
 });
 
-test('Create a new action and add it to a step', async ({ page }) => {
-    const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
-    const action = 'Log in';
-    const actionPastTense = 'Logged In';
-    const stepTitle = 'step1';
-  
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-    console.info('✅ Navigated to Workflow Builder');
-  
-    // Create new workflow
-    await page.locator('#btn_newWorkflow').click();
-    await expect(page.locator('span.ui-dialog-title', { hasText: 'Create new workflow' })).toBeVisible();
-    await page.locator('#description').fill(uniqueWorkflowName);
-    await page.locator('#button_save').click();
-    console.info(`✅ Created new workflow: ${uniqueWorkflowName}`);
-  
-    // Verify workflow exists
-    await expect(page.locator('#workflows_chosen')).toContainText(uniqueWorkflowName);
-    console.info('✅ Verified workflow appears in the dropdown');
-  
-    // Create new action
-    await page.getByRole('button', { name: 'Edit Actions' }).click();
-    await page.getByRole('button', { name: 'Create a new Action' }).click();
-    await page.locator('#actionText').fill(action);
-    await page.locator('#actionTextPasttense').fill(actionPastTense);
-    await page.locator('#actionSortNumber').fill('0');
-    await page.locator('#button_save').click({ force: true });
-    console.info(`✅ Created new action: ${action} (${actionPastTense})`);
-  
-    // Verify new action appears
-    await page.getByRole('button', { name: 'Edit Actions' }).click({ force: true });
-    const actionRow = page.locator('table#actions tr').filter({
-      has: page.locator(`td:has-text("${action}")`)
-    }).filter({
-      has: page.locator(`td:has-text("${actionPastTense}")`)
-    });
-    await expect(actionRow).toBeVisible();
-    console.info('✅ Verified action is listed in the action table');
-    await page.getByRole('button', { name: 'Cancel' }).click({ force: true });
-  
-    // Create a new step
-    await page.locator('div#sideBar button#btn_createStep').click();
-    await expect(page.locator('span.ui-dialog-title', { hasText: 'Create new Step' })).toBeVisible();
-    await page.locator('#stepTitle').fill(stepTitle);
-    await page.locator('#button_save').click();
-    console.info(`✅ Created new step: ${stepTitle}`);
-  
-    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
-    await expect(stepElement).toBeVisible();
-  
-    // Move step visually
-    await stepElement.hover();
-    await page.mouse.down();
-    await page.mouse.move(300, 300);
-    await page.mouse.up();
-    console.info('✅ Moved step into position');
-  
-    // Connect step to end
-    const stepConnector = page.locator('.jtk-endpoint').nth(0);
-    const endConnector = page.locator('.jtk-endpoint').nth(2);
-    await stepConnector.dragTo(endConnector);
-    console.info('✅ Connected step to Workflow End');
-  
-    // Assign action to connector
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await page.locator('#actionType_chosen').click();
-    await page.getByRole('option', { name: action }).click();
-    await page.locator('#button_save').click({ force: true });
-    console.info(`✅ Assigned action "${action}" to connector`);
-  });
-  
 
 /**
  *  Test for LEAF 4716 verifying the following:
@@ -488,7 +417,11 @@ test('Create a new action and add it to a step', async ({ page }) => {
  *      as the non-removable even
  */
 test('Workflow editor UX improvements - 4716', async ({ page }) => {
-
+    const actionsAdded = [
+        { present: "Deny", past: "Denied" },
+        { present: "Reply", past: "Replied" },
+        { present: "Backlog", past: "Backlogged" },
+    ];
     // Create a unique workflow name
     const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
 
@@ -531,6 +464,29 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Action *Required').press('Tab');
     await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
+
+    // Verify new actions appear
+    const awaitActions = page.waitForResponse(res => res.url().includes('userActions') && res.status() === 200);
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    await awaitActions;
+
+    const table = page.locator("#actions");
+    await expect(
+        table.getByRole('heading', { name: 'List of Actions' }),
+        `Action modal heading to be 'List of Actions'`
+    ).toBeVisible();
+
+    for (let i = 0; i < actionsAdded.length; i++) {
+        await expect(
+            table.getByRole("cell", { name: actionsAdded[i].present, exact: true }),
+            `action present tense, ${actionsAdded[i].present}, to be listed in the action table`
+        ).toBeVisible();
+        await expect(
+            table.getByRole("cell", { name: actionsAdded[i].past, exact: true }),
+            `action paste tense, ${actionsAdded[i].past}, to be listed in the action table`
+        ).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Cancel' }).click();
 
     // Create a new step
     await page.getByRole('button', { name: 'New Step' }).click();
