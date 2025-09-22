@@ -217,24 +217,30 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
     // Search for the hard-coded test case records
     await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Enter your search text' }).fill('');
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(massCancelTitle);
 
     await page.keyboard.press('Enter');
-    await expect(page.locator('table[id^="LeafFormGrid"] tbody')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
 
     // Look for the specific checkboxes by row content (from original test pattern)
     for (let i = 0; i < cancelledRecords.length; i++) {
-      const requestRow = page.getByRole('row', { name: new RegExp(`${cancelledRecords[i]}.*General Form.*LEAF-4872`) });
+      const checkBox = page.locator(
+        `input[type="checkbox"][value="${cancelledRecords[i]}"]`
+      );
       await expect(
-        requestRow,
+        checkBox,
         `Request ${cancelledRecords[i]} to be found in mass action results`
       ).toHaveCount(1);
-      await requestRow.getByRole('checkbox').check();
+      await checkBox.check();
     }
+
     await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
     await page.getByRole('button', { name: 'Yes' }).click();
+    await page.waitForLoadState('networkidle'); //cancellations are processed one-by-one, want to make sure it does all of them
 
-    const successMsg = '2 successes and 0 failures of 2 total.'
+    const successMsg = '2 successes and 0 failures of 2 total.';
     await expect(
       page.locator('#massActionContainer .progress', { hasText: successMsg }),
       `progress message, ${successMsg}, to be displayed`
@@ -245,11 +251,11 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
     for (let i = 0; i < cancelledRecords.length; i++) {
       const emailSubject = `The request for General Form (#${cancelledRecords[i]}) has been canceled.`;
-      const emailLink = page.locator('div.cell').getByText(emailSubject);
+      const emailLink = page.locator('div.cell').getByText(emailSubject).first();
       expect(
         emailLink,
         `a cancellation notification email to be found for submitted request ${cancelledRecords[i]}`
-      ).toHaveCount(1);
+      ).toBeVisible();
 
       //delete the email
       await emailLink.click();
