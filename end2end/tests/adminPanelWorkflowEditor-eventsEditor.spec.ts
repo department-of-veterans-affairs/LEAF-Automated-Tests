@@ -459,13 +459,13 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     await subjectArea.fill(subjectText);
 
     await editorPage.getByRole('button', { name: 'Use Code Editor' }).click();
-    
+
     let bodyArea = editorPage
       .locator('#code_mirror_template_editor');
     await bodyArea.press('ControlOrMeta+A');
     await bodyArea.press('Backspace');
     await bodyArea.fill(bodyContent); 
-       
+
     await editorPage.getByRole('button', { name: 'Save Changes' }).click();
 
     //Trigger event with Return to Requestor workflow action
@@ -483,11 +483,17 @@ test.describe('Custom Email Event, custom template and emailing verification', (
     await confirmEmailRecipients(page, subjectText, expectedEventEmailRecipients);
 
     await page.getByText(subjectText).first().click();
-       
+
+    const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
+    const dangerBtnCount = await dangerBtn.count();
+    if(dangerBtnCount > 0) {
+      await dangerBtn.click();
+    }
+
     const msgframe = page.frameLocator('.htmlview')
     await expect(
     msgframe.locator('#format_grid table'),
-    'grid question to be presented in table format'
+      'grid question to be presented in table format'
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete' }).click();
