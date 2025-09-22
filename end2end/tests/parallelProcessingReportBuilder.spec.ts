@@ -233,16 +233,18 @@ test('Update Form', async ({ page}, testInfo) => {
 
 //Create New Request
 test('Create New Request', async ({ page }, testInfo) => {
-
+  const serviceDropdown = page.locator('#service_chosen');
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
 
 
   //Create New Request
   await expect(page.getByText('New Request Start a new')).toBeVisible();
- await page.getByText('New Request', { exact: true }).click();
- await expect(page.locator('#step1_questions')).toBeVisible();
-  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-  await page.getByRole('option', { name: 'AS Test Group' }).click();
+  await page.getByText('New Request', { exact: true }).click();
+  await expect(page.locator('#step1_questions')).toBeVisible();
+  await expect(serviceDropdown).toBeVisible();
+  await serviceDropdown.click();
+  await page.getByRole('option', { name: 'AS Test Group', exact: true }).click();
+
   await page.getByRole('textbox', { name: 'Title of Request' }).click();
   await page.getByRole('textbox', { name: 'Title of Request' }).fill(newRequestForm);
   await page.getByText(uniqueFormName).click();
