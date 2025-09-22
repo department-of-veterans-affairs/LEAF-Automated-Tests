@@ -486,7 +486,7 @@ test.describe('Custom Email Event, custom template and emailing verification', (
        
     const msgframe = page.frameLocator('.htmlview')
     await expect(
-    msgframe.locator('#format_grid'),
+    msgframe.locator('#format_grid table'),
     'grid question to be presented in table format'
     ).toBeVisible();
 
