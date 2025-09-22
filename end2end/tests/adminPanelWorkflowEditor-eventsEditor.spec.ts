@@ -484,14 +484,11 @@ test.describe('Custom Email Event, custom template and emailing verification', (
 
     await page.getByText(subjectText).first().click();
        
-    const gridLocator = page.locator('iframe').contentFrame();
+    const msgframe = page.frameLocator('.htmlview')
     await expect(
-       gridLocator.getByRole('table'),
-    'The Grid is present'
-     ).toBeVisible();
-    
-     const rowCount = await gridLocator.locator('tr').count();
-    console.log(`Number of rows in the table: ${rowCount}`);
+    msgframe.locator('#format_grid'),
+    'grid question to be presented in table format'
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(subjectText).first()).not.toBeVisible();
