@@ -11,7 +11,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     await page.waitForLoadState('networkidle');
     await expect(page.locator('#reportStats')).toHaveText(/records/);
     try {
-      await expect(page.locator('table[id^="LeafFormGrid"] tbody')).toBeVisible();
+      await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
       const recordsTable = page.locator('table[id^="LeafFormGrid"] tbody');
       const recordLinks = await recordsTable.locator('tr > td:first-child a').all();
 
@@ -35,15 +35,10 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
   // Helper function to create a new request
   async function createNewRequest(page: any, testId: string, title: string) {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    await page.getByText('New Request Start a new').click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
+    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
+    const serviceDropdown = page.locator('#service_chosen');
+    await expect(serviceDropdown).toBeVisible();
+    await serviceDropdown.click();
     await page.getByRole('option', { name: 'AS - Service' }).click();
     
     // Reliable form filling with verification
@@ -78,7 +73,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
   // Helper to clean up emails
   async function cleanupEmails(page: any, subjectText: string) {
     await page.goto('http://host.docker.internal:5080/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const emailElements = await page.locator(`text="${subjectText}"`).all();
     for (let email of emailElements) {
@@ -142,7 +137,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
     // Check email notification  
     await page.goto('http://host.docker.internal:5080/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const emailLink = page.getByText(emailSubject);
     expect(
@@ -187,7 +182,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
     // Check email notification  
     await page.goto('http://host.docker.internal:5080/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const emailExists = await page.getByText(emailSubject).count();
     expect(
@@ -207,7 +202,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     const cancelComment = `Mass cancel ${requestId1} & ${requestId2} - ${testId}`;
 
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     await expect(page.getByLabel('Choose Action')).toBeVisible();
     await page.getByLabel('Choose Action').selectOption('cancel');
@@ -218,10 +213,11 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     // Search for the hard-coded test case records
     await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill('');
+    const awaitQuery = page.waitForResponse(res =>
+      res.url().includes('LEAF-4872') && res.status() === 200
+    );
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(massCancelTitle);
-
-    await page.keyboard.press('Enter');
-    await page.waitForLoadState('networkidle');
+    await awaitQuery;
     await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
 
     // Look for the specific checkboxes by row content (from original test pattern)
@@ -247,7 +243,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     ).toBeVisible();
       
     await page.goto('http://host.docker.internal:5080/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     for (let i = 0; i < cancelledRecords.length; i++) {
       const emailSubject = `The request for General Form (#${cancelledRecords[i]}) has been canceled.`;
@@ -275,7 +271,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     const cancelComment = `Suppress cancel ${requestId} - ${testId}`;
 
     await page.goto('https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     await expect(page.getByLabel('Choose Action')).toBeVisible();
     await page.getByLabel('Choose Action').selectOption('cancel');
@@ -286,10 +282,13 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
         
     // Search for the hard-coded test case records
     await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Enter your search text' }).fill('');
+    const awaitQuery = page.waitForResponse(res =>
+      res.url().includes('LEAF-4872') && res.status() === 200
+    );
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(massCancelTitle);
-
-    await page.keyboard.press('Enter');
-    await expect(page.locator('table[id^="LeafFormGrid"] tbody')).toBeVisible();
+    await awaitQuery;
+    await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
 
     const requestRow = page.getByRole('row', { name: new RegExp(`${requestId}.*General Form.*LEAF-4872`) });
     await expect(
@@ -300,6 +299,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
     await page.getByRole('button', { name: 'Take Action' }).nth(1).click();
     await page.getByRole('button', { name: 'Yes' }).click();
+    await page.waitForLoadState('networkidle');
 
     const successMsg = '1 successes and 0 failures of 1 total.'
     await expect(
@@ -309,7 +309,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
 
     // Verify no email was sent
     await page.goto('http://host.docker.internal:5080/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const suppressedSubject = `The request for General Form (#${requestId}) has been canceled.`;
     const emailExists = await page.getByText(suppressedSubject).count();
