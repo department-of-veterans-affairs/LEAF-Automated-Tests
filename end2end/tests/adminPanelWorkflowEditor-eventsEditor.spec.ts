@@ -388,25 +388,37 @@ test.describe('Events can be edited and deleted', () => {
 });
 
 //uses uniqueEventName/uniqueDescr, still on return to requestor, to test email editor and group emails
-test.describe('Email events can be used to send or CC based on orgchart_group request data (LEAF 4892)', () => {
-  const groupId = 'group#202';
+test.describe('Custom Email Event, custom template and emailing verification', () => {
   const groupDisplayName = '2911 TEST Group';
   const subjectText = `${groupDisplayName} email ${uniqueEventName}`;
-  const directEmailToCc = 'test4892@fake.com';
-  const emailToCC = '{{$field.9}}\n' + directEmailToCc;
+  const directEmailTo = 'test4892.to@fake.com';
+  const directEmailCC = 'test4892.cc@fake.com';
+  const emailTo = '{{$field.50}}\n' + directEmailTo;
+  const emailCC = '{{$field.53}}\n' + directEmailCC;
+  const bodyContent = 
+    '<p>request fields</p>\n' +
+    '<div id="format_grid">{{$field.48}} checking</div>';
 
-  const expectedFieldEmailRecipients = [
-    'Roman.Abbott@fake-email.com', //direct groupId members
+  const expectedToFieldEmailRecipients = [
+    'Roman.Abbott@fake-email.com', //direct groupId 202 members
     'Morton.Anderson@fake-email.com',
     'Loyd.Cartwright10@fake-email.com',
     'Booker.Feeney@fake-email.com',
-    directEmailToCc //confirm direct email entry in Template Editor
+    directEmailTo
+  ];
+  const expectedCcFieldEmailRecipients = [
+    'Allen.Corwin@fake-email.com', //direct groupId 97 members
+    'Cory.Hartmann@fake-email.com',
+    'Roger.Kirlin@fake-email.com',
+    'Cecille.Maggio@fake-email.com',
+    directEmailCC
   ];
   const expectedEventEmailRecipients = [
-    'Donte.Glover@fake-email.com' //direct groupId members
+    'Donte.Glover@fake-email.com', //notify group 206 is on the event itself
+    'tester.tester@fake-email.com' //notify requetor is on the event itself
   ];
 
-  test('Add group by request field to Email Template (To)', async({page}) => {
+  test('Customize Email Template content and trigger event', async({page}) => {
     await loadWorkflow(page);
     await awaitPromise(page, "customEvents", async (p:Page) => {
       await p.getByRole('button', { name: 'Edit Events' }).click();
@@ -436,58 +448,62 @@ test.describe('Email events can be used to send or CC based on orgchart_group re
       'Event in Email Template Editor to be successfully accessed from the Edit Events modal'
     ).toBeVisible();
     await expect(editorPage.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
-    await editorPage.getByRole('textbox', { name: 'Email To:' }).fill(emailToCC);
+    await editorPage.getByRole('textbox', { name: 'Email To:' }).fill(emailTo);
+    await editorPage.getByRole('textbox', { name: 'Email CC:' }).fill(emailCC);
 
     let subjectArea = editorPage
       .locator('#divSubject')
-      .getByLabel('Template Editor coding area.')
-
+      .getByLabel('Template Editor coding area.');
     await subjectArea.press('ControlOrMeta+A');
     await subjectArea.press('Backspace');
     await subjectArea.fill(subjectText);
 
+    await editorPage.getByRole('button', { name: 'Use Code Editor' }).click();
+
+    let bodyArea = editorPage
+      .locator('#code_mirror_template_editor');
+    await bodyArea.press('ControlOrMeta+A');
+    await bodyArea.press('Backspace');
+    await bodyArea.fill(bodyContent); 
+
     await editorPage.getByRole('button', { name: 'Save Changes' }).click();
-  });
-
-  test('Trigger event with email recipient based on request orgchart_group data', async({page}) => {
-    await page.goto(requestURL);
-    await page.waitForLoadState('load');
-
-    await page.locator("#PHindicator_9_1 button").click();
-    const dialog = page.getByRole('dialog', { name: 'Editing #' });
-    await expect(dialog.locator('div[id$="_loadIndicator"]')).toBeHidden();
-
-    await dialog.getByRole('searchbox', { name: 'Search for user to add as' }).fill(groupId);
-    await dialog.getByRole('cell', { name: groupDisplayName }).click();
-
-    await expect(page.getByRole('searchbox', { name: 'Search for user to add as' })).toHaveValue(groupId);
-
-    await awaitPromise(page, 'getprintindicator', async (d:Locator) => {
-      await d.getByRole('button', { name: 'Save Change' }).click();
-    });
 
     //Trigger event with Return to Requestor workflow action
+    await page.goto(requestURL);
+    await page.waitForLoadState('load');
     await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
   });
 
-
-  test('Verify Email Sent (To)', async({page}) => {
+  test('Verify email sent, email recipients (To/Cc/notify), and email field content)', async({page}) => {
     await page.goto('http://host.docker.internal:5080/');
     await page.waitForLoadState('load');
-    await confirmEmailRecipients(page, subjectText, expectedFieldEmailRecipients);
+    await confirmEmailRecipients(page, subjectText, expectedToFieldEmailRecipients);
+    await confirmEmailRecipients(page, subjectText, expectedCcFieldEmailRecipients);
     await confirmEmailRecipients(page, subjectText, expectedEventEmailRecipients);
 
-    //Cleanup the inbox
     await page.getByText(subjectText).first().click();
+
+    const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
+    const dangerBtnCount = await dangerBtn.count();
+    if(dangerBtnCount > 0) {
+      await dangerBtn.click();
+    }
+
+    const msgframe = page.frameLocator('.htmlview')
+    await expect(
+    msgframe.locator('#format_grid table'),
+      'grid question to be presented in table format'
+    ).toBeVisible();
+
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(subjectText).first()).not.toBeVisible();
 
-    await page.getByText(`RETURNED: General Form (#${requestId}) to`).first().click();
+    await page.getByText(`RETURNED: Test Email Events (#${requestId}) to`).first().click();
     await page.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText(`RETURNED: General Form (#${requestId}) to`).first()).not.toBeVisible();
+    await expect(page.getByText(`RETURNED: Test Email Events (#${requestId}) to`).first()).not.toBeVisible();
 
-    //resubmit request and move it back to 'Requestor Followup' to test Cc field
+    //resubmit request and move it back to 'Requestor Followup' step
     await page.goto(requestURL);
     await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();
     await awaitPromise(page, 'lastActionSummary', async (p:Page) => {
@@ -495,65 +511,9 @@ test.describe('Email events can be used to send or CC based on orgchart_group re
     });
     await printAdminMenuChangeStep(page, requestId, 'General Workflow: Requestor Followup');
   });
-
-  test('Add group by request field to Email Template (CC)', async({page}) => {
-    await awaitPromise(page, 'customEvents', async (p:Page) => {
-      await p.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email');
-    });
-
-    await awaitPromise(page, 'customEvents', async (p:Page) => {
-      p.getByRole('button', { name: uniqueDescr, exact: true }).click();
-    });
-    await expect(page.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
-    await page.getByRole('textbox', { name: 'Email To:' }).fill('');
-
-    await page.getByRole('textbox', { name: 'Email CC:' }).fill(emailToCC);
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForLoadState('load');
-
-    await expect(
-      page.getByRole('textbox', { name: 'Email To:' }),
-      '(To) field to be clear'
-    ).toHaveValue('');
-    await expect(
-      page.getByRole('textbox', { name: 'Email CC:' }),
-      '(CC) field to have email recipients set'
-    ).toHaveValue(emailToCC);
-
-    //re-trigger email event
-    await page.goto(requestURL);
-    await page.waitForLoadState('load');
-    await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
-    await page.getByRole('button', { name: 'Return to Requestor' }).click();
-  });
-
-  test('Verify Email Sent (CC)', async({page}) => {
-    await page.goto('http://host.docker.internal:5080/');
-    await page.waitForLoadState('load');
-    await confirmEmailRecipients(page, subjectText, expectedFieldEmailRecipients);
-    await confirmEmailRecipients(page, subjectText, expectedEventEmailRecipients);
-
-    //Cleanup the inbox
-    await page.getByText(subjectText).first().click();
-    await page.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText(subjectText).first()).not.toBeVisible();
-
-    await page.getByText(`RETURNED: General Form (#${requestId}) to`).first().click();
-    await page.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText(`RETURNED: General Form (#${requestId}) to`).first()).not.toBeVisible();
-  });
 });
-
 
 /* POST RUN CLEANUP */
-test('Clean up Request Test Data', async({page}) => {
-  await page.goto(requestURL);
-  await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();
-  await awaitPromise(page, 'lastActionSummary', async (p:Page) => {
-    await p.getByRole('button', { name: 'Re-Submit Request' }).click();
-  });
-  await printAdminMenuChangeStep(page, requestId, 'General Workflow: Requestor Followup');
-});
 test('Clean up Workflow Test Data', async({page}) => {
   await loadWorkflow(page);
   await deleteWorkflowEvent(page, uniqueEventName.replace(/[^a-z0-9]/gi, '_'), uniqueDescr);
