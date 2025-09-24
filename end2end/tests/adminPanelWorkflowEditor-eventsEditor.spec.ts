@@ -1,27 +1,8 @@
-import { test, expect, Page, Locator } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+import { awaitPromise, loadWorkflow, deleteWorkflowEvent } from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'default' });
 
-/**
- * @param page Page instance from test
- * @param includesString part of url from network call to wait for
- * @param callback action to take prior to awaiting promise
- * @param requestMethod http verb. GET, POST, DELETE
- */
-const awaitPromise = async (
-  page: Page,
-  includesString:string = '',
-  callback:Function,
-  requestMethod:string = 'GET',
-) => {
-  const promiseToAwait = page.waitForResponse(res =>
-    res.url().includes(includesString) &&
-    res.request().method() === requestMethod &&
-    res.status() === 200
-  );
-  await callback(page);
-  await promiseToAwait;
-}
 
 /**
  * @param page Page instance from test
@@ -47,62 +28,8 @@ const confirmEmailRecipients = async (
   }
 }
 
-/**
- * load a specific workflow by URL param
- * @param page Page instance from test
- * @param workflowID string - workflowID
- */
-const loadWorkflow = async (page:Page, workflowID:string = '1') => {
-  const promiseToAwait = page.waitForResponse(res =>
-    res.url().includes(`workflow/${workflowID}/route`) &&
-    res.status() === 200
-  );
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=${workflowID}`)
-  await promiseToAwait;
-}
 
-/**
- * Deletes a Workflow Event and asserts that it is not present in the Event List after deletion
- * @param page Page instance from test
- * @param eventNameInput the event name **as it appears in the Create/Edit Event modal input field**
- * @param eventDescription
- */
-const deleteWorkflowEvent = async (
-  page:Page,
-  eventNameInput:string,
-  eventDescription:string
-) => {
-  let awaitEvents = page.waitForResponse(res => res.url().includes('customEvents') && res.status() === 200);
-  await page.getByRole('button', { name: 'Edit Events' }).click();
-  await awaitEvents;
 
-  await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
-  await page
-    .locator(`#editor_CustomEvent_${eventNameInput}`)
-    .getByRole(`button`, {name:`Delete`}).click();
-  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-
-  const awaitDel = page.waitForResponse(res =>
-    res.url().includes(eventNameInput) &&
-    res.request().method() === 'DELETE' &&
-    res.status() === 200
-  );
-  awaitEvents = page.waitForResponse(res => res.url().includes('customEvents') && res.status() === 200);
-  await page.getByRole('button', { name: 'Yes' }).click();
-  await awaitDel;
-  await awaitEvents;
-
-  const table = page.locator("#events");
-  await expect(table).toBeVisible();
-  await expect(
-    table.getByText(eventNameInput.replace(/_+/g, " "), { exact: true }),
-    'deleted event name not to be present in Event List'
-  ).toHaveCount(0);
-  await expect(
-    table.getByText(eventDescription, { exact: true }),
-    'deleted event desription not to be present in Event List'
-  ).toHaveCount(0);
-}
 
 /**
  * Use the printview admin menu to change the step of a request
@@ -123,7 +50,6 @@ const printAdminMenuChangeStep = async (page:Page, requestID:string, newStep:str
   await expect(dialog.locator('div[id$="_loadIndicator"]')).toBeHidden();
   await dialog.locator('#changeStep a.chosen-single').click();
   await dialog.getByRole('option', { name: newStep }).click();
-
   await dialog.getByRole('button', { name: 'Save Change' }).click();
 }
 
@@ -219,7 +145,6 @@ test('Create a new Event from page Side Menu', async ({ page }) => {
   ).toHaveCount(1);
 });
 
-//add and then remove uniqueEventName/uniqueDescr from workflow
 test.describe('Existing events can be added and removed from workflows', () => {
   const eventTitle = `Email - ${uniqueDescr}`;
 

@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { creatInitialForm, addFormQuestion, selectChosenDropdownOption } from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'serial'});
 
@@ -30,44 +31,22 @@ const uniqueText = `My New Request ${randNum}`;
  * @param page
  */
 const lifecycleNewRequestSetup = async (page:Page) => {
-  const addQuestion = async (page:Page, sectionText:string, fillValue:string, format:string) => {
-    const nameInputLabel = sectionText === 'Add Section' ? 'Section Heading' : 'Field Name';
-    await page.getByLabel(sectionText).click();
-    await page.getByLabel(nameInputLabel).fill(fillValue);
-    await page.getByLabel('Input Format').selectOption(format);
-    awaitPromise = page.waitForResponse(res =>
-      res.url().includes('formEditor/newIndicator') &&
-      res.status() === 200
-    );
-    await page.getByRole('button', { name: 'Save' }).click();
-    await awaitPromise;
-  }
-
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('button', { name: 'Create Form' }).click();
-  await page.getByLabel('Form Name (up to 50').fill(testFormName);
-  await page.getByLabel('Form Description (up to 255').fill(testFormDescription);
-  await page.getByLabel('Form Name (up to 50').press('Tab');
-  let awaitPromise = page.waitForResponse(res =>
-    res.url().includes('workflow') &&
-    res.status() === 200
-  );
-  await page.getByRole('button', { name: 'Save' }).click();
-  await awaitPromise;
+  await creatInitialForm(page, testFormName, testFormDescription);
 
-  await addQuestion(page, 'Add Section', firstIndLabel, 'orgchart_employee');
+  await addFormQuestion(page, 'Add Section', firstIndLabel, 'orgchart_employee');
   let namePreview = page.locator('.indicator-name-preview', { hasText: firstIndLabel });
   await expect(namePreview).toBeVisible();
   let elID = await namePreview.getAttribute('id') ?? '';
   reviewer1_indID = elID.replace('format_label_', '');
 
-  await addQuestion(page, 'Add Question to Section', secondIndLabel, 'orgchart_employee');
+  await addFormQuestion(page, 'Add Question to Section', secondIndLabel, 'orgchart_employee');
   namePreview = page.locator('.indicator-name-preview', { hasText: secondIndLabel });
   await expect(namePreview).toBeVisible();
   elID = await namePreview.getAttribute('id') ?? '';
   reviewer2_indID = elID.replace('format_label_', '');
 
-  await addQuestion(page, 'Add Question to Section', thirdIndLabel, 'text');
+  await addFormQuestion(page, 'Add Question to Section', thirdIndLabel, 'text');
   namePreview = page.locator('.indicator-name-preview', { hasText: thirdIndLabel });
   await expect(namePreview).toBeVisible();
   elID = await namePreview.getAttribute('id') ?? '';
@@ -121,10 +100,7 @@ test('a status-available form with a workflow is Visible to New Request', async 
 
 test('a new request can be created, and edited before being submitted', async () => {
   await page.goto(newRequestURL);
-  const serviceDropdown = page.locator('#service_chosen');
-  await expect(serviceDropdown).toBeVisible();
-  await serviceDropdown.click();
-  await page.getByRole('option', { name: 'Concrete Electronics' }).click();
+  await selectChosenDropdownOption(page,'#service_chosen', 'Concrete Electronics');
   await page.getByLabel('Title of Request').fill(uniqueText + ' to Edit, Copy, and Cancel');
   await page.locator('label').filter({ hasText: testFormName }).locator('span').click();
   await page.getByRole('button', { name: 'Click here to Proceed' }).click();
