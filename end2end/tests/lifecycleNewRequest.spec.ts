@@ -5,6 +5,7 @@ test.describe.configure({ mode: 'serial'});
 // Generate unique text to help ensure that fields are being filled correctly.
 let page: Page;
 const newRequestURL = 'https://host.docker.internal/Test_Request_Portal/?a=newform';
+const requestPrintPrefix = `https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=`;
 const formEditorURL_prefix = 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=';
 
 const randNum = Math.random();
@@ -98,20 +99,20 @@ test.beforeAll(async ({ browser }) => {
 });
 
 
-/**
- *  Verify the New Request page loads correctly
- */
-test('Verify New Request Page', async () => {
+test('Portal Home Page to New Request page navigation', async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
   await page.getByText('New Request', { exact: true }).click();
-  await expect(page.locator('#record')).toContainText('Step 1 - General Information');
+  await expect(
+    page.locator('#record'),
+    'that the New Request page can be navigated to from the Portal Home page'
+  ).toContainText('Step 1 - General Information');
 });
 
 /**
  *  Verify a form with a status of 'Unpublished' is not available
  *  to be selected when creating a new request
  */
-test('Unpublished Form Not Visible to New Request', async () => {
+test('an unpublished Form is Not Visible to New Request', async () => {
   await page.goto(newRequestURL);
   await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
   await expect(
@@ -124,7 +125,7 @@ test('Unpublished Form Not Visible to New Request', async () => {
  *  Verify a form with available status, without a workflow set, is not available
  *  to be selected when creating a new request
  */
-test('Form without a workflow is not Visible to New Request', async () => {
+test('a status-available form without a workflow is not Visible to New Request', async () => {
   await page.goto(formEditorURL_prefix + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Status:').selectOption('1');
@@ -138,11 +139,8 @@ test('Form without a workflow is not Visible to New Request', async () => {
   ).not.toBeVisible();
 });
 
-/**
- *  Verify a form with a status of 'Available' and a workflow set is available
- *  to be selected when creating a new request
- */
-test('Available Form with a workflow is Visible to New Request', async () => {
+
+test('a status-available form with a workflow is Visible to New Request', async () => {
   await page.goto(formEditorURL_prefix + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Workflow:').selectOption('4');
@@ -159,7 +157,7 @@ test('Available Form with a workflow is Visible to New Request', async () => {
 /**
  *  Verify a new request can be edited before being submitted
  */
-test('Create and edit a New Request', async () => {
+test('a new request can be created and edited before being submitted', async () => {
   await page.goto(newRequestURL);
   const serviceDropdown = page.locator('#service_chosen');
   await expect(serviceDropdown).toBeVisible();
@@ -215,7 +213,7 @@ test('Create and edit a New Request', async () => {
  *   Verify a request can be copied if its status is 'Available'
  */
 test('Request With Available Form Can Be Copied', async () => {
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${newRequestID}`);
+  await page.goto(requestPrintPrefix + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
 
@@ -233,7 +231,7 @@ test("Request with Unpublished Form Cannot Be Copied", async () => {
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Status:').selectOption('-1');
 
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${newRequestID}`);
+  await page.goto(requestPrintPrefix + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
   await expect(page.getByText('Request could not be copied:')).toBeVisible();
@@ -257,7 +255,7 @@ test('Hidden Form Not Visible to New Request', async () => {
 });
 
 test("Request with Hidden Form Can Be Copied", async () => {
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${newRequestID}`);
+  await page.goto(requestPrintPrefix + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
 
@@ -278,7 +276,6 @@ test("Request with Hidden Form Can Be Copied", async () => {
  *    4. Restore the "Reviewer 2" field and verify the request still has the old value
  */
 test.describe('Archive and Restore Question', () => {
-  const requestPrintPrefix = `https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=`;
   // Subsequent tests will make changes that will cause previous tests 
   // to fail so no retries
   test.describe.configure({ retries: 0});
@@ -380,10 +377,7 @@ test.describe('Archive and Restore Question', () => {
 });
 
 
-/**
- *  Verify copied request in can be cancelled
- */
-test('Cancel Requests', async () => {
+test('original request and copied requests can be cancelled', async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(3);
 
@@ -405,12 +399,8 @@ test('Cancel Requests', async () => {
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(0);
 });
 
-/**
- *  Test for 4665
- *  Verify that a negative amount is allowed for currency
- *  in a new request
- */
-test('Negative Currency Allowed in New Request', async () => {
+
+test('a negative currency is allowed in a new request', { tag: ['@LEAF-4665'] }, async () => {
   await page.goto(newRequestURL);
   const serviceDropdown = page.locator('#service_chosen');
   await expect(serviceDropdown).toBeVisible();
@@ -442,16 +432,9 @@ test('Negative Currency Allowed in New Request', async () => {
   ).toContainText('-$300.00');
 });
 
-/**
- *  Test for 4665
- *  Verify that a negative amount is allowed for currency
- *  when editing a request
- */
 
-test("Negative Currency Allowed When Editing a Request", async () => {
-  await page.goto(
-    'https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=' + negCurrencyRequestID
-  );
+test('a negative currency is allowed when editing a request', { tag: ['@LEAF-4665'] }, async () => {
+  await page.goto(requestPrintPrefix + negCurrencyRequestID);
 
   await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
   const dialog = page.getByRole('dialog', { name: 'Editing #' });
@@ -478,22 +461,22 @@ test("Negative Currency Allowed When Editing a Request", async () => {
   await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-/**
- * Test for LEAF 4913
- */
-test('Closing pop up window does not cause workflow form fields to disappear', async ({ page }) => {
+
+test('Closing pop up window does not cause workflow form fields to disappear', { tag: ['@LEAF-4913'] }, async ({ page }) => {
   const testCase = '495';
-  await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${testCase}`);
+  await page.goto(requestPrintPrefix + testCase);
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
   await page.locator('#tools').getByText('View History').click();
   await expect(page.getByText(`History of Request ID#: ${testCase}`)).toBeVisible();
   await page.locator('#genericDialogxhr').press('Escape');
-
-  await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('#format_label_4').getByText('Multi line text', { exact: true }),
+    'workflow internal form field to still be visisble'
+  ).toBeVisible();
 });
 
+//delete created form.
 test.afterAll(async () => {
-  //delete created form.
   await page.goto(formEditorURL_prefix + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByRole('button', { name: 'Delete this form' }).click();

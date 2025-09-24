@@ -243,7 +243,7 @@ test('Create New Request', async ({ page }, testInfo) => {
   await expect(page.locator('#step1_questions')).toBeVisible();
   await expect(serviceDropdown).toBeVisible();
   await serviceDropdown.click();
-  await page.getByRole('option', { name: 'AS Test Group', exact: true }).click();
+  await page.getByRole('option', { name: 'Bronze Kids', exact: true }).click();
 
   await page.getByRole('textbox', { name: 'Title of Request' }).click();
   await page.getByRole('textbox', { name: 'Title of Request' }).fill(newRequestForm);
@@ -267,7 +267,7 @@ test('Create New Request', async ({ page }, testInfo) => {
   //Question 3
   await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).click();
   await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).fill('t');
-  await page.getByRole('cell', { name: 'AS Test Group', exact: true }).click();
+  await page.getByRole('cell', { name: 'Bronze Kids', exact: true }).click();
   await page.locator('#nextQuestion2').click();
 
    //**Add a check */
