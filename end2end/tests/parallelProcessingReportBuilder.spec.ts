@@ -267,7 +267,7 @@ test('Create New Request', async ({ page }, testInfo) => {
   //Question 3
   await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).click();
   await page.getByRole('searchbox', { name: 'Search for user to add as \'' }).fill('t');
-  await page.getByRole('cell', { name: 'Bronze Kids', exact: true }).click();
+  await page.getByRole('cell', { name: '2911 TEST Group', exact: true }).click();
   await page.locator('#nextQuestion2').click();
 
    //**Add a check */
