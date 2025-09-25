@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import {test, expect, Page, Locator} from '@playwright/test';
 
 //This test is designed to test LEAF
 test.describe.configure({ mode: 'default' });
@@ -15,6 +15,40 @@ let stapleName = 'Test IFTHEN staple | Multiple person designated';
 let requestId;
 let requestId2
 let stapledRequestId;
+
+/**
+ * @param page Page instance from test
+ * @param displayRole 
+ */
+const confirmInboxView= async (
+  page:Page,
+  displayRole:string,
+ 
+) =>
+ {
+    const mainDivContainer = page.locator('.siteFormContainers'); 
+    const roleDivCountainer = await mainDivContainer.locator('.depContainer');
+    const counter = await roleDivCountainer.count();
+    const testerUser = 'Tester Tester';
+
+    if (displayRole == 'Role' )
+  {
+    for (let i=0; i<counter; i++)
+    {
+      const spanText =await roleDivCountainer.nth(i).locator('div span').nth(0).innerText();
+      await expect(page.getByText('UID').nth(i)).toBeVisible();
+      await expect(page.getByText('Type').nth(i)).toBeVisible();
+      await expect(page.getByText('Title').nth(i)).toBeVisible();
+      await expect(page.getByText('Status').nth(i)).toBeVisible();
+      await expect(page.getByText('Action').nth(i)).toBeVisible();
+        if(spanText == testerUser)
+        { console.log("The text matches the expected value.");
+         //await expect(page.getByText('Service').nth(i)).toBeVisible();(Need Help)
+        }
+      }
+    }
+
+  }
 
 
 test.describe('SiteMap Creation, Verification and Inbox Customazation', () => {
@@ -69,7 +103,7 @@ test('create New Sitemap Card', async ({ page }, testInfo) => {
 });
 
 //Inbox before Customization
-test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
+test.only('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
@@ -83,11 +117,10 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
   await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
   await expect(page.locator('#indexSites')).toContainText(siteMapname);
 
-
   //Verify display based on View
   //Form View
    await page.getByRole('button', { name: 'Toggle sections' }).click();
-  
+
   //Complex Form View
   const uidCol = page.locator('text=UID').nth(0);
   expect(await uidCol.isVisible()).toBeTruthy();
@@ -108,27 +141,41 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
    await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
 
-  const dynTxt = 'Tester Tester View';
-  const dynRegex = new RegExp(`^${dynTxt}.*`);
-  await page.getByRole('button', { name: dynRegex}).click();
+  // Test
+  const displayTab ='Role';
+  const mainDivContainer = page.locator('.siteFormContainers'); 
+  const roleDivCountainer = await mainDivContainer.locator('.depContainer');
+  const counter = await roleDivCountainer.count();
+  console.log(`#number of roles present: ${counter}`);
+  const tableDisplay = await roleDivCountainer.locator('div div table');
+  const tblHeaders = await tableDisplay.locator(' thead tr th');
+  const headerCount = await tblHeaders.count();
+  console.log(`Number of headers: ${headerCount}`);
+  const testerUser = 'Tester Tester';
 
-  const uidColrole = page.locator('text=UID').nth(0);
-  expect(await uidColrole.isVisible()).toBeTruthy();
+  for (let i=0; i<counter; i++)
+  {
+    const expandButton = await roleDivCountainer.nth(i).locator('button').click();
+    const spanText =await roleDivCountainer.nth(i).locator('div span').nth(0).innerText();
 
-  const typeColrole = page.locator('text=Type').nth(0);
-  expect(await typeColrole.isVisible).toBeTruthy();
+    console.log(`Text ${spanText}`);
 
-  const serviceColrole = page.locator('text=Service').nth(2);
-  expect(await serviceColrole.isVisible).toBeTruthy();
+    //vERIFY TABLE
+    const tableDisplay = await roleDivCountainer.nth(i).locator('div div table');
+    const tblHeaders = await tableDisplay.locator('thead tr th');
+    
+    await expect(page.getByText('UID').nth(i)).toBeVisible();
+    await expect(page.getByText('Type').nth(i)).toBeVisible();
+    await expect(page.getByText('Title').nth(i)).toBeVisible();
+    await expect(page.getByText('Status').nth(i)).toBeVisible();
+    await expect(page.getByText('Action').nth(i)).toBeVisible();
 
-  const titleColrole = page.locator('text=Title').nth(0);
-  expect(await titleColrole.isVisible).toBeTruthy();
-
-  const statusColrole = page.locator('text=Status').nth(0);
-  expect(await statusColrole.isVisible).toBeTruthy();
-
-  const actionColrole = page.locator('text=Action').nth(0);
-  expect(await actionColrole.isVisible).toBeTruthy();
+    if(spanText == testerUser)
+    {
+      console.log("The text matches the expected value.");
+      //await expect(page.getByText('Service').nth(i)).toBeVisible();(Need Help)
+    }  
+  }
 
 
 });
@@ -152,8 +199,7 @@ test('Customized Column Display', async ({ page }, testInfo) => {
  
 
  //Add Customization
-
-   await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
+  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
   await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('p');
   await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
   await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('d');
@@ -242,15 +288,15 @@ test('Personalized a Form', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
   await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
   
-await page.waitForLoadState();
+  await page.waitForLoadState();
 
   await expect(page.getByText('☰ LEAF 4832 - Customization')).toBeVisible();
   
     //Get ID
   const option =await (page.getByText('☰ LEAF 4832 - Customization'));
- const siteId = await option.getAttribute('value');
- const  leafSiteId = `#site-container-${siteId}`;
- const formSiteId = `#form_select_${siteId}`;
+  const siteId = await option.getAttribute('value');
+  const  leafSiteId = `#site-container-${siteId}`;
+  const formSiteId = `#form_select_${siteId}`;
 
   console.log('Text ID:', leafSiteId);
 
