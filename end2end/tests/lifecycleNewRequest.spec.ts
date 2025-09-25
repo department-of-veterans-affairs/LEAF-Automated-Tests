@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { creatInitialForm, addFormQuestion, selectChosenDropdownOption } from '../leaf_test_utils/leaf_util_methods.ts';
+import { createTestForm, addFormQuestion, selectChosenDropdownOption } from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'serial'});
 
@@ -32,7 +32,7 @@ const uniqueText = `My New Request ${randNum}`;
  */
 const lifecycleNewRequestSetup = async (page:Page) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await creatInitialForm(page, testFormName, testFormDescription);
+  await createTestForm(page, testFormName, testFormDescription);
 
   await addFormQuestion(page, 'Add Section', firstIndLabel, 'orgchart_employee');
   let namePreview = page.locator('.indicator-name-preview', { hasText: firstIndLabel });

@@ -6,7 +6,7 @@ import { Page, expect } from '@playwright/test';
  * @param page Page instance from test
  * @param includesString part of url from network call to wait for
  * @param callback action to take prior to awaiting promise
- * @param requestMethod http verb. GET, POST, DELETE (use if string is otherwise not unique)
+ * @param requestMethod http verb. GET, POST, DELETE
  */
 export const awaitPromise = async (
   page: Page,
@@ -38,22 +38,26 @@ export const selectChosenDropdownOption = async (page:Page, dropdownID:string, d
 
 
 /**
+ * Create a new form in the Form Editor
  * @param page Page instance from test
  * @param formName 
  * @param formDescription 
  */
-export const creatInitialForm = async (page:Page, formName:string, formDescription:string) => {
+export const createTestForm = async (page:Page, formName:string, formDescription:string) => {
   await page.getByRole('button', { name: 'Create Form' }).click();
   await expect(page.getByRole('heading', { name: 'New Form' })).toBeVisible();
   await page.getByLabel('Form Name (up to 50').fill(formName);
   await page.getByLabel('Form Description (up to 255').fill(formDescription);
   await page.getByLabel('Form Name (up to 50').press('Tab');
-  await awaitPromise(page, 'workflow', async (p:Page) => p.getByRole('button', { name: 'Save' }).click())
+  await awaitPromise(
+    page, 'formEditor/new',
+    async (p:Page) => p.getByRole('button', { name: 'Save' }).click()
+  );
 }
 
 
 /**
- * Add a question to a form
+ * Add a question to a form with basic name, format and location options
  * @param page Page instance from test
  * @param sectionBtnText the text on the 'new section/add question to section' button
  * @param nameFillValue the value for the question name
@@ -76,7 +80,6 @@ export const addFormQuestion = async (
   await expect(page.getByLabel(nameInputLabel)).toBeVisible();
   await page.getByLabel(nameInputLabel).fill(nameFillValue);
   await page.getByLabel('Input Format').selectOption(format);
-
   await awaitPromise(page, 'formEditor/newIndicator',
     async (p:Page) => p.getByRole('button', { name: 'Save' }).click()
   );
@@ -86,15 +89,54 @@ export const addFormQuestion = async (
 /**
  * load a specific workflow by URL param
  * @param page Page instance from test
- * @param workflowID string - workflowID
+ * @param workflowID string
  */
 export const loadWorkflow = async (page:Page, workflowID:string = '1') => {
-  await awaitPromise(page,`workflow/${workflowID}/route`, async (p:Page) => await p.goto(
+  await awaitPromise(
+    page, `workflow/${workflowID}/route`, async (p:Page) => await p.goto(
     `https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=${workflowID}`
   ));
 }
 
+/**
+ * load a specific form by URL param
+ * @param page Page instance from test
+ * @param formID string
+ */
+export const loadForm = async (page:Page, formID:string = 'form_5ea07') => {
+  await awaitPromise(
+    page, `form/_${formID}`, async (p:Page) => await p.goto(
+    `https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=${formID}`
+  ));
+}
 
+/**
+ * 
+ * @param page Page instance from test
+ * @param service
+ * @param requestTitel
+ * @param formName
+ * @returns new request ID as string (Promise value)
+ */
+export const createTestRequest = async (
+  page:Page,
+  service:string = 'AS - Service',
+  requestTitel:string = 'test request',
+  formName:string = 'General Form'
+):Promise<string> => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
+  await selectChosenDropdownOption(page,'#service_chosen', service);
+  await page.getByLabel('Title of Request').fill(requestTitel);
+  await page.locator('label').filter({ hasText: formName }).locator('span').click();
+  await awaitPromise(
+    page, 'getindicator&recordID',
+    async (p:Page) => await p.getByRole('button', { name: 'Click here to Proceed' }).click()
+  );
+  const url = page.url();
+  expect(url).toContain('&recordID=');
+  const newRecordID = url.match(/(?<=&recordID\=)\d+$/)?.[0] ?? '';
+  return new Promise(resolve => resolve(newRecordID));
+}
 
 /**
  * Deletes a Workflow Event and asserts that it is not present in the Event List after deletion
