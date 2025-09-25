@@ -1,5 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
-import { createTestForm, addFormQuestion, selectChosenDropdownOption } from '../leaf_test_utils/leaf_util_methods.ts';
+import {
+  createTestForm,
+  addFormQuestion,
+  createTestRequest
+} from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'serial'});
 
@@ -31,35 +35,16 @@ const uniqueText = `My New Request ${randNum}`;
  * @param page
  */
 const lifecycleNewRequestSetup = async (page:Page) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await createTestForm(page, testFormName, testFormDescription);
-
-  await addFormQuestion(page, 'Add Section', firstIndLabel, 'orgchart_employee');
-  let namePreview = page.locator('.indicator-name-preview', { hasText: firstIndLabel });
-  await expect(namePreview).toBeVisible();
-  let elID = await namePreview.getAttribute('id') ?? '';
-  reviewer1_indID = elID.replace('format_label_', '');
-
-  await addFormQuestion(page, 'Add Question to Section', secondIndLabel, 'orgchart_employee');
-  namePreview = page.locator('.indicator-name-preview', { hasText: secondIndLabel });
-  await expect(namePreview).toBeVisible();
-  elID = await namePreview.getAttribute('id') ?? '';
-  reviewer2_indID = elID.replace('format_label_', '');
-
-  await addFormQuestion(page, 'Add Question to Section', thirdIndLabel, 'text');
-  namePreview = page.locator('.indicator-name-preview', { hasText: thirdIndLabel });
-  await expect(namePreview).toBeVisible();
-  elID = await namePreview.getAttribute('id') ?? '';
-  singleLineText_indID = elID.replace('format_label_', '');
-
-  formCategoryID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';
+  formCategoryID = await createTestForm(page, testFormName, testFormDescription);
+  reviewer1_indID = await addFormQuestion(page, 'Add Section', firstIndLabel, 'orgchart_employee');
+  reviewer2_indID = await addFormQuestion(page, 'Add Question to Section', secondIndLabel, 'orgchart_employee');
+  singleLineText_indID = await addFormQuestion(page, 'Add Question to Section', thirdIndLabel, 'text');
 }
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
   await lifecycleNewRequestSetup(page);
 });
-
 
 test('New Request page can be navigated to from the Portal Home Page', async () => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -99,17 +84,7 @@ test('a status-available form with a workflow is Visible to New Request', async 
 });
 
 test('a new request can be created, and edited before being submitted', async () => {
-  await page.goto(newRequestURL);
-  await selectChosenDropdownOption(page,'#service_chosen', 'Concrete Electronics');
-  await page.getByLabel('Title of Request').fill(uniqueText + ' to Edit, Copy, and Cancel');
-  await page.locator('label').filter({ hasText: testFormName }).locator('span').click();
-  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-  const headerTab = page.locator('#headerTab');
-  await expect(headerTab).toBeVisible();
-  const headerText = await headerTab.textContent() ?? '';
-  newRequestID = headerText.replace('Request #', '');
-
+  newRequestID = await createTestRequest(page, 'Concrete Electronics', uniqueText + ' to Edit, Copy, and Cancel', testFormName);
   await page.getByLabel('single line text').fill('12345');
   await page.locator('#nextQuestion2').click();
   await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('12345');
@@ -208,12 +183,7 @@ test.describe('Archive and Restore Question', () => {
   // to fail so no retries
   test.describe.configure({ retries: 0});
 
-  /**
-   *  After archiving the form question, 
-   *  verify the data is no longer visible on the 
-   *  original request
-   */
-  test('Archived Question Not Visible to New Request', async () => {
+  test('archived questions are not visible in reports', async () => {
     // Archive the Reviewer 2 field
     await page.goto(formEditorURL_prefix + formCategoryID);
     await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
@@ -222,7 +192,6 @@ test.describe('Archive and Restore Question', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.locator('span').filter({ hasText: secondIndLabel })).not.toBeVisible();
 
-    // Verify the Reviewer 1 field is visible but the Reviewer 2 field is not in the created request
     await page.goto(requestPrintPrefix + newRequestID);
     await expect(
       page.getByText(firstIndLabel, { exact: true }),
@@ -234,12 +203,8 @@ test.describe('Archive and Restore Question', () => {
     ).not.toBeVisible();
   });
 
-  /**
-   *  Show that despite the data of the archived question 
-   *  not being visible in the original request, it is still 
-   *  visible in a report.
-   */
-  test('Value Still Visible in Report After Archiving Question', async () => {
+
+  test('archived questions are still visible in reports', async () => {
     // Create a new report containing the created request
     await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
@@ -268,12 +233,7 @@ test.describe('Archive and Restore Question', () => {
     ).toContainText('Dorian Balistreri');
   });
 
-  /**
-   *  After restoring the form question, verify
-   *  that the value is once again visible on the 
-   *  original request.
-   */
-  test('Previous Value Still Available to Request After Restoring Question', async () => {
+  test('the restored question is again visible on the request', async () => {
     // Restore the Reviewer 2 field
     await page.goto(formEditorURL_prefix + formCategoryID);
     await page.getByRole('link', { name: 'Restore Fields' }).click();
@@ -329,27 +289,10 @@ test('original request and copied requests can be cancelled', async () => {
 
 
 test('a negative currency is allowed in a new request', { tag: ['@LEAF-4665'] }, async () => {
-  await page.goto(newRequestURL);
-  const serviceDropdown = page.locator('#service_chosen');
-  await expect(serviceDropdown).toBeVisible();
-  await serviceDropdown.click();
-  await page.getByRole('option', { name: 'Concrete Music' }).click();
-  await page.getByLabel('Title of Request').click();
-  await page.getByLabel('Title of Request').fill(uniqueText + ' to Test Negative Currency');
-
-  // Choose the Input Formats form
-  await page.locator('label').filter({ hasText: 'Input Formats (For testing' }).locator('span').click();
-  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-  const headerTab = page.locator('#headerTab');
-  await expect(headerTab).toBeVisible();
-  const headerText = await headerTab.textContent() ?? '';
-  negCurrencyRequestID = headerText.replace('Request #', '');
-
-  await page.getByLabel('currency').click();
+  negCurrencyRequestID = await createTestRequest(
+    page, 'Concrete Music', uniqueText + ' to Test Negative Currency', 'Input Formats'
+  );
   await page.getByLabel('currency').fill('-300');
-
-  // After saving, verify the negative number is still visible
   await page.locator('#save_indicator').click();
   await expect(page.getByLabel('currency')).toHaveValue('-300.00');
   //verify correct display on the print view

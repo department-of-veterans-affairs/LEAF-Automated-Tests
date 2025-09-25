@@ -1,6 +1,8 @@
 import { test, expect, Page } from '@playwright/test';
-import { createTestForm, addFormQuestion, selectChosenDropdownOption, createTestRequest }
-  from '../leaf_test_utils/leaf_util_methods.ts';
+import {
+  createTestForm, addFormQuestion,
+  selectChosenDropdownOption, createTestRequest
+} from '../leaf_test_utils/leaf_util_methods.ts';
 
 
 //Run test in order
@@ -22,17 +24,15 @@ let newFormID = '';
 let parallelApproverIndID = '';
 
 //prepare test-specific conditions
-const parallelTestSetup = async (page:Page) => {
-  //form
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await createTestForm(page, uniqueFormName, uniqueFormDescr);
+const parallelProcessingTestSetup = async (page:Page) => {
+  newFormID = await createTestForm(page, uniqueFormName, uniqueFormDescr);
   await addFormQuestion(page, 'Add Section', 'Section 1', '');
   await addFormQuestion(page, 'Add Question to Section', questionOrgEmpLabel, 'orgchart_employee');
   await addFormQuestion(page, 'Add Question to Section', questionOrgPosLabel, 'orgchart_position');
-  await addFormQuestion(page, 'Add Question to Section', questionWithHTML, 'orgchart_group');
+  parallelApproverIndID = await addFormQuestion(page, 'Add Question to Section', questionWithHTML, 'orgchart_group');
+
   await page.getByLabel('Status:').selectOption('1');
   await page.getByLabel('Form Type:').selectOption('parallel_processing');
-  newFormID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';
 
   //workflow
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow');
@@ -68,6 +68,12 @@ const parallelTestSetup = async (page:Page) => {
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('.workflowAction', { hasText: 'Approve' })).toBeVisible();
 
+  await page.getByRole('button', { name: 'workflow step: Requestor' }).click();
+  await page.getByLabel('View Step Actions').click();
+  const optionToSelect = await page.locator('select#create_route option', { hasText: newStepTitle }).textContent() ?? '';
+  await page.locator('select#create_route').selectOption({ label: optionToSelect });
+  await page.reload();
+
   await expect(page.getByRole('button', { name: newStepTitle })).toBeVisible();
   await page.getByRole('button', { name: newStepTitle }).click();
 
@@ -80,9 +86,7 @@ const parallelTestSetup = async (page:Page) => {
 
   await expect(page.getByRole('button', { name: 'Set Data Field' })).toBeVisible();
   await page.getByRole('button', { name: 'Set Data Field' }).click();
-  const option = page.locator('select > option', { hasText: uniqueFormName }).first();
 
-  parallelApproverIndID = await option.getAttribute('value') ?? '';
   await page.locator('#indicatorID').selectOption(parallelApproverIndID);
   await page.getByRole('button', { name: 'Save' }).click();
 
@@ -91,11 +95,15 @@ const parallelTestSetup = async (page:Page) => {
   const workflowLocator = page.locator('select > option', { hasText: workflowTitle });
   const workflowValue = await workflowLocator.getAttribute('value');
   await expect(page.locator('#edit-properties-other-properties')).toBeVisible();
-  await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowValue)
+  const awaitSave = page.waitForResponse(
+    res => res.url().includes('formWorkflow') && res.status() === 200
+  );
+  await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowValue);
+  await awaitSave;
 };
 
 test('Request for a form using parallel processing can be submitted without alert errors', async ({ page }) => {
-  await parallelTestSetup(page);
+  await parallelProcessingTestSetup(page);
   await createTestRequest(page, 'Bronze Kids', newRequestTitle, uniqueFormName);
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
@@ -115,16 +123,21 @@ test('Request for a form using parallel processing can be submitted without aler
   await page.locator('#indicator_selector').selectOption(parallelApproverIndID);
 
   await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('t');
-  await page.locator('#btn202').click();
-  await page.locator('#btn63').click();
-  await page.locator('#btn78').click();
-  await page.locator('#btn19').click();
+  const groupSelections = [ '202', '63', '78', '19' ];
+  const numGroups = groupSelections.length;
+  for (let i = 0; i < groupSelections.length; i++) {
+    await page.locator('#btn' + groupSelections[i]).click();
+  }
 
   page.once('dialog', dialog => {
-    console.log(`Dialog message: ${dialog.message()}`);
-    expect(true, 'parallel processing submission to complete without triggering an alert').toBe(false);
+    expect( //explicitly fail this test if there is an alert dialog of any kind
+      true,
+      `parallel processing submission to complete without triggering an alert: ${dialog.message()}`
+    ).toBe(false);
     dialog.dismiss().catch(() => {});
   });
   await page.getByRole('button', { name: 'Send Request to Selected' }).click();
-  await expect(page.getByText('Requests have been assigned to these people 4 recordsStop and show results')).toBeVisible();
+  await expect(page.getByText(`Requests have been assigned to these people ${numGroups} recordsStop and show results`)).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(numGroups);
+  await expect(page.locator('tbody tr td', { hasText: 'Pending ' + newStepTitle })).toHaveCount(numGroups);
 });

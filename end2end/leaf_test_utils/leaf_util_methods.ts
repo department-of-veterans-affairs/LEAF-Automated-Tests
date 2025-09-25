@@ -38,12 +38,18 @@ export const selectChosenDropdownOption = async (page:Page, dropdownID:string, d
 
 
 /**
- * Create a new form in the Form Editor
+ * Navigates to Form Editor and create a new form
  * @param page Page instance from test
- * @param formName 
- * @param formDescription 
+ * @param formName
+ * @param formDescription
+ * @returns new form ID as string (Promise value)
  */
-export const createTestForm = async (page:Page, formName:string, formDescription:string) => {
+export const createTestForm = async (
+  page:Page,
+  formName:string,
+  formDescription:string
+):Promise<string> => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
   await page.getByRole('button', { name: 'Create Form' }).click();
   await expect(page.getByRole('heading', { name: 'New Form' })).toBeVisible();
   await page.getByLabel('Form Name (up to 50').fill(formName);
@@ -53,6 +59,9 @@ export const createTestForm = async (page:Page, formName:string, formDescription
     page, 'formEditor/new',
     async (p:Page) => p.getByRole('button', { name: 'Save' }).click()
   );
+  await expect(page.locator('#edit-properties-panel .form-id')).toBeVisible();
+  const newFormID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';
+  return new Promise(resolve => resolve(newFormID));
 }
 
 
@@ -60,9 +69,10 @@ export const createTestForm = async (page:Page, formName:string, formDescription
  * Add a question to a form with basic name, format and location options
  * @param page Page instance from test
  * @param sectionBtnText the text on the 'new section/add question to section' button
- * @param nameFillValue the value for the question name
+ * @param nameFillValue ** unique ** value for the question name
  * @param format the question format
  * @param parentID optional parent question ID
+ * @returns new indicator ID as string (Promise value)
  */
 export const addFormQuestion = async (
   page:Page,
@@ -70,7 +80,7 @@ export const addFormQuestion = async (
   nameFillValue:string,
   format:string,
   parentID:string = ''
-) => {
+):Promise<string> => {
   const nameInputLabel = sectionBtnText === 'Add Section' ? 'Section Heading' : 'Field Name';
   if(+parentID > 0 && Number.isInteger(+parentID)) {
     await page.locator(`#index_listing_${parentID}`, { hasText: sectionBtnText }).click();
@@ -80,9 +90,15 @@ export const addFormQuestion = async (
   await expect(page.getByLabel(nameInputLabel)).toBeVisible();
   await page.getByLabel(nameInputLabel).fill(nameFillValue);
   await page.getByLabel('Input Format').selectOption(format);
-  await awaitPromise(page, 'formEditor/newIndicator',
-    async (p:Page) => p.getByRole('button', { name: 'Save' }).click()
-  );
+
+  const newIndPromise = page.waitForResponse(res =>
+    res.url().includes('formEditor/newIndicator') && res.status() === 200
+  )
+  page.getByRole('button', { name: 'Save' }).click();
+  const newIndicatorRes = await newIndPromise;
+  let newIndID = await newIndicatorRes.text();
+  newIndID = newIndID.replaceAll('"', '');
+  return new Promise(resolve => resolve(newIndID));
 }
 
 
@@ -111,7 +127,7 @@ export const loadForm = async (page:Page, formID:string = 'form_5ea07') => {
 }
 
 /**
- * 
+ * Navigates to New Request page and creates a new request with specified info
  * @param page Page instance from test
  * @param service
  * @param requestTitel
