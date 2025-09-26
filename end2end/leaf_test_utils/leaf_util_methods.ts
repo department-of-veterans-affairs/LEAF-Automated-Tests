@@ -66,7 +66,7 @@ export const createTestForm = async (
 
 
 /**
- * Add a question to a form with basic name, format and location options
+ * Add a question to a single page form with basic name, format and location options
  * @param page Page instance from test
  * @param sectionBtnText the text on the 'new section/add question to section' button
  * @param nameFillValue ** unique ** value for the question name
@@ -78,19 +78,14 @@ export const addFormQuestion = async (
   page:Page,
   sectionBtnText:string,
   nameFillValue:string,
-  format:string,
-  parentID:string = ''
+  format:string
 ):Promise<string> => {
+  //indicator name input label is different for header questions
   const nameInputLabel = sectionBtnText === 'Add Section' ? 'Section Heading' : 'Field Name';
-  if(+parentID > 0 && Number.isInteger(+parentID)) {
-    await page.locator(`#index_listing_${parentID}`, { hasText: sectionBtnText }).click();
-  } else {
-    await page.getByLabel(sectionBtnText).click();
-  }
+  await page.getByLabel(sectionBtnText).click();
   await expect(page.getByLabel(nameInputLabel)).toBeVisible();
   await page.getByLabel(nameInputLabel).fill(nameFillValue);
   await page.getByLabel('Input Format').selectOption(format);
-
   const newIndPromise = page.waitForResponse(res =>
     res.url().includes('formEditor/newIndicator') && res.status() === 200
   )
