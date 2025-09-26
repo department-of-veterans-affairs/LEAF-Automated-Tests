@@ -16,41 +16,6 @@ let requestId;
 let requestId2
 let stapledRequestId;
 
-/**
- * @param page Page instance from test
- * @param displayRole 
- */
-const confirmInboxView= async (
-  page:Page,
-  displayRole:string,
- 
-) =>
- {
-    const mainDivContainer = page.locator('.siteFormContainers'); 
-    const roleDivCountainer = await mainDivContainer.locator('.depContainer');
-    const counter = await roleDivCountainer.count();
-    const testerUser = 'Tester Tester';
-
-    if (displayRole == 'Role' )
-  {
-    for (let i=0; i<counter; i++)
-    {
-      const spanText =await roleDivCountainer.nth(i).locator('div span').nth(0).innerText();
-      await expect(page.getByText('UID').nth(i)).toBeVisible();
-      await expect(page.getByText('Type').nth(i)).toBeVisible();
-      await expect(page.getByText('Title').nth(i)).toBeVisible();
-      await expect(page.getByText('Status').nth(i)).toBeVisible();
-      await expect(page.getByText('Action').nth(i)).toBeVisible();
-        if(spanText == testerUser)
-        { console.log("The text matches the expected value.");
-         //await expect(page.getByText('Service').nth(i)).toBeVisible();(Need Help)
-        }
-      }
-    }
-
-  }
-
-
 test.describe('SiteMap Creation, Verification and Inbox Customazation', () => {
 test('create New Sitemap Card', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
@@ -103,7 +68,7 @@ test('create New Sitemap Card', async ({ page }, testInfo) => {
 });
 
 //Inbox before Customization
-test.only('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
+test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
 
  await page.goto('https://host.docker.internal/Test_Request_Portal/');
   
@@ -139,44 +104,37 @@ test.only('Display Inbox Sitemap Personalization', async ({ page }, testInfo) =>
 
    //Role View
    await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
-  await page.getByRole('button', { name: 'Organize by Roles' }).click();
+   await page.getByRole('button', { name: 'Organize by Roles' }).click();
 
-  // Test
-  const displayTab ='Role';
+
   const mainDivContainer = page.locator('.siteFormContainers'); 
-  const roleDivCountainer = await mainDivContainer.locator('.depContainer');
+  const roleDivCountainer = mainDivContainer.locator('.depContainer');
   const counter = await roleDivCountainer.count();
-  console.log(`#number of roles present: ${counter}`);
-  const tableDisplay = await roleDivCountainer.locator('div div table');
-  const tblHeaders = await tableDisplay.locator(' thead tr th');
-  const headerCount = await tblHeaders.count();
-  console.log(`Number of headers: ${headerCount}`);
-  const testerUser = 'Tester Tester';
+  console.log(`#number of Headers: ${counter}`);
 
-  for (let i=0; i<counter; i++)
+    for (let i=0; i<counter; i++)
   {
-    const expandButton = await roleDivCountainer.nth(i).locator('button').click();
+    const expandButton = await roleDivCountainer.nth(i).locator('button');
     const spanText =await roleDivCountainer.nth(i).locator('div span').nth(0).innerText();
+    const requestSpan = await roleDivCountainer.nth(i).locator('button').nth(0).innerText();
+    const parts = requestSpan.split("View");
+    const requestString = parts[1];
+    const requestValue = requestString.split('requests');
+    console.log(requestValue[0]);
+    const requestAmount = Number(requestValue[0]);
+    //LEAF-5029 check to see if Request is more than zero expand the Request
+       if(requestAmount > 0)
+    {
+      await expandButton.click();
 
-    console.log(`Text ${spanText}`);
-
-    //vERIFY TABLE
-    const tableDisplay = await roleDivCountainer.nth(i).locator('div div table');
-    const tblHeaders = await tableDisplay.locator('thead tr th');
-    
+    }
     await expect(page.getByText('UID').nth(i)).toBeVisible();
     await expect(page.getByText('Type').nth(i)).toBeVisible();
     await expect(page.getByText('Title').nth(i)).toBeVisible();
     await expect(page.getByText('Status').nth(i)).toBeVisible();
     await expect(page.getByText('Action').nth(i)).toBeVisible();
 
-    if(spanText == testerUser)
-    {
-      console.log("The text matches the expected value.");
-      //await expect(page.getByText('Service').nth(i)).toBeVisible();(Need Help)
-    }  
   }
-
 
 });
 //Add additional customization
