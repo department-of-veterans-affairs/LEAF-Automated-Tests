@@ -106,14 +106,15 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
    await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
    await page.getByRole('button', { name: 'Organize by Roles' }).click();
 
-
+  await expect(page.locator('.siteFormContainers')).toBeVisible();
   const mainDivContainer = page.locator('.siteFormContainers'); 
   const roleDivCountainer = mainDivContainer.locator('.depContainer');
-  const counter = await roleDivCountainer.count();
+  const counter =  await roleDivCountainer.count();
   console.log(`#number of Headers: ${counter}`);
 
     for (let i=0; i<counter; i++)
   {
+    
     const expandButton = await roleDivCountainer.nth(i).locator('button');
     const spanText =await roleDivCountainer.nth(i).locator('div span').nth(0).innerText();
     const requestSpan = await roleDivCountainer.nth(i).locator('button').nth(0).innerText();
@@ -127,7 +128,7 @@ test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
     {
       await expandButton.click();
 
-    }
+    } 
     await expect(page.getByText('UID').nth(i)).toBeVisible();
     await expect(page.getByText('Type').nth(i)).toBeVisible();
     await expect(page.getByText('Title').nth(i)).toBeVisible();
