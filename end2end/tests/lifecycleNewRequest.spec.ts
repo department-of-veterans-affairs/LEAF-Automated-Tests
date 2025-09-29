@@ -1,17 +1,16 @@
 import { test, expect, Page } from '@playwright/test';
 import {
+  LEAF_URLS,
   createTestForm,
+  deleteTestFormByFormID,
   addFormQuestion,
-  createTestRequest
+  createTestRequest,
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'serial'});
 
 // Generate unique text to help ensure that fields are being filled correctly.
 let page: Page;
-const newRequestURL = 'https://host.docker.internal/Test_Request_Portal/?a=newform';
-const requestPrintPrefix = `https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=`;
-const formEditorURL_prefix = 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=';
 
 const randNum = Math.random();
 const testFormName = `lifecycle ${randNum}`;
@@ -47,13 +46,13 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test('New Request page can be navigated to from the Portal Home Page', async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
   await page.getByText('New Request', { exact: true }).click();
   await expect(page.locator('#record')).toContainText('Step 1 - General Information');
 });
 
 test('an unpublished Form without a workflow is Not Visible to New Request', async () => {
-  await page.goto(newRequestURL);
+  await page.goto(LEAF_URLS.INITIAL_FORM);
   await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
   await expect(
     page.getByText(testFormName),
@@ -62,23 +61,23 @@ test('an unpublished Form without a workflow is Not Visible to New Request', asy
 });
 
 test('a status-available form without a workflow is not Visible to New Request', async () => {
-  await page.goto(formEditorURL_prefix + formCategoryID);
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Status:').selectOption('1');
   await expect(page.locator('#form_properties_last_update')).toBeVisible();
 
-  await page.goto(newRequestURL);
+  await page.goto(LEAF_URLS.INITIAL_FORM);
   await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
   await expect(page.getByText(testFormName)).not.toBeVisible();
 });
 
 test('a status-available form with a workflow is Visible to New Request', async () => {
-  await page.goto(formEditorURL_prefix + formCategoryID);
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Workflow:').selectOption('4');
   await expect(page.locator('#form_properties_last_update')).toBeVisible();
 
-  await page.goto(newRequestURL);
+  await page.goto(LEAF_URLS.INITIAL_FORM);
   await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
   await expect(page.getByText(testFormName)).toBeVisible();
 });
@@ -123,7 +122,7 @@ test('a new request can be created, and edited before being submitted', async ()
 });
 
 test('a request can be copied if its form status is set to Available', async () => {
-  await page.goto(requestPrintPrefix + newRequestID);
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
 
@@ -137,28 +136,28 @@ test('a request can be copied if its form status is set to Available', async () 
 });
 
 test('a request can not be copied if its form status is set to Unpublished', async () => {
-  await page.goto(formEditorURL_prefix + formCategoryID);
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Status:').selectOption('-1');
 
-  await page.goto(requestPrintPrefix + newRequestID);
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
   await expect(page.getByText('Request could not be copied:')).toBeVisible();
 });
 
 test('a status-hidden form with a workflow is not Visible to New Request', async () => {
-  await page.goto(formEditorURL_prefix + formCategoryID);
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
   await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
   await page.getByLabel('Status:').selectOption('0');
 
-  await page.goto(newRequestURL);
+  await page.goto(LEAF_URLS.INITIAL_FORM);
   await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
   await expect(page.getByText(testFormName)).not.toBeVisible();
 });
 
 test("Request with Hidden Form Can Be Copied", async () => {
-  await page.goto(requestPrintPrefix + newRequestID);
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
 
@@ -185,14 +184,14 @@ test.describe('Archive and Restore Question', () => {
 
   test('archived questions are not visible in reports', async () => {
     // Archive the Reviewer 2 field
-    await page.goto(formEditorURL_prefix + formCategoryID);
+    await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
     await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
     await page.locator(`#edit_indicator_${reviewer2_indID}`).click();
     await page.locator('label').filter({ hasText: 'Archive' }).locator('span').click();
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.locator('span').filter({ hasText: secondIndLabel })).not.toBeVisible();
 
-    await page.goto(requestPrintPrefix + newRequestID);
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
     await expect(
       page.getByText(firstIndLabel, { exact: true }),
       'active question to be visible on the request'
@@ -206,7 +205,7 @@ test.describe('Archive and Restore Question', () => {
 
   test('archived questions are still visible in reports', async () => {
     // Create a new report containing the created request
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+    await page.goto(LEAF_URLS.REPORT_BUILDER);
     await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
     await page.getByRole('option', { name: 'Record ID' }).click();
     await page.getByLabel('text', { exact: true }).fill(newRequestID);
@@ -235,7 +234,7 @@ test.describe('Archive and Restore Question', () => {
 
   test('the restored question is again visible on the request', async () => {
     // Restore the Reviewer 2 field
-    await page.goto(formEditorURL_prefix + formCategoryID);
+    await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
     await page.getByRole('link', { name: 'Restore Fields' }).click();
     const restoreBtn = page.locator(`#restore_indicator_${reviewer2_indID}`);
     await expect(
@@ -249,7 +248,7 @@ test.describe('Archive and Restore Question', () => {
     ).not.toBeVisible();
 
     // Verify both fields are visible on the request again
-    await page.goto(requestPrintPrefix + newRequestID);
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
     await expect(page.getByText(firstIndLabel, { exact: true })).toBeVisible();
     await expect(page.getByText(secondIndLabel, { exact: true })).toBeVisible();
 
@@ -266,7 +265,7 @@ test.describe('Archive and Restore Question', () => {
 
 
 test('original request and copied requests can be cancelled', async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(3);
 
   const requests = page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' });
@@ -305,7 +304,7 @@ test('a negative currency is allowed in a new request', { tag: ['@LEAF-4665'] },
 
 
 test('a negative currency is allowed when editing a request', { tag: ['@LEAF-4665'] }, async () => {
-  await page.goto(requestPrintPrefix + negCurrencyRequestID);
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + negCurrencyRequestID);
 
   await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
   const dialog = page.getByRole('dialog', { name: 'Editing #' });
@@ -335,7 +334,7 @@ test('a negative currency is allowed when editing a request', { tag: ['@LEAF-466
 
 test('Closing pop up window does not cause workflow form fields to disappear', { tag: ['@LEAF-4913'] }, async ({ page }) => {
   const testCase = '495';
-  await page.goto(requestPrintPrefix + testCase);
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + testCase);
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
   await page.locator('#tools').getByText('View History').click();
   await expect(page.getByText(`History of Request ID#: ${testCase}`)).toBeVisible();
@@ -348,9 +347,5 @@ test('Closing pop up window does not cause workflow form fields to disappear', {
 
 //delete created form.
 test.afterAll(async () => {
-  await page.goto(formEditorURL_prefix + formCategoryID);
-  await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
-  await page.getByRole('button', { name: 'Delete this form' }).click();
-  await expect(page.locator('#leaf_dialog_content', { hasText: testFormName})).toBeVisible();
-  await page.getByRole('button', { name: 'Yes' }).click();
+  await deleteTestFormByFormID(page, formCategoryID);
 });

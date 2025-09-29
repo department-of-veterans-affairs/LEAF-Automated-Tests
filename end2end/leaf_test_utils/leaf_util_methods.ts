@@ -1,5 +1,24 @@
 import { Page, expect } from '@playwright/test';
 
+export const LEAF_URLS = {
+  PORTAL_HOME: 'https://host.docker.internal/Test_Request_Portal/',
+  FORM_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/',
+  FORM_EDITOR_FORM: 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=',
+  INITIAL_FORM: 'https://host.docker.internal/Test_Request_Portal/?a=newform',
+  WORKFLOW_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/',
+  WORKFLOW_EDITOR_WF: 'https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=',
+  REPORT_BUILDER: 'https://host.docker.internal/Test_Request_Portal/?a=reports&v=3',
+  MASS_ACTION: 'https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action',
+  PRINTVIEW_REQUEST: 'https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=',
+  EDITVIEW_REQUEST: 'https://host.docker.internal/Test_Request_Portal/index.php?a=view&recordID=',
+  EMAIL_SERVER: 'http://host.docker.internal:5080/'
+}
+
+/**
+ * get a randomized ID that can be used for isolated test data
+ * @returns string id_timestamp_####
+ */
+export const getRandomId = () => `id_${Date.now()}_${Math.floor(Math.random() * 10000)}`
 
 /**
  * Sets up a promise around a specific action expected to result in a netork response.
@@ -49,7 +68,7 @@ export const createTestForm = async (
   formName:string,
   formDescription:string
 ):Promise<string> => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  await page.goto(LEAF_URLS.FORM_EDITOR);
   await page.getByRole('button', { name: 'Create Form' }).click();
   await expect(page.getByRole('heading', { name: 'New Form' })).toBeVisible();
   await page.getByLabel('Form Name (up to 50').fill(formName);
@@ -65,20 +84,39 @@ export const createTestForm = async (
 }
 
 
+export const deleteTestFormByFormID = async (
+  page:Page,
+  formID:string,
+) => {
+  await page.goto(`${LEAF_URLS.FORM_EDITOR_FORM}${formID}`);
+  await expect(page.locator('#edit-properties-panel .form-id')).toBeVisible();
+  const viewFormID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';
+  if (formID === viewFormID) {
+    await page.getByRole('button', { name: 'Delete this Form' }).click();
+    await expect(page.getByRole('heading', { name: 'Delete this Form' })).toBeVisible();
+    await awaitPromise(
+      page, `formStack/_${formID}`, async (p:Page) => {
+        await p.getByRole('button', { name: 'Yes' }).click();
+      }, 'DELETE'
+    );
+  }
+}
+
 /**
  * Add a question to a single page form with basic name, format and location options
  * @param page Page instance from test
  * @param sectionBtnText the text on the 'new section/add question to section' button
  * @param nameFillValue ** unique ** value for the question name
  * @param format the question format
- * @param parentID optional parent question ID
+ * @param options options for dropdown formats.  separate values with \n
  * @returns new indicator ID as string (Promise value)
  */
 export const addFormQuestion = async (
   page:Page,
   sectionBtnText:string,
   nameFillValue:string,
-  format:string
+  format:string = '',
+  options:string = ''
 ):Promise<string> => {
   //indicator name input label is different for header questions
   const nameInputLabel = sectionBtnText === 'Add Section' ? 'Section Heading' : 'Field Name';
@@ -86,6 +124,9 @@ export const addFormQuestion = async (
   await expect(page.getByLabel(nameInputLabel)).toBeVisible();
   await page.getByLabel(nameInputLabel).fill(nameFillValue);
   await page.getByLabel('Input Format').selectOption(format);
+  if (options !== '') {
+    await page.getByRole('textbox', { name: 'Options (One option per line)' }).fill(options)
+  }
   const newIndPromise = page.waitForResponse(res =>
     res.url().includes('formEditor/newIndicator') && res.status() === 200
   )
@@ -105,7 +146,7 @@ export const addFormQuestion = async (
 export const loadWorkflow = async (page:Page, workflowID:string = '1') => {
   await awaitPromise(
     page, `workflow/${workflowID}/route`, async (p:Page) => await p.goto(
-    `https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=${workflowID}`
+    `${LEAF_URLS.WORKFLOW_EDITOR_WF}${workflowID}`
   ));
 }
 
@@ -117,7 +158,7 @@ export const loadWorkflow = async (page:Page, workflowID:string = '1') => {
 export const loadForm = async (page:Page, formID:string = 'form_5ea07') => {
   await awaitPromise(
     page, `form/_${formID}`, async (p:Page) => await p.goto(
-    `https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=${formID}`
+    `${LEAF_URLS.FORM_EDITOR_FORM}${formID}`
   ));
 }
 
@@ -135,7 +176,7 @@ export const createTestRequest = async (
   requestTitel:string = 'test request',
   formName:string = 'General Form'
 ):Promise<string> => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
+  await page.goto(LEAF_URLS.INITIAL_FORM);
   await selectChosenDropdownOption(page,'#service_chosen', service);
   await page.getByLabel('Title of Request').fill(requestTitel);
   await page.locator('label').filter({ hasText: formName }).locator('span').click();
@@ -148,6 +189,19 @@ export const createTestRequest = async (
   const newRecordID = url.match(/(?<=&recordID\=)\d+$/)?.[0] ?? '';
   return new Promise(resolve => resolve(newRecordID));
 }
+
+/**
+ * @param page 
+ * @param requestID 
+ */
+export const deleteTestRequestByRequestID = async (page:Page, requestID:string) => {
+  await page.goto(`${LEAF_URLS.PRINTVIEW_REQUEST}${requestID}`);
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByPlaceholder('Enter Comment').fill('No longer needed');
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
+}
+
 
 /**
  * Deletes a Workflow Event and asserts that it is not present in the Event List after deletion
