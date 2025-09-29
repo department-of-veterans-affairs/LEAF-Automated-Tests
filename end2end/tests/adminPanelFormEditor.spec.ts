@@ -20,7 +20,7 @@ test.describe('Update heading of a General Form then reset back to original head
   const newText = `Single line text ${testId}`;
   let formEditorFieldsFormID = '';
 
-  test.only('edit a section heading', async ({ page }) => {
+  test('edit a section heading', async ({ page }) => {
     formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
     const sectionID = await addFormQuestion(page, 'Add Section', singleLineName, '');
     const headerEditSelector = `edit indicator ${sectionID}`;
@@ -47,7 +47,7 @@ test.describe('Update heading of a General Form then reset back to original head
 
 test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
   let requestID_emailing = '';
-  test.only('Create a New Request', async ({ page }) => {
+  test('Create a New Request', async ({ page }) => {
     const groupText = `Group A`;
     const assignedPersonOne = `Tester, Tester Product Liaison`;
     const assignedPersonIndId = '8';
@@ -69,7 +69,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await page.getByRole('cell', { name: assignedPersonOne }).click();
     await expect(page.locator(`#empSel_${assignedPersonIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
-    //await page.waitForLoadState('networkidle'); //uncomment here and in 3. if this test is still flaky
+    await page.waitForLoadState('networkidle'); //helps ensure required orgchart field validation is complete
     await page.locator('#nextQuestion2').click();
 
     //3. Assigned Group - not an approver for step one, but required to proceed
@@ -79,7 +79,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await page.getByRole('cell', { name: groupText }).click();
     await expect(page.locator(`#grpSel_${assignedGroupIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
-    //await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('networkidle');
     await page.locator('#nextQuestion2').click();
 
     await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
@@ -97,7 +97,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     });
   });
 
-  test.only('Mass Action Email Reminder', async ({ page }) => {
+  test('Mass Action Email Reminder', async ({ page }) => {
     await page.goto(LEAF_URLS.MASS_ACTION);
     await expect(page.getByText('Choose Action -Select- Cancel')).toBeVisible();
 
@@ -131,7 +131,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     ).toBeVisible();
   });
 
-  test.only('email reminder is only sent to remaining dependency', { tag: ['@LEAF-4891'] }, async ({ page }) => {
+  test('email reminder is only sent to remaining dependency', { tag: ['@LEAF-4891'] }, async ({ page }) => {
     await page.goto(LEAF_URLS.EMAIL_SERVER);
     //approver 1 should be a recipient, but group A requirement has been met, so its member should not be
     const expectedSubject = `Reminder for General Form (#${requestID_emailing})`;
@@ -162,7 +162,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
 });
 
 
-test.only('warning message is displayed if both hidden and shown display states are on the same question', async ({ page }) => {
+test('warning message is displayed if both hidden and shown display states are on the same question', async ({ page }) => {
   await page.goto(LEAF_URLS.FORM_EDITOR);
 
   const formName = `Test LEAF-4888-${testId}`;
@@ -236,7 +236,7 @@ test.only('warning message is displayed if both hidden and shown display states 
 });
 
 
-test.only('Verify Alert Dialog does not Appear', async ({ page }) => {
+test('Verify Alert Dialog does not Appear', async ({ page }) => {
   const formName =`LEAF-5005_${testId}`;
   const formDescription =`FormDescription_${testId}`;
   const LEAF_5005_formId = await createTestForm(page, formName, formDescription);
