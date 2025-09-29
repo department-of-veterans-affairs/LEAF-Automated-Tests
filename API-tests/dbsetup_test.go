@@ -52,7 +52,15 @@ func setupTestDB() {
 	}
 	importPortalAgentSql := string(f)
 
+	f, err = os.ReadFile("database/portal_national_leaf_launchpad.sql")
+	if err != nil {
+		log.Fatal("Couldn't open the file: ", err.Error())
+	}
+	importSitesTable := string(f)
+
+	// Setup launchpad DB (index of sites)
 	db.Exec("USE national_leaf_launchpad")
+	db.Exec(importSitesTable) // Update sites table
 
 	// Get original DB config
 	err = db.QueryRow(`SELECT portal_database, orgchart_database FROM sites
