@@ -8,21 +8,21 @@ import {
   createTestRequest,
   deleteTestRequestByRequestID,
   awaitPromise,
+  confirmEmailRecipients
 } from '../leaf_test_utils/leaf_util_methods.ts';
-
 
 test.describe.configure({ mode: 'default' });
 
 const testId = getRandomId();
+const singleLineName = `Single line text`;
 
 test.describe('Update heading of a General Form then reset back to original heading', () => {
-  const originalText = `Single line text`;
   const newText = `Single line text ${testId}`;
   let formEditorFieldsFormID = '';
 
   test.only('edit a section heading', async ({ page }) => {
     formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
-    const sectionID = await addFormQuestion(page, 'Add Section', originalText, '');
+    const sectionID = await addFormQuestion(page, 'Add Section', singleLineName, '');
     const headerEditSelector = `edit indicator ${sectionID}`;
     const headerLabelSelector = `#format_label_${sectionID}`;
     await expect(page.getByTitle(headerEditSelector)).toBeVisible();
@@ -35,9 +35,9 @@ test.describe('Update heading of a General Form then reset back to original head
 
     await page.getByTitle(headerEditSelector).click();
     await expect(page.getByLabel('Section Heading')).toBeVisible();
-    await page.getByLabel('Section Heading').fill(originalText);
+    await page.getByLabel('Section Heading').fill(singleLineName);
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator(headerLabelSelector)).toContainText(originalText);
+    await expect(page.locator(headerLabelSelector)).toContainText(singleLineName);
 
     //cleanup
     await deleteTestFormByFormID(page, formEditorFieldsFormID);
@@ -48,52 +48,53 @@ test.describe('Update heading of a General Form then reset back to original head
 test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
   let requestID_emailing = '';
   test.only('Create a New Request', async ({ page }) => {
-    let singleLineText = `Single line Text ${testId}`;
-    let multiLineText = `This is some multi link test ${testId}. This is some multi link test.`;
-    let numericText =`1922`;
-    let radioTxt =`B`;
-    let groupText = `Group A`;
-    let assignedPersonOne = `Tester, Tester Product Liaison`;
-    let assignedPersonTwo = `Bauch, Herbert Purdy. Human`;  
+    const groupText = `Group A`;
+    const assignedPersonOne = `Tester, Tester Product Liaison`;
+    const assignedPersonIndId = '8';
+    const assignedGroupIndId = '9';
 
     requestID_emailing = await createTestRequest(page, 'AS - Service', `LEAF-4891-${testId}`, 'General Form');
-  
+
     await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
     await expect(page.locator('#xhr')).toBeVisible();
-    
-    //1. Single line Text
-    await page.getByRole('textbox', { name: 'Single line text', exact: true }).fill(singleLineText);
-    await page.getByRole('textbox', { name: 'Multi line text' }).fill(multiLineText);
-    await page.getByRole('textbox', { name: 'Numeric' }).fill(numericText);
-    await page.getByRole('textbox', { name: 'Single line text B' }).fill(singleLineText);
-    await page.locator('#radio_options_7 label').filter({ hasText: radioTxt }).locator('span').click();
+
+    //1. page one is not relevant for this test and has no required questions
     await expect(page.locator('#nextQuestion2')).toBeVisible();
     await page.locator('#nextQuestion2').click();
- 
-    //2. Assigned Person  
+
+    //2. Assigned Person - step 1 approver
     await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
     await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person', exact: true }).fill('tes');
     await expect(page.getByRole('cell', { name: assignedPersonOne })).toBeVisible();
     await page.getByRole('cell', { name: assignedPersonOne }).click();
-
-    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Person 2' }).fill('h');
-    await expect(page.getByRole('cell', { name: assignedPersonTwo })).toBeVisible();
-    await page.getByRole('cell', { name: assignedPersonTwo}).click();
+    await expect(page.locator(`#empSel_${assignedPersonIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
+    //await page.waitForLoadState('networkidle'); //uncomment here and in 3. if this test is still flaky
     await page.locator('#nextQuestion2').click();
-    await expect(page.getByText('Form completion progress: 50% Next Question')).toBeVisible();
 
-    //3. Assigned Group
-    await expect(page.getByRole('searchbox', { name: 'Search for user to add as' })).toBeVisible();
-    await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('group');
+    //3. Assigned Group - not an approver for step one, but required to proceed
+    await expect(page.getByText('Form completion progress: 50% Next Question')).toBeVisible();
+    await page.getByRole('searchbox', { name: 'Search for user to add as Assigned Group', exact: true }).fill(groupText);
     await expect(page.getByRole('cell', { name: groupText })).toBeVisible();
     await page.getByRole('cell', { name: groupText }).click();
-    await expect(page.getByText('Search results found for term group#206 listed below Group TitleGroup A')).toBeVisible();
+    await expect(page.locator(`#grpSel_${assignedGroupIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
+    //await page.waitForLoadState('networkidle');
     await page.locator('#nextQuestion2').click();
 
     await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
-    await page.getByRole('button', { name: 'Submit Request' }).click();
+    await awaitPromise(page, `${requestID_emailing}/submit`, async (p:Page) => {
+      await p.getByRole('button', { name: 'Submit Request' }).click();
+    });
+
+    //wait for internal form to load then approve for Group A.
+    await page.reload();
+    await expect(page.getByRole('textbox', { name: singleLineName, exact: true })).toBeVisible();
+    const approveBtn = page.locator(`#button_step9_approve`); //dependency 9
+    await expect(approveBtn).toBeVisible();
+    await awaitPromise(page, `${requestID_emailing}/apply`, async (p:Page) => {
+      await p.locator('#button_step9_approve').click()
+    });
   });
 
   test.only('Mass Action Email Reminder', async ({ page }) => {
@@ -103,16 +104,14 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     //Start The Mass Email Reminder
     await page.getByLabel('Choose Action').selectOption('email');
     await expect(page.getByRole('textbox', { name: 'Enter your search text' })).toBeVisible();
-    // Use a broader search term to find the request created by any test run
+    //Use a broader search term to find the request created by any test run
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill('LEAF-4891');
     await page.getByRole('spinbutton', { name: 'Days Since Last Action' }).fill('0');
     await expect(page.getByRole('button', { name: 'Search Requests' })).toBeVisible();
-
     await awaitPromise(page, 'LEAF-4891', async (p:Page) => {
       p.getByRole('button', { name: 'Search Requests' }).click()
     });
  
-
     await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
 
     // Check if any requests were found
@@ -132,32 +131,32 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     ).toBeVisible();
   });
 
-  test.only('Verify Email Sent', { tag: ['@LEAF-4891'] }, async ({ page }) => {
+  test.only('email reminder is only sent to remaining dependency', { tag: ['@LEAF-4891'] }, async ({ page }) => {
     await page.goto(LEAF_URLS.EMAIL_SERVER);
-    const emailLink = page.locator('td div.cell').getByText(`(#${requestID_emailing})`).first();
-    const emailCount = await emailLink.count();
-    if(emailCount === 1) {
-      expect(
-        emailLink,
-        `a reminder notification email to be found for submitted request ${requestID_emailing}`
-      ).toBeVisible();
-      const tableRow = page.locator(`tr:has(td:has-text("(#${requestID_emailing})"))`);
-      await expect(tableRow.locator('td').getByText('leaf.noreply@va.gov')).toBeVisible();
-      await expect(tableRow.locator('td').getByText('tester.tester@fake-email.com')).toBeVisible();
-      await expect(tableRow.locator('td').getByText('Reminder for General Form')).toBeVisible();
+    //approver 1 should be a recipient, but group A requirement has been met, so its member should not be
+    const expectedSubject = `Reminder for General Form (#${requestID_emailing})`;
+    const expectedRecipient = 'tester.tester@fake-email.com';
+    const expectedNotRecipient = 'Donte.Glover@fake-email.com';
 
-      await emailLink.click();
-      await page.getByRole('button', { name: 'Delete' }).click();
-      await expect(tableRow).not.toBeVisible();
+    const emailLink = page.locator('tr div.cell').getByText(expectedSubject).first();
+    expect(
+      emailLink,
+      `a reminder notification email to be found for submitted request ${requestID_emailing}`
+    ).toBeVisible();
 
-    } else {
-      expect(
-        true,
-        'reminder email to be found (note: API tests must be run prior to email reminder testing).'
-      ).toBe(false);
-    }
+    await confirmEmailRecipients(page, expectedSubject, [ expectedRecipient ]);
 
-    //cleanup 
+    const row = page.locator(`tr:has-text("${expectedSubject}")`);
+    const recipientEls = row.locator('.el-table_1_column_3 strong');
+    await expect(
+      recipientEls.filter({ hasText: expectedNotRecipient }),
+      `group A member ${expectedNotRecipient} not to be present as an email recipient`
+    ).toHaveCount(0);
+
+    //cleanup
+    await emailLink.click();
+    await page.getByRole('button', { name: 'Delete' }).click();
+    await expect(emailLink).not.toBeVisible();
     await deleteTestRequestByRequestID(page, requestID_emailing)
   });
 });

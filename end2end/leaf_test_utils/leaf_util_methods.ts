@@ -202,6 +202,30 @@ export const deleteTestRequestByRequestID = async (page:Page, requestID:string) 
   await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
 }
 
+/**
+ * Confirm an email with the given subject is present once and confirm recipients
+ * @param page Page instance from test
+ * @param emailSubjectText the text in the email's subject field, used to find the email
+ * @param expectedEmailRecipients array of email addresses that should be found as recipients
+ */
+export const confirmEmailRecipients = async (
+  page:Page,
+  emailSubjectText:string,
+  expectedEmailRecipients:Array<string>
+) => {
+  const row = page.locator(`tr:has-text("${emailSubjectText}")`);
+  await expect(
+    row, `one email with subject ${emailSubjectText} to be found`
+  ).toHaveCount(1);
+
+  const recipientEls = row.locator('.el-table_1_column_3 strong');
+  for (let i = 0; i < expectedEmailRecipients.length; i++) {
+    await expect(
+      recipientEls.filter({ hasText: expectedEmailRecipients[i] }),
+      `email recipient ${expectedEmailRecipients[i]} to be present once`
+    ).toHaveCount(1);
+  }
+}
 
 /**
  * Deletes a Workflow Event and asserts that it is not present in the Event List after deletion
