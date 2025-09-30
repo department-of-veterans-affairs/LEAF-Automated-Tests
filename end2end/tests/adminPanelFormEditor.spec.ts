@@ -14,15 +14,15 @@ import {
 test.describe.configure({ mode: 'default' });
 
 const testId = getRandomId();
-const singleLineName = `Single line text`;
 
-test.describe('Update heading of a General Form then reset back to original heading', () => {
-  const newText = `Single line text ${testId}`;
+test.describe('Update heading of a form then reset back to original heading', () => {
+  const originalText = 'Section 1'
+  const newText = 'Edited Section 1';
   let formEditorFieldsFormID = '';
 
   test('edit a section heading', async ({ page }) => {
     formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
-    const sectionID = await addFormQuestion(page, 'Add Section', singleLineName, '');
+    const sectionID = await addFormQuestion(page, 'Add Section', originalText, '');
     const headerEditSelector = `edit indicator ${sectionID}`;
     const headerLabelSelector = `#format_label_${sectionID}`;
     await expect(page.getByTitle(headerEditSelector)).toBeVisible();
@@ -35,9 +35,9 @@ test.describe('Update heading of a General Form then reset back to original head
 
     await page.getByTitle(headerEditSelector).click();
     await expect(page.getByLabel('Section Heading')).toBeVisible();
-    await page.getByLabel('Section Heading').fill(singleLineName);
+    await page.getByLabel('Section Heading').fill(originalText);
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator(headerLabelSelector)).toContainText(singleLineName);
+    await expect(page.locator(headerLabelSelector)).toContainText(originalText);
 
     //cleanup
     await deleteTestFormByFormID(page, formEditorFieldsFormID);
@@ -49,6 +49,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
   let requestID_emailing = '';
   test('Create a New Request', async ({ page }) => {
     const groupText = `Group A`;
+    const singleLineName = `Single line text`;
     const assignedPersonOne = `Tester, Tester Product Liaison`;
     const assignedPersonIndId = '8';
     const assignedGroupIndId = '9';
@@ -69,7 +70,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await page.getByRole('cell', { name: assignedPersonOne }).click();
     await expect(page.locator(`#empSel_${assignedPersonIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
     await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.waitForLoadState('networkidle'); //helps ensure required orgchart field validation is complete
+    await page.waitForLoadState('networkidle'); //helps ensure required validation for an orgchart field is complete
     await page.locator('#nextQuestion2').click();
 
     //3. Assigned Group - not an approver for step one, but required to proceed
