@@ -1,35 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
-import { awaitPromise, loadWorkflow, deleteWorkflowEvent } from '../leaf_test_utils/leaf_util_methods.ts';
+import {
+  awaitPromise, loadWorkflow, deleteWorkflowEvent, confirmEmailRecipients
+} from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'default' });
-
-
-/**
- * @param page Page instance from test
- * @param emailSubjectText the text in the email's subject field, used to find the email
- * @param expectedEmailRecipients array of email addresses that should be found as recipients
- */
-const confirmEmailRecipients = async (
-  page:Page,
-  emailSubjectText:string,
-  expectedEmailRecipients:Array<string>
-) => {
-  const row = page.locator(`tr:has-text("${emailSubjectText}")`);
-  await expect(
-    row, `one email with subject ${emailSubjectText} to be found`
-  ).toHaveCount(1);
-
-  const recipientEls = row.locator('.el-table_1_column_3 strong');
-  for (let i = 0; i < expectedEmailRecipients.length; i++) {
-    await expect(
-      recipientEls.filter({ hasText: expectedEmailRecipients[i] }),
-      `email recipient ${expectedEmailRecipients[i]} to be present once`
-    ).toHaveCount(1);
-  }
-}
-
-
-
 
 /**
  * Use the printview admin menu to change the step of a request
