@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export const LEAF_URLS = {
   PORTAL_HOME: 'https://host.docker.internal/Test_Request_Portal/',
@@ -53,6 +53,20 @@ export const selectChosenDropdownOption = async (page:Page, dropdownID:string, d
   await expect(serviceDropdown).toBeVisible();
   await serviceDropdown.click();
   await page.getByRole('option', { name: dropOption, exact: true }).click();
+}
+
+/**
+ * Clear and then fill an input or textarea field with a given value.
+ * NOTE: This method confirms the value but does not open modals or take any save action.
+ * @param locator locator for the input field
+ * @param value value to set for the input field
+ */
+export const fillAndVerifyField = async (locator:Locator, value:string) => {
+  await expect(locator).toBeVisible();
+  await locator.press('ControlOrMeta+A');
+  await locator.press('Backspace');
+  await locator.fill(value);
+  await expect(locator).toHaveValue(value);
 }
 
 
