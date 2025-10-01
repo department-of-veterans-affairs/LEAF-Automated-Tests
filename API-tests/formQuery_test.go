@@ -4,10 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -768,4 +772,54 @@ func TestLargeFormQuery_LargeQuery_Indi_10_Limit1001(t *testing.T) {
 		t.Errorf("bad headers: %v", res.Header)
 	}
 
+}
+
+func TestValidAuthorizationToken(t *testing.T) {
+	cookieJar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   time.Second * 5,
+		Jar:       cookieJar,
+	}
+
+	// Retrieve all unresolved requests as the LEAF agent
+	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}`, nil)
+	// Login as the agent
+	req.Header.Set("Authorization", os.Getenv("AGENT_TOKEN"))
+	res, err := client.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+	b, _ := io.ReadAll(res.Body)
+	var formRes FormQueryResponse
+	err = json.Unmarshal(b, &formRes)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(formRes) == 0 {
+		t.Errorf("client with valid token should be able to see public records")
+	}
+}
+
+func TestInvalidAuthorizationToken(t *testing.T) {
+	cookieJar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   time.Second * 5,
+		Jar:       cookieJar,
+	}
+
+	// Retrieve all unresolved requests as the LEAF agent with an invalid token
+	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}`, nil)
+	// Login as the agent
+	req.Header.Set("Authorization", "INVALID TOKEN")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if res.StatusCode != 401 {
+		t.Errorf("client with an invalid token should be denied access. got status code: %v, want: 401", res.StatusCode)
+	}
 }
