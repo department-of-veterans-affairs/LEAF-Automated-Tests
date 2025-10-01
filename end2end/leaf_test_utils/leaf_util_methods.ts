@@ -90,7 +90,7 @@ export const createTestForm = async (
   await page.getByLabel('Form Name (up to 50').press('Tab');
   await awaitPromise(
     page, 'formEditor/new',
-    async (p:Page) => p.getByRole('button', { name: 'Save' }).click()
+    async (p:Page) => await p.getByRole('button', { name: 'Save' }).click()
   );
   await expect(page.locator('#edit-properties-panel .form-id')).toBeVisible();
   const newFormID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';

@@ -110,7 +110,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await page.getByRole('spinbutton', { name: 'Days Since Last Action' }).fill('0');
     await expect(page.getByRole('button', { name: 'Search Requests' })).toBeVisible();
     await awaitPromise(page, 'LEAF-4891', async (p:Page) => {
-      p.getByRole('button', { name: 'Search Requests' }).click()
+      await p.getByRole('button', { name: 'Search Requests' }).click()
     });
  
     await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
