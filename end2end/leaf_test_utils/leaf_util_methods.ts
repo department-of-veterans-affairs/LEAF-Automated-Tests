@@ -230,6 +230,7 @@ export const createTestRequest = async (
  */
 export const deleteTestRequestByRequestID = async (page:Page, requestID:string) => {
   await page.goto(`${LEAF_URLS.PRINTVIEW_REQUEST}${requestID}`);
+  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
   await page.getByPlaceholder('Enter Comment').fill('No longer needed');
   await page.getByRole('button', { name: 'Yes' }).click();
