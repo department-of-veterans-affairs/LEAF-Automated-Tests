@@ -1,11 +1,11 @@
-import { Page, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export const LEAF_URLS = {
   PORTAL_HOME: 'https://host.docker.internal/Test_Request_Portal/',
   FORM_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/',
   FORM_EDITOR_FORM: 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=',
   INITIAL_FORM: 'https://host.docker.internal/Test_Request_Portal/?a=newform',
-  WORKFLOW_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/',
+  WORKFLOW_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/?a=workflow',
   WORKFLOW_EDITOR_WF: 'https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=',
   REPORT_BUILDER: 'https://host.docker.internal/Test_Request_Portal/?a=reports&v=3',
   MASS_ACTION: 'https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action',
@@ -55,6 +55,20 @@ export const selectChosenDropdownOption = async (page:Page, dropdownID:string, d
   await page.getByRole('option', { name: dropOption, exact: true }).click();
 }
 
+/**
+ * Clear and then fill an input or textarea field with a given value.
+ * NOTE: This method confirms the value but does not open modals or take any save action.
+ * @param locator locator for the input field
+ * @param value value to set for the input field
+ */
+export const fillAndVerifyField = async (locator:Locator, value:string) => {
+  await expect(locator).toBeVisible();
+  await locator.press('ControlOrMeta+A');
+  await locator.press('Backspace');
+  await locator.fill(value);
+  await expect(locator).toHaveValue(value);
+}
+
 
 /**
  * Navigates to Form Editor and create a new form
@@ -76,11 +90,18 @@ export const createTestForm = async (
   await page.getByLabel('Form Name (up to 50').press('Tab');
   await awaitPromise(
     page, 'formEditor/new',
-    async (p:Page) => p.getByRole('button', { name: 'Save' }).click()
+    async (p:Page) => await p.getByRole('button', { name: 'Save' }).click()
   );
   await expect(page.locator('#edit-properties-panel .form-id')).toBeVisible();
   const newFormID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';
-  return new Promise(resolve => resolve(newFormID));
+
+  return new Promise((resolve, reject) => {
+    if(newFormID !== '') {
+      resolve(newFormID);
+    } else {
+      reject(`leaf_util createTestForm: unexpected formID value - ${newFormID}.`);
+    }
+  });
 }
 
 
@@ -118,9 +139,9 @@ export const addFormQuestion = async (
   format:string = '',
   options:string = ''
 ):Promise<string> => {
-  //indicator name input label is different for header questions
+  //the label text for an 'indicator name' input area is different for header questions
   const nameInputLabel = sectionBtnText === 'Add Section' ? 'Section Heading' : 'Field Name';
-  await page.getByLabel(sectionBtnText).click();
+  await page.getByLabel(sectionBtnText).first().click();
   await expect(page.getByLabel(nameInputLabel)).toBeVisible();
   await page.getByLabel(nameInputLabel).fill(nameFillValue);
   await page.getByLabel('Input Format').selectOption(format);
@@ -134,9 +155,15 @@ export const addFormQuestion = async (
   const newIndicatorRes = await newIndPromise;
   let newIndID = await newIndicatorRes.text();
   newIndID = newIndID.replaceAll('"', '');
-  return new Promise(resolve => resolve(newIndID));
-}
 
+  return new Promise((resolve, reject) => {
+    if(+newIndID > 0) {
+      resolve(newIndID);
+    } else {
+      reject(`leaf_util addFormQuestion: new question creation not successful.`);
+    }
+  });
+}
 
 /**
  * load a specific workflow by URL param
@@ -187,7 +214,14 @@ export const createTestRequest = async (
   const url = page.url();
   expect(url).toContain('&recordID=');
   const newRecordID = url.match(/(?<=&recordID\=)\d+$/)?.[0] ?? '';
-  return new Promise(resolve => resolve(newRecordID));
+
+  return new Promise((resolve, reject) => {
+    if(+newRecordID > 0) {
+      resolve(newRecordID);
+    } else {
+      reject(`leaf_util createTestRequest: test request creation did not complete.`);
+    }
+  });
 }
 
 /**
@@ -196,6 +230,7 @@ export const createTestRequest = async (
  */
 export const deleteTestRequestByRequestID = async (page:Page, requestID:string) => {
   await page.goto(`${LEAF_URLS.PRINTVIEW_REQUEST}${requestID}`);
+  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel Request' }).click();
   await page.getByPlaceholder('Enter Comment').fill('No longer needed');
   await page.getByRole('button', { name: 'Yes' }).click();
@@ -225,6 +260,72 @@ export const confirmEmailRecipients = async (
       `email recipient ${expectedEmailRecipients[i]} to be present once`
     ).toHaveCount(1);
   }
+}
+
+
+/**
+ * Create a new basic workflow: requestor -submit-> intialstep.  No other config.
+ * @param page Page instance from test
+ * @param workflowName unique workflow name
+ * @param intialStepName unique workflow step name
+ * @returns new workflow ID and initial stepID as array (Promise value)
+ *
+ * Promised values can be set and used by destructuring:
+ * const [ newWorkflowID, initialStepID ] = await createBaseTestWorkflow(page, wfTitle, stTitle);
+ * console.log(newWorkflowID, initialStepID);
+ */
+export const createBaseTestWorkflow = async (
+  page:Page,
+  workflowName:string,
+  intialStepName:string
+):Promise<string[]> => {
+  await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+  await expect(page.getByRole('button', { name: 'New Workflow' })).toBeVisible();
+  await page.getByRole('button', { name: 'New Workflow' }).click();
+  await expect(page.getByText('Create new workflow')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Workflow Title:' }).fill(workflowName);
+  let awaitSave = page.waitForResponse(res =>
+    res.url().includes('/workflow/new') && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Save' }).click();
+  const newWorkflowRes = await awaitSave;
+  let newWorkflowID = await newWorkflowRes.text() ?? '';
+  newWorkflowID = newWorkflowID.replaceAll('"', '');
+
+  //Create new Step and move it
+  await page.getByRole('button', { name: 'New Step' }).click();
+  await expect(page.getByText('Create new Step')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Step Title:' }).fill(intialStepName);
+  awaitSave = page.waitForResponse(res =>
+    res.url().includes(`workflow/${newWorkflowID}/step`) && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Save' }).click();
+  const newStepRes = await awaitSave;
+  let newStepID = await newStepRes.text() ?? '';
+  newStepID = newStepID.replaceAll('"', '');
+
+  const stepElement = page.getByLabel(`workflow step: ${intialStepName}`, { exact: true });
+  await expect(stepElement).toBeInViewport();
+  await page.reload();
+  await stepElement.hover();
+  await page.mouse.down();
+  await page.mouse.move(300, 300);
+  await page.mouse.up();
+
+  //set the requestor -> step submit route
+  await page.getByRole('button', { name: 'workflow step: Requestor' }).click();
+  await page.getByLabel('View Step Actions').click();
+  await expect(page.getByLabel('Add Action:')).toBeVisible();
+  await page.locator('#create_route:visible').selectOption(newStepID);
+  await page.reload();
+
+  return new Promise((resolve, reject) => {
+    if(+newWorkflowID > 0 && +newStepID > 0) {
+      resolve([ newWorkflowID, newStepID ]);
+    } else {
+      reject(`leaf_util createBaseTestWorkflow: workflow setup did not complete. wfID:${newWorkflowID} stepID:${newStepID}`);
+    }
+  });
 }
 
 /**
