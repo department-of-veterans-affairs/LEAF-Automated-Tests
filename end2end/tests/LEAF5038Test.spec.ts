@@ -12,7 +12,7 @@ import {
 
 const testId = getRandomId();
 
-test('Need to come up with a name', async ({ page }) => {
+test('Elements attached to a workflow cannot be deleted from form', async ({ page }) => {
 
     // Create the form and add sections
     const formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
