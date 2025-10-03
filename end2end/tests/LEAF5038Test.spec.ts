@@ -5,7 +5,9 @@ import {
   createTestForm,
   loadForm,
   loadWorkflow,
-  addFormQuestion
+  addFormQuestion,
+  deleteTestFormByFormID,
+  createBaseTestWorkflow
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
 const testId = getRandomId();
@@ -19,74 +21,84 @@ test('Need to come up with a name', async ({ page }) => {
     const textSectionID = await addFormQuestion(page, 'Add Section', 'Single line text', 'Single line text');
 
     // Create workflow
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-
     const workflowName = `workflow_name_${testId}`;
-    await page.getByRole('button', { name: 'New Workflow' }).click();
-    await page.getByLabel('Workflow Title:').fill(workflowName);
-    const saveButton = await page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    const stepTitle = "Step 1";
+    const workflowAndStepIDs = await createBaseTestWorkflow(page, workflowName, stepTitle);
+    const workflowID = workflowAndStepIDs[0];
+    console.log("The workflow ID is " + workflowID);
 
     // Attach workflow to form
     await loadForm(page, formEditorFieldsFormID);
-    await page.getByLabel('Workflow: No Workflow. Users').selectOption('5');
+    await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowID);
 
-    // Create Step
-    await loadWorkflow(page, '5');
-    await page.getByRole('button', { name: 'New Step' }).click();
-
-    const stepTitle = "Step 1";
-    await page.getByLabel('Step Title:').fill(stepTitle);
-    saveButton.click();
-
+    // Go back to the workflow
+    await loadWorkflow(page, workflowID);
     const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
-    await expect(stepElement).toBeInViewport();
-
-    // Hover over the new step and drag it to the desired position
-    await stepElement.hover();
-    await page.mouse.down();
-    await page.mouse.move(300, 300);
-    await page.mouse.up();
-
-    // Locate connectors and drag them to connect steps
-    const stepConnector = page.locator('.jtk-endpoint').nth(0);
-    const requestorConnector = page.locator('.jtk-endpoint').nth(1);
-    const endConnector = page.locator('.jtk-endpoint').nth(2);
-
-    await requestorConnector.dragTo(stepConnector);
-    await expect(page.getByText('Submit')).toBeInViewport();
-
-    await stepConnector.dragTo(endConnector);
-
-    // Wait for the "Create New Workflow Action" dialog and save the action
-    const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
-    await expect(actionDialog).toBeVisible();  
-
-    // Save the workflow action and verify its visibility
-    await saveButton.click();
-    await expect(page.getByText('Approve')).toBeInViewport();
-
-     // Add Data field and option to workflow
+    await expect(stepElement).toBeVisible();
     stepElement.click();
-    await page.getByRole('button', { name: 'Add Requirement' }).click();
+
+    // Add Person designated requirement
+    const addRequirement = await page.getByRole('button', { name: 'Add Requirement' });
+    await expect(addRequirement).toBeVisible()
+    await addRequirement.click();
+
     await page.getByLabel('Add requirement to a workflow').locator('a').click();
     await page.getByRole('option', { name: 'Person Designated by the' }).click();
+    
+    const saveButton = await page.getByRole('button', { name: 'Save' });
     saveButton.click();
 
-    await page.getByRole('button', { name: 'Set Data Field' }).click();
-    saveButton.click();
-    
-    stepElement.click();
+    // Set the Available Person data field
+    const setDataField = await page.getByRole('button', { name: 'Set Data Field' });
+    await expect(setDataField).toBeVisible();
+    setDataField.click();
+
+    await expect(page.getByText('Set Indicator ID')).toBeVisible();
+    await page.locator('#indicatorID').selectOption('54');
+    await saveButton.click();
+    await expect(stepElement).toBeVisible();
+
+    // Set the Single Line Text form field
+    await stepElement.click();
     await page.getByLabel('Form Field:').selectOption('56');
-    stepElement.click();
+    await stepElement.click();
     
+    // Confirm that the Input Form and Delete/Archive options are not available on Assigned Person
+    await loadForm(page, formEditorFieldsFormID);
+    await expect(page.getByText('Assigned Person')).toBeVisible();
+    await page.getByTitle('edit indicator 54').click();
+    await expect(page.locator('#input-format')).toContainText('This field is used in a workflow and must be removed from there before you can change its format.');
+    await expect(page.locator('#indicator-editing-attributes')).toContainText('This field is used in a workflow and must be removed from there before you can Archive or Delete it.');
+    await page.getByRole('button', { name: 'Cancel' }).click();
 
-    // Confirm that the Input Form and Delete/Archive options are not available
+    // Confirm the Archive and Delete are not available on the Single Line Text
+    await page.getByTitle('edit indicator 56').click();
+    await expect(page.locator('#indicator-editing-attributes')).toContainText('This field is used in a workflow and must be removed from there before you can Archive or Delete it.');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // Confirm the Archive/Delete and Input Dropdown are avaiable on the Assigned Group
+    await page.getByTitle('edit indicator 55').click();
+    await expect(page.getByText('Input Format')).toBeVisible();
+    await expect(page.getByText('Archive', { exact: true })).toBeVisible();
+    await expect(page.getByText('Delete', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click();
 
     // Delete the step from the workflow
+    await loadWorkflow(page, workflowID);
+    await expect(stepElement).toBeVisible();
+    stepElement.click();
+
+    await expect(page.locator('#stepInfo_10').getByText('Step 1')).toBeVisible();
+    await page.getByLabel('Remove Step').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await expect(stepElement).not.toBeVisible();
 
     // Delete the form
+    await deleteTestFormByFormID(page, formEditorFieldsFormID);
 
     // Delete the workflow
+    await loadWorkflow(page, workflowID);
+    await page.getByRole('button', { name: 'Delete Workflow' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
     
 });
