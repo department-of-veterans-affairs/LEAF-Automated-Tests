@@ -131,7 +131,9 @@ import { test, expect, Page } from '@playwright/test';
     
     const nowTimeStamp = new Date();
     const currentTimeStamp = nowTimeStamp.toLocaleTimeString();
-    console.log(currentTimeStamp);
+    let timeSplit = currentTimeStamp.split(" ", 2 );
+    const updatedCurrentTimeStamp = timeSplit[0];
+    console.log(updatedCurrentTimeStamp);
     
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
 
@@ -154,12 +156,12 @@ import { test, expect, Page } from '@playwright/test';
             
          console.log('Row ID:', cellTime);
 
-         let timeSplit = cellTime.split("\n", 3 );
+         let timeSplit = cellTime.split(" ", 2 );
         const currentTimeStamped = timeSplit[1];
         console.log('Row ID:', currentTimeStamped);
 
          //Verify message is displayed when less than 25 chars
-         if (currentTimeStamped.includes(currentTimeStamp))
+         if (currentTimeStamped.includes(updatedCurrentTimeStamp))
          {
                 console.log(`NPassed`);
             } else{
