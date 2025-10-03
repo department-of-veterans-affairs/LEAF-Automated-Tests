@@ -1,12 +1,13 @@
-import { test, expect, Locator } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { getRandomId } from '../leaf_test_utils/leaf_util_methods.ts';
 
 //Run test in order
 test.describe.configure({ mode: 'serial' });
 
+const testPositionID = getRandomId();
 
 //View Organizational Chart
-test ('View Organizational Charts', async ({ page}, testinfo) => {
-  
+test('Nexus View Organizational Charts link is functional', async ({ page}, testinfo) => {
   await page.goto('https://host.docker.internal/Test_Nexus/');
 
   //Wait for page to Load
@@ -21,25 +22,26 @@ test ('View Organizational Charts', async ({ page}, testinfo) => {
   await testinfo.attach('Org Chart', { body: newOrgChart, contentType: 'image/png' });
  
 });
-// End of Organizational Chart
 
 
-//View Organization Details
-test ('View Organization Details', async ({ page}, testinfo) => {
+test('View Organization Details', async ({ page}, testinfo) => {
+  await page.goto('https://host.docker.internal/Test_Nexus/');
+  await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
+  await page.getByText('Browser View Organizational').click();
 
-    await page.goto('https://host.docker.internal/Test_Nexus/');
+  //View Organizational Charts
+  await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible();
 
-    //Wait for page to Load
-    await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
-    await page.getByText('Browser View Organizational').click();
- 
-    //View Organizational Charts
-    await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible();
-    await page.getByRole('button', { name: 'Assistant Director', exact: true }).click();
-    await page.getByRole('button', { name: 'Assistant Director', exact: true }).hover();
- 
-  //View Cheif of Staff Director Details Page
-  await page.getByRole('link', { name: 'View Details' }).click();
+  //Nav to Details Page
+  const positionTitle = 'Assistant Director';
+  const cardBtn = page.getByRole('button', { name: positionTitle, exact: true });
+  const card = page.locator('div[id^="pos"].positionSmall').filter({ has: cardBtn });
+  const cardLink = card.getByRole('link', { name: 'View Details' });
+  await expect(cardBtn).toBeVisible();
+  await cardBtn.hover();
+  await expect(cardLink).toBeVisible();
+  await cardLink.click();
+
   await expect(page.locator('#maincontent')).toBeVisible();
   //Display More Information
   await page.locator('#positionBody').getByRole('button', { name: 'Show_all_fields' }).click();
@@ -57,11 +59,9 @@ test ('View Organization Details', async ({ page}, testinfo) => {
   const newOrgDetails = await page.screenshot();
   await testinfo.attach('Org Details', { body: newOrgDetails, contentType: 'image/png' });
 });
-//View Card Details
 
 
-//Relocate cards
-test ('Relocate Cards', async ({ page}, testinfo) => {
+test('Relocate Cards', async ({ page}, testinfo) => {
  await page.goto('https://host.docker.internal/Test_Nexus/');
 
    //Wait for page to Load
@@ -107,72 +107,61 @@ test ('Relocate Cards', async ({ page}, testinfo) => {
   const newCardMove = await page.screenshot();
   await testinfo.attach('Card Move', { body: newCardMove, contentType: 'image/png' });
 
-  });
+});
 
 test('Add Subordinate', async ({ page}, testInfo ) => {
   await page.goto('https://host.docker.internal/Test_Nexus/');
-
-  // Wait for homepage to load
-  await expect(
-    page.getByText("Browser View Organizational Charts Service Org. Chart View your service's Org.")
-  ).toBeVisible({ timeout: 30000 });
-
+  await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
   await page.getByText('Browser View Organizational').click();
 
   // Wait for Edit Orgchart button
-  await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole('button', { name: 'Edit Orgchart' })).toBeVisible();
   await page.getByRole('button', { name: 'Edit Orgchart' }).click();
 
-  // Zoom In and find position
-  await expect(page.getByRole('button', { name: 'Zoom In' })).toBeVisible({ timeout: 30000 });
-  const chiefBtn = page.getByRole('button', { name: 'Chief of Everything' });
-  await expect(chiefBtn).toBeVisible();
-  await chiefBtn.hover();
-
-  // Click "Add Subordinate"
-  // const addSubBtn = page.getByRole('button', { name: 'Add Subordinate' });
-  const addSubBtn = page.locator(`button[onclick="addSubordinate(3)"]`);
+  // Find position for test update
+  const positionTitle = 'Chief of Everything';
+  const cardBtn = page.getByRole('button', { name: positionTitle, exact: true });
+  const card = page.locator('div[id^="pos"].positionSmall').filter({ has: cardBtn });
+  const addSubBtn = card.getByRole('button', { name: 'Add Subordinate' });
+  await expect(cardBtn).toBeVisible();
+  await cardBtn.hover();
   await expect(addSubBtn).toBeVisible();
   await addSubBtn.click();
 
   // Fill the subordinate info
   const titleInput = page.getByLabel('Full Position Title:');
-  await expect(titleInput).toBeVisible({ timeout: 30000 });
-  await titleInput.fill('Medical Tech Test');
-
+  await expect(titleInput).toBeVisible();
+  await titleInput.fill(testPositionID);
   await page.getByRole('button', { name: 'Save Change' }).click();
 
   // Verify the subordinate card appears
-  const newCard = page.getByRole('button', { name: 'Medical Tech Test' });
-  await expect(newCard).toBeVisible({ timeout: 10000 });
+  const newCard = page.getByRole('button', { name: testPositionID });
+  await expect(newCard).toBeVisible();
 
   // Screenshot for validation
   const newCardCreated = await page.screenshot();
   await testInfo.attach('Card Create', { body: newCardCreated, contentType: 'image/png' });
 });
 
-// New Subordinate
-
 
 // Remove Position
-test ('Remove Position', async ({ page}, testinfo) => {
-
+test('Remove Position', async ({ page}, testinfo) => {
   await page.goto('https://host.docker.internal/Test_Nexus/');
-
-  //Wait for page to Load
   await expect(page.getByText('Browser View Organizational Charts Service Org. Chart View your service\'s Org.')).toBeVisible();
- 
   await page.getByText('Browser View Organizational').click();
-
-  //Select a card
-  await expect(page.getByRole('button', { name: 'Medical Tech Test' })).toBeVisible();
-  await page.getByRole('button', { name: 'Medical Tech Test' }).click();
 
   //View Details
   await page.getByRole('button', { name: 'Edit Orgchart' }).click();
-  await page.getByRole('button', { name: 'Medical Tech Test ' }).hover();
 
-  await page.getByRole('link', { name: 'View Details' }).click();
+  const positionTitle = testPositionID;
+  const cardBtn = page.getByRole('button', { name: positionTitle, exact: true });
+  const card = page.locator('div[id^="pos"].positionSmall').filter({ has: cardBtn });
+  const cardLink = card.getByRole('link', { name: 'View Details' });
+  await expect(cardBtn).toBeVisible();
+  await cardBtn.hover();
+  await expect(cardLink).toBeVisible();
+  await cardLink.click();
+  await expect(page.locator('#maincontent')).toBeVisible();
 
   //Remove Position
   await page.getByRole('button', { name: 'Delete Position Delete' }).click();
@@ -186,9 +175,7 @@ test ('Remove Position', async ({ page}, testinfo) => {
   //Return to the main page
   await page.getByRole('link', { name: 'Main Page' }).click();
   await page.getByText('Browser').click();
-
-     //Verify remove
-  await expect(page.getByRole('button', { name: 'Medical Tech Test' })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: testPositionID })).not.toBeVisible();
 
   //Screenshot Card is removed
   const newCardRemoved = await page.screenshot();
