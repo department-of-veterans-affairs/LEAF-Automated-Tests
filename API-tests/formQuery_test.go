@@ -794,7 +794,7 @@ func TestValidAuthorizationToken(t *testing.T) {
 	var formRes FormQueryResponse
 	err = json.Unmarshal(b, &formRes)
 	if err != nil {
-		t.Error(err)
+		t.Error(err, string(b))
 	}
 
 	if len(formRes) == 0 {
