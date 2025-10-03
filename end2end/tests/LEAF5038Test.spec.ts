@@ -3,6 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 import {
   getRandomId,
   createTestForm,
+  selectChosenDropdownOption,
   loadForm,
   loadWorkflow,
   addFormQuestion,
@@ -25,7 +26,7 @@ test('Elements attached to a workflow cannot be deleted from form', async ({ pag
     const stepTitle = "Step 1";
     const workflowAndStepIDs = await createBaseTestWorkflow(page, workflowName, stepTitle);
     const workflowID = workflowAndStepIDs[0];
-    console.log("The workflow ID is " + workflowID);
+    //console.log("The workflow ID is " + workflowID);
 
     // Attach workflow to form
     await loadForm(page, formEditorFieldsFormID);
@@ -42,8 +43,9 @@ test('Elements attached to a workflow cannot be deleted from form', async ({ pag
     await expect(addRequirement).toBeVisible()
     await addRequirement.click();
 
-    await page.getByLabel('Add requirement to a workflow').locator('a').click();
-    await page.getByRole('option', { name: 'Person Designated by the' }).click();
+    // await page.getByLabel('Add requirement to a workflow').locator('a').click();
+    // await page.getByRole('option', { name: 'Person Designated by the' }).click();
+    await selectChosenDropdownOption(page, '#dependencyID_chosen', 'Person Designated by the Requestor');
     
     const saveButton = await page.getByRole('button', { name: 'Save' });
     saveButton.click();
