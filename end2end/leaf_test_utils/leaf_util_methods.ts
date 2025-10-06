@@ -11,6 +11,10 @@ export const LEAF_URLS = {
   MASS_ACTION: 'https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action',
   PRINTVIEW_REQUEST: 'https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=',
   EDITVIEW_REQUEST: 'https://host.docker.internal/Test_Request_Portal/index.php?a=view&recordID=',
+  ACCOUNT_UPDATER: 'https://host.docker.internal/Test_Request_Portal/admin/?a=mod_account_updater',
+
+  NEXUS_HOME: 'https://host.docker.internal/Test_Nexus/',
+
   EMAIL_SERVER: 'http://host.docker.internal:5080/'
 }
 
