@@ -55,7 +55,7 @@ const verifySwaps = async (page:Page) => {
   await expect(page.locator('#positions_updated > div')).toHaveCount(originalPositions.length);
 }
 
-test.describe('use Account Updater to swap request, fields, groups and positions', () => {
+test.describe('Account Updater functionalities', () => {
   test('lookup user account from nexus', async ({ page }) => {
     await page.goto(LEAF_URLS.NEXUS_HOME);
     await expect(page.getByText('Search Available Search')).toBeVisible();
@@ -178,5 +178,46 @@ test.describe('use Account Updater to swap request, fields, groups and positions
 
     await page.getByRole('button', { name: 'Update Records' }).click();
     await verifySwaps(page);
+  });
+
+  test('test page behavior when no groups or positions are found, no field updates', async ({ page }) => {
+    /* already synced in above tests */
+    await page.goto(LEAF_URLS.ACCOUNT_UPDATER);
+
+    fromUser = {
+      username: 'vtrmvtlynnette',
+      userDisplay: 'Jacobs, Gilbert Wilderman.',
+    };
+    toUser = {
+      username: 'vtrkmwroseann',
+      userDisplay: 'Greenholt, Shirlene Parisian',
+    }
+
+    await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
+    await page.getByRole('cell', { name: fromUser.userDisplay }).click();
+
+    await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
+    await page.getByRole('cell', { name: toUser.userDisplay }).click();
+
+    await expect(page.getByText('New Account Search results')).toBeVisible();
+    await page.getByRole('button', {name: 'Preview Changes'}).click();
+    await expect(page.getByRole('button', { name: 'Update Records'})).toBeVisible();
+    await page.waitForLoadState('networkidle');
+
+    //do not move employee fields
+    const gridEmployee = page.locator('#grid_orgchart_employee th input');
+    await expect(gridEmployee).toBeVisible();
+    await gridEmployee.click();
+    await expect(gridEmployee).not.toBeChecked();
+
+    await expect(page.locator('#grid_groups_info')).toContainText('No groups found');
+    await expect (page.locator('#grid_positions_info')).toContainText('No Positions found');
+
+    await page.getByRole('button', { name: 'Update Records' }).click();
+
+    await expect(page.locator('#orgchart_no_updates')).toContainText('no updates');
+    await expect(page.locator('#groups_no_updates')).toContainText('no updates');
+    await expect(page.locator('#positions_no_updates')).toContainText('no updates');
+    await expect(page.locator('#no_errors')).toContainText('no errors');
   });
 })
