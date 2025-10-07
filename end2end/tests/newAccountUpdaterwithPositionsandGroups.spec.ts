@@ -55,21 +55,21 @@ const verifySwaps = async (page:Page) => {
   await expect(page.locator('#positions_updated > div')).toHaveCount(originalPositions.length);
 }
 
-//Check to make sure the inital user
 test.describe('use Account Updater to swap request, fields, groups and positions', () => {
-  test('check User Account', async ({ page }) => {
+  test('lookup user account from nexus', async ({ page }) => {
     await page.goto(LEAF_URLS.NEXUS_HOME);
     await expect(page.getByText('Search Available Search')).toBeVisible();
 
-    //Search Nexus for the user account
     await page.getByLabel('Search', { exact: true }).click();
     await page.keyboard.type(`username.disabled:${fromUser.username}`);
     await expect(page.locator('#employeeBody')).toBeVisible();
     await page.getByRole('link', { name: fromUser.userDisplay}).click();
-    await expect(page.locator('#maincontent')).toBeVisible();
   
-    //Verify user have positions assigned
-    await expect(page.getByText('Position Assignments Chief of')).toBeVisible();
+    //Verify account page and that user has positions assigned
+    await expect(page.locator('#employeeAccount')).toHaveText(fromUser.username);
+    await expect(page.getByText('Position Assignments')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#positionBody ul li')).toHaveCount(originalPositions.length);
   });
 
   test('swap requestor, employee field, groups and positions', async ({ page }) => {
@@ -90,6 +90,7 @@ test.describe('use Account Updater to swap request, fields, groups and positions
 
     await expect(page.getByText('New Account Search results')).toBeVisible();
     await page.getByRole('button', {name: 'Preview Changes'}).click();
+    await expect(page.getByRole('button', { name: 'Update Records'})).toBeVisible();
     await page.waitForLoadState('networkidle');
 
     //tables and export buttons exist.  There is at least one row expected for each
@@ -132,14 +133,14 @@ test.describe('use Account Updater to swap request, fields, groups and positions
 
     await expect(page.getByText('New Account Search results')).toBeVisible();
     await page.getByRole('button', {name: 'Preview Changes'}).click();
+    await expect(page.getByRole('button', { name: 'Update Records'})).toBeVisible();
     await page.waitForLoadState('networkidle');
 
     /*
     Where possible (Requestor swap is not optional), use checkboxes to swap orig values.
     */
     for (let i = 0; i < gridContainerIDs.length; i++) {
-      const id = gridContainerIDs[i];
-      const gridLoc = page.locator(id);
+      const gridLoc = page.locator(gridContainerIDs[i]);
       await expect(gridLoc.getByRole('button', { name: 'Export' })).toBeVisible();
       await expect(gridLoc.locator('table tbody tr').first()).toBeVisible();
       if (i === 0) { //there is no checkbox for requestor swap table
