@@ -309,7 +309,7 @@ export const createBaseTestWorkflow = async (
   await page.reload();
   await stepElement.hover();
   await page.mouse.down();
-  await page.mouse.move(300, 300);
+  await page.mouse.move(400, 300);
   await page.mouse.up();
 
   //set the requestor -> step submit route
