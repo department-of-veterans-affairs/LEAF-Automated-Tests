@@ -13,17 +13,43 @@ const originalPositions:Array<string> = [
   'LEAF Coaches', 'Chief of Everything', 'Chief, Facilties', 'Dog Sitter West Region'
 ];
 
-let fromUser = {
+interface UserInfo {
+  username: string;
+  userDisplay: string;
+}
+
+let fromUser:UserInfo = {
   username: 'vtrfaufelecia',
   userDisplay: 'Schultz, Phuong Boyer.',
 };
-let toUser = {
+let toUser:UserInfo = {
   username: 'vtrvxhconception',
   userDisplay: 'Predovic, Augustine Hammes.',
 };
 
 /**
- * Confirm outcome of account updater action.  This method is only used in this test.
+ * Set from and to accounts and preview results.
+ * @param page page instance of the test
+ * @param fromUser from account info
+ * @param toUser to account info
+ */
+const fillAndPreview = async (page:Page, fromUser:UserInfo, toUser:UserInfo) => {
+    await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
+    await page.getByRole('cell', { name: fromUser.userDisplay }).click();
+
+    await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
+    await page.getByRole('cell', { name: toUser.userDisplay }).click();
+
+    await expect(page.getByText('New Account Search results')).toBeVisible();
+    await page.getByRole('button', {name: 'Preview Changes'}).click();
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('button', { name: 'Update Records' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start Over' })).toBeVisible();
+}
+
+/**
+ * Confirm outcome of account updater action.
  * @param page page instance of the test
  */
 const verifySwaps = async (page:Page) => {
@@ -81,17 +107,7 @@ test.describe('Account Updater functionalities', () => {
     const syncPage = await syncPromise;
     await expect(syncPage.getByText('Syncing has finished. You are set to go.')).toBeVisible();
 
-    //fill from and to account names
-    await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
-    await page.getByRole('cell', { name: fromUser.userDisplay }).click();
-
-    await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
-    await page.getByRole('cell', { name: toUser.userDisplay }).click();
-
-    await expect(page.getByText('New Account Search results')).toBeVisible();
-    await page.getByRole('button', {name: 'Preview Changes'}).click();
-    await expect(page.getByRole('button', { name: 'Update Records'})).toBeVisible();
-    await page.waitForLoadState('networkidle');
+    await fillAndPreview(page, fromUser, toUser);
 
     //tables and export buttons exist.  There is at least one row expected for each
     for (let i = 0; i < gridContainerIDs.length; i++) {
@@ -101,7 +117,6 @@ test.describe('Account Updater functionalities', () => {
     }
 
     //Accept changes - swap everything for this first test
-
     await page.getByRole('button', { name: 'Update Records' }).click();
     await verifySwaps(page);
   });
@@ -125,16 +140,7 @@ test.describe('Account Updater functionalities', () => {
       userDisplay: 'Schultz, Phuong Boyer.',
     }
 
-    await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
-    await page.getByRole('cell', { name: fromUser.userDisplay }).click();
-
-    await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
-    await page.getByRole('cell', { name: toUser.userDisplay }).click();
-
-    await expect(page.getByText('New Account Search results')).toBeVisible();
-    await page.getByRole('button', {name: 'Preview Changes'}).click();
-    await expect(page.getByRole('button', { name: 'Update Records'})).toBeVisible();
-    await page.waitForLoadState('networkidle');
+    await fillAndPreview(page, fromUser, toUser);
 
     /*
     Where possible (Requestor swap is not optional), use checkboxes to swap orig values.
@@ -146,9 +152,15 @@ test.describe('Account Updater functionalities', () => {
       if (i === 0) { //there is no checkbox for requestor swap table
         await expect(gridLoc.locator('th input')).not.toBeVisible();
       } else {
+        //uncheck all requests
         await expect(gridLoc.locator('th input')).toBeVisible();
         await gridLoc.locator('th input').click();
         await expect(gridLoc.locator('th input')).not.toBeChecked();
+        //confirm all checkboxes are unchecked before updating specific requests;
+        const gridRows = await gridLoc.getByRole('row').all();
+        for (let i = 0; i < gridRows.length; i++) {
+          await expect(gridRows[i].getByRole('checkbox')).not.toBeChecked();
+        }
 
         switch(i) {
           case 1: //employee swaps
@@ -193,22 +205,17 @@ test.describe('Account Updater functionalities', () => {
       userDisplay: 'Greenholt, Shirlene Parisian',
     }
 
-    await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
-    await page.getByRole('cell', { name: fromUser.userDisplay }).click();
-
-    await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
-    await page.getByRole('cell', { name: toUser.userDisplay }).click();
-
-    await expect(page.getByText('New Account Search results')).toBeVisible();
-    await page.getByRole('button', {name: 'Preview Changes'}).click();
-    await expect(page.getByRole('button', { name: 'Update Records'})).toBeVisible();
-    await page.waitForLoadState('networkidle');
+    await fillAndPreview(page, fromUser, toUser);
 
     //do not move employee fields
     const gridEmployee = page.locator('#grid_orgchart_employee th input');
     await expect(gridEmployee).toBeVisible();
     await gridEmployee.click();
     await expect(gridEmployee).not.toBeChecked();
+    const gridRows = await page.locator('#grid_orgchart_employee').getByRole('row').all();
+    for (let i = 0; i < gridRows.length; i++) {
+      await expect(gridRows[i].getByRole('checkbox')).not.toBeChecked();
+    }
 
     await expect(page.locator('#grid_groups_info')).toContainText('No groups found');
     await expect (page.locator('#grid_positions_info')).toContainText('No Positions found');
