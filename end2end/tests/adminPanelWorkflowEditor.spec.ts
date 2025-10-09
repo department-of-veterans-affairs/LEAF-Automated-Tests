@@ -1,52 +1,22 @@
 import { test, expect } from '@playwright/test';
-test('Create a new workflow and add step', async ({ page }) => {
+import {
+    LEAF_URLS, getRandomId,
+    createBaseTestWorkflow, selectChosenDropdownOption
+} from '../leaf_test_utils/leaf_util_methods';
+
+test('Create a new workflow and add a step and an action', async ({ page }) => {
     // Generate unique workflow title
-    const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const testID = getRandomId();
+    const workflowTitle = `wf_${testID}`;
+    const initialStepName = `st_${testID}`;
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-
-    await page.locator('#btn_newWorkflow').click();
-
-    // Wait for the "Create new workflow" dialog to be visible
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await expect(workflowCreateDialog).toBeVisible();
-
-    await page.locator('#description').fill(workflowTitle);
-
-    const saveButton = page.locator('#button_save');
-    await saveButton.click();
-
-    // Assert that the newly created workflow is visible
-    await expect(page.locator('a').filter({ hasText: workflowTitle })).toBeVisible();
-
-    // Create a new step
-    await page.locator('#btn_createStep').click();
-
-    // Wait for the "Create new Step" dialog to be visible
-    const stepCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new Step")');
-    await expect(stepCreateDialog).toBeVisible();
-
-    const stepTitle = 'step1';
-    await page.locator('#stepTitle').fill(stepTitle);
-    await saveButton.click();
-
-    // Verify that the new step is visible
-    await page.reload();
-    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
-    await expect(stepElement).toBeInViewport();
-
-    // Hover over the new step and drag it to the desired position
-    await stepElement.hover();
-    await page.mouse.down();
-    await page.mouse.move(300, 300);
-    await page.mouse.up();
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    await createBaseTestWorkflow(page, workflowTitle, initialStepName);
 
     // Locate connectors and drag them to connect steps
     const stepConnector = page.locator('.jtk-endpoint').nth(0);
-    const requestorConnector = page.locator('.jtk-endpoint').nth(1);
     const endConnector = page.locator('.jtk-endpoint').nth(2);
 
-    await requestorConnector.dragTo(stepConnector);
     await expect(page.getByText('Submit')).toBeInViewport();
 
     await stepConnector.dragTo(endConnector);
@@ -54,18 +24,20 @@ test('Create a new workflow and add step', async ({ page }) => {
     // Wait for the "Create New Workflow Action" dialog and save the action
     const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
     await expect(actionDialog).toBeVisible();
+    await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
 
-    // Save the workflow action and verify its visibility
-    await saveButton.click();
+    // verify its visibility
+    await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Approve')).toBeInViewport();
 });
 
 test('Rename workflow', async ({ page }) => {
     // Generate unique workflow title
-    const initialWorkflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
-    const updatedWorkflowTitle = `Updated_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const testID = getRandomId();
+    const initialWorkflowTitle = `New_Workflow_${testID}`;
+    const updatedWorkflowTitle = `Updated_Workflow_${testID}`;
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
 
     await page.locator('#btn_newWorkflow').click();
 
@@ -99,9 +71,10 @@ test('Rename workflow', async ({ page }) => {
 
 test('View workflow history', async ({ page }) => {
     // Generate unique workflow title
-    const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const testID = getRandomId();
+    const workflowTitle = `New_Workflow_${testID}`;
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
 
     await page.locator('#btn_newWorkflow').click();
 
@@ -128,14 +101,14 @@ test('View workflow history', async ({ page }) => {
 });
 
 
-test('Copy workflow', async ({ page }) => {
+test('create a requestor to end workflow, copy it, then delete the copy', async ({ page }) => {
     // Generate unique workflow title for original and copied workflow
-    const originalWorkflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const testID = getRandomId();
+    const originalWorkflowTitle = `New_Workflow_${testID}`;
     const copiedWorkflowTitle = `Copy_of_${originalWorkflowTitle}`;
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
 
-    // Click on the 'Create new workflow' button to open the workflow creation dialog
     await page.locator('#btn_newWorkflow').click();
 
     // Wait for the "Create new workflow" dialog to be visible
@@ -171,9 +144,11 @@ test('Copy workflow', async ({ page }) => {
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).toBeVisible();
     await page.waitForLoadState('domcontentloaded');
     await expect(page.getByText('Submit', { exact: true })).toBeVisible();
-    await page.click("div.jtk-overlay");
-    await page.locator("div.workflowStepInfo button.buttonNorm").last().click();
-    await page.click("span#confirm_saveBtnText:first-child");
+
+    //remove submit action and then delete
+    await page.locator("div.jtk-overlay", { hasText: 'Submit'}).click();
+    await page.getByRole('button', { name: 'Remove Action' }).click();
+    await page.click("span#confirm_saveBtnText:visible");
 
     const deleteButton = page.locator('#btn_deleteWorkflow');
     await expect(deleteButton).toBeVisible();
@@ -181,67 +156,61 @@ test('Copy workflow', async ({ page }) => {
 
     await expect(page.getByText('Confirmation required')).toBeVisible();
     await page.locator('#confirm_button_save').click();
+
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).not.toBeVisible();
 });
 
 test('Create a read only workflow step', async ({ page }) => {
-    // Generate a unique workflow name
-    const workflowName = `New_Workflow_${Math.floor(Math.random() * 1000)}`;
-
-    // Define locators for elements used in the test
-    const workflowDropdown = page.locator('#workflows_chosen');
-    const workflowInList = page.locator(`ul#workflows-chosen-search-results li:has-text("${workflowName}")`);
-    const saveButton = page.locator('#button_save');
-    const closeModal = page.locator('#closeModal');
-    const newStep = page.getByRole('button', { name: 'Step1' });
-    const stepRequirements = page.locator('#step_requirements');
+    const testID = getRandomId();
+    const workflowName = `New_Workflow_${testID}`;
+    const initStepName = `New_step_${testID}`;
+    const readOnlyStepName = `ro_step_${testID}`;
+    const requirementOption = 'Group Designated by the Requestor';
 
     // Navigate to the workflow editor page
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
     await expect(page.locator('#workflow_editor')).toBeVisible();
 
-    // Click to create a new workflow
-    await page.locator('#btn_newWorkflow').click();
-    await expect(page.getByText('Create new workflow')).toBeVisible();
+    const [ wfID, initStepID ] = await createBaseTestWorkflow(page, workflowName, initStepName);
 
-    // Enter the workflow name and save
-    await page.locator('#description').fill(workflowName);
-    await saveButton.click();
-
-    // Validate if the newly created workflow is visible in the dropdown
-    await workflowDropdown.click();
-    await expect(page.locator('#workflows-chosen-search-results')).toBeVisible();
-    await expect(workflowInList).toBeVisible();
-    await workflowDropdown.click();
+    // Validate if the newly created workflow is visible and selectable in the dropdown
+    const workflowOption = workflowName + ` (ID: #${wfID})`;
+    await selectChosenDropdownOption(page, '#workflows_chosen', workflowOption);
+    await expect(page.locator('#step_' + initStepID)).toBeVisible();
 
     // Create a new step in the workflow
     await page.locator('#btn_createStep').click();
     await expect(page.getByText('Create new Step')).toBeVisible();
-    await page.locator('#stepTitle').fill('Step1');
-    await saveButton.click();
+    await page.locator('#stepTitle').fill(readOnlyStepName);
+    const awaitStepSave = page.waitForResponse(res =>
+        res.url().includes(`workflow/${wfID}/step`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    const newStepRes = await awaitStepSave;
+    const roStepID = (await newStepRes.text() ?? '').replaceAll('"', '');
 
     // Verify the step is visible and move it within the editor
-    await expect(newStep).toBeVisible();
+    const roStepBtn = page.getByRole('button', { name: readOnlyStepName });
+    await expect(roStepBtn).toBeVisible();
     await page.reload();
-    await newStep.hover();
+    await roStepBtn.hover();
     await page.mouse.down();
-    await page.mouse.move(300, 300);
+    await page.mouse.move(600, 300);
     await page.mouse.up();
 
-    // Verify modal is visible and add a requirement to the step
-    await expect(closeModal).toBeVisible();
+    // Verify modal is visible after dragging it and add a requirement to the step
+    await expect(page.getByRole('heading', { name: `stepID: #${roStepID}` })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add Requirement' })).toBeVisible();
     await page.getByRole('button', { name: 'Add Requirement' }).click();
     await expect(page.getByText('Add requirement to a workflow step')).toBeVisible();
 
-    // Select a requirement from the dropdown
-    await page.locator('#dependencyID_chosen').click();
-    await page.locator("#dependencyID-chosen-search-result-4").click();
-    await saveButton.click();
+    await selectChosenDropdownOption(page, '#dependencyID_chosen', requirementOption);
+    await page.getByRole('button', { name: 'Save' }).click();
 
     // Reopen the step modal and verify the requirement was added
     await page.reload();
-    await newStep.click();
-    await expect(stepRequirements).toContainText('Group Designated by the Requestor');
+    await roStepBtn.click();
+    await expect(page.locator('#step_requirements')).toContainText(requirementOption);
 });
 
 test('Create a new workflow and delete it', async ({ page }) => {
@@ -255,7 +224,7 @@ test('Create a new workflow and delete it', async ({ page }) => {
     const deleteWorkflowButton = page.locator('#btn_deleteWorkflow');
     const confirmDeleteButton = page.locator('#confirm_button_save');
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
 
     // Create new workflow
     await newWorkflowButton.click();
@@ -286,7 +255,7 @@ test('Remove Workflow Action', async ({ page }) => {
     const saveButton = page.locator('#button_save');
     const workflowDropdown = page.locator('#workflows_chosen');
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
 
     await newWorkflowButton.click();
     await expect(workflowCreateDialog).toBeVisible();
@@ -350,58 +319,40 @@ test('Remove Workflow Action', async ({ page }) => {
 
 test('Add email reminder to a step by specific days', async ({ page }) => {
     // Generate unique workflow title
-    const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
-    const stepTitle = 'step1';
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    const stepCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new Step")');
+    const testID = getRandomId();
+    const workflowTitle = `reminder_wf_${testID}`;
+    const stepTitle =  `reminder_st_${testID}`;
+
     const saveButton = page.locator('#button_save');
     const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
     const stepConnector = page.locator('.jtk-endpoint').nth(0);
-    const requestorConnector = page.locator('.jtk-endpoint').nth(1);
     const endConnector = page.locator('.jtk-endpoint').nth(2);
     const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
-    const emailReminderButton = page.getByRole('button', { name: 'Email Reminder' });
+    const emailDays = '5';
 
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-    await page.locator('#btn_newWorkflow').click();
-    await expect(workflowCreateDialog).toBeVisible();
-    await page.locator('#description').fill(workflowTitle);
-    await saveButton.click();
-    await expect(page.locator('a').filter({ hasText: workflowTitle })).toBeVisible();
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    await createBaseTestWorkflow(page, workflowTitle, stepTitle);
 
-    await page.locator('#btn_createStep').click();
-    await expect(stepCreateDialog).toBeVisible();
-    await page.locator('#stepTitle').fill(stepTitle);
-    await saveButton.click();
-
-    await page.reload();
-    await expect(stepElement).toBeInViewport();
-    await stepElement.hover();
-    await page.mouse.down();
-    await page.mouse.move(300, 300);
-    await page.mouse.up();
-
-    await requestorConnector.dragTo(stepConnector);
     await expect(page.getByText('Submit')).toBeInViewport();
     await stepConnector.dragTo(endConnector);
 
     await expect(actionDialog).toBeVisible();
+    await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
     await saveButton.click();
     await expect(page.getByText('Approve')).toBeInViewport();
 
     await stepElement.click();
     await expect(page.getByText(`Step: ${stepTitle}`)).toBeVisible();
-    await emailReminderButton.click();
+    await page.getByRole('button', { name: 'Email Reminder' }).click();
 
     await expect(page.getByLabel('Email Reminder')).toBeVisible();
     await page.locator('#edit_email_check').click();
-    await page.locator('#reminder_days').fill('5');
+    await page.locator('#reminder_days').fill(emailDays);
     await page.locator('#reminder_days_additional').fill('10');
     await saveButton.click();
 
-    const altText = `Email reminders will be sent after 5 Days of inactivity`;
+    const altText = `Email reminders will be sent after ${emailDays} Days of inactivity`;
     const reminderImage = stepElement.locator(`img[src*="appointment.svg"][alt="${altText}"]`);
-
     await expect(reminderImage).toBeVisible();
 });
 
@@ -423,13 +374,12 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
         { present: "Backlog", past: "Backlogged" },
     ];
     // Create a unique workflow name
-    const workflowTitle = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const testID = getRandomId();
+    const workflowTitle = `ux_wf_${testID}`;
+    const initialStep = `ux_step_${testID}`;
 
     // Go to the Workflow Builder and create a new workflow
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=1');
-    await page.getByRole('button', { name: 'New Workflow' }).click();
-    await page.getByLabel('Workflow Title:').fill(workflowTitle);
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
 
     // Add a new custom action 'Deny'
     let awaitActionSave = page.waitForResponse(res => res.url().includes('system/action') && res.status() === 200);
@@ -443,7 +393,6 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Does this action represent').selectOption('-1');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
     await awaitActionSave;
-
 
     awaitActionSave = page.waitForResponse(res => res.url().includes('system/action') && res.status() === 200);
     await page.waitForLoadState('networkidle');
@@ -487,58 +436,36 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     }
     await page.getByRole('button', { name: 'Cancel' }).click();
 
-    // Create a new step
-    await page.getByRole('button', { name: 'New Step' }).click();
-    await page.getByLabel('Step Title:').fill('Step 1');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    //create a workflow to test these actions on
+    await createBaseTestWorkflow(page, workflowTitle, initialStep);
+    await expect(page.getByText('Submit')).toBeVisible();
+    await expect(page.getByLabel(`workflow step: ${initialStep}`)).toBeVisible();
 
-    // Reload the page and verify the new step is visible
-    await page.reload();
-    const step1 = page.getByLabel('workflow step: Step 1');
-    await expect(step1).toBeVisible();
-
-    // Hover over the new step and drag it to the desired position
-    await step1.hover();
-    await page.mouse.down();
-    await page.mouse.move(400, 300);
-    await page.mouse.up();
-
-    // Close the Step modal that appears
-    await page.getByLabel('Close Modal').click();
-
-    // Do the same for a second step
+    // add a second step
     await page.getByRole('button', { name: 'New Step' }).click();
     await page.getByLabel('Step Title:').fill('Step 2');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
 
     const step2 = page.getByLabel('workflow step: Step 2');
     await expect(step2).toBeVisible();
-
     await step2.hover();
     await page.mouse.down();
     await page.mouse.move(800, 400);
     await page.mouse.up();
-
     await page.getByLabel('Close Modal').click();
 
     // Move the End step to align with Step 2
     const endStep = page.getByLabel('Workflow End');
     await expect(endStep).toBeVisible();
-
     await endStep.hover();
     await page.mouse.down();
     await page.mouse.move(800, 600);
     await page.mouse.up();
 
-    const requestorConnector = await page.locator('rect').nth(2);
-    const step1Connector = await page.locator('rect').first();
-    const step2Connector = await page.locator('rect').nth(1);
-    const endConnector = await page.locator('rect').nth(3);
-
-    // Connect the Requestor to Step 1 and verify the action 'Submit'
-    // is visible
-    await requestorConnector.dragTo(step1Connector);
-    await expect(page.getByText('Submit')).toBeVisible();
+    const requestorConnector = page.locator('rect').nth(2);
+    const step1Connector = page.locator('rect').first();
+    const step2Connector = page.locator('rect').nth(1);
+    const endConnector = page.locator('rect').nth(3);
 
     // Connect Step 1 back to the Requestor and verify it has
     // action "Return to Requestor"
@@ -547,42 +474,40 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
 
     // Connect Step 1 to Step 2 and give it the custom action "Reply"
     await step1Connector.dragTo(step2Connector);
-    await page.getByLabel('Create New Workflow Action').locator('a').click();
-    await page.getByRole('option', { name: 'Reply' }).click();
+    await selectChosenDropdownOption(page, '#actionType_chosen', 'Reply');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Reply')).toBeVisible();
 
     // Add another connector from Step 1 to Step 2 and give it the 
     // action "Backlog"
     await step1Connector.dragTo(step2Connector);
-    await page.getByLabel('Create New Workflow Action').locator('a').click();
-    await page.getByRole('option', { name: 'Backlog' }).click();
+    await selectChosenDropdownOption(page, '#actionType_chosen', 'Backlog');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
     await expect(page.getByText('Backlog')).toBeVisible();
 
     // Connect Step 2 to Step 1 and add the custom action "Deny"
     await step2Connector.dragTo(step1Connector);
-    await page.getByLabel('Create New Workflow Action').locator('a').click();
-    await page.getByRole('option', { name: 'Deny' }).click({ force: true });
+    await selectChosenDropdownOption(page, '#actionType_chosen', 'Deny');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
     await expect(page.getByText('Deny')).toBeVisible();
 
     // Connect Step 2 to the End and verify the "Approve"
     // action is added
     await step2Connector.dragTo(endConnector);
-    await page.getByLabel('Create New Workflow Action').locator('a').click();
+    await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
     await page.getByRole('button', { name: 'Save' }).click({ force: true });
     await expect(page.getByText('Approve')).toBeVisible();
 
     // Click on Step 1 and verify the modal is displayed
+    const step1 = page.getByLabel(`workflow step: ${initialStep}`);
     await step1.click();
     await expect(page.getByRole('button', { name: 'Add Requirement' })).toBeVisible();
     await page.getByLabel('Close Modal').click();
 
     // Click on the "Return to Requestor" action and verify that it contains 
     // the event "Email - Send Back Notification for Requestor"
-    await page.getByText('Return to Requestor').click();
-    const listItem = await page.getByText("Triggers these events").locator('ul').locator('li').first();
+    await page.getByText('Return to Requestor').click({ force: true });
+    const listItem = page.getByText("Triggers these events").locator('ul').locator('li').first();
     await expect(listItem).toHaveText("Email - Send Back Notification for Requestor");
     await page.getByLabel('Close Modal').click();
 
@@ -599,7 +524,4 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     // Delete the workflow
     await page.getByRole('button', { name: 'Delete Workflow' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
-
-    
 });
-
