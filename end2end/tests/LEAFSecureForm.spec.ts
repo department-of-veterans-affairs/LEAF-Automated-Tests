@@ -10,6 +10,7 @@ import { test, expect, Page } from '@playwright/test';
     const textBoxErrorMsg = 'Please provide a more detailed justification. Minimum 25 characters required.';
     const resubmitButton = page.getByRole('button', { name: 'Re-Submit Request' });
     const messageBoxText = page.getByRole('textbox',{name: 'Justification for collection' });
+    const myButton = page.locator('#nextQuestion');
 
     //Check to see if the API has runned if not only check for Save
 
@@ -34,12 +35,7 @@ import { test, expect, Page } from '@playwright/test';
         await page.getByRole('button', { name: 'Save Change' }).click();
     } else //Else Statement
     {
-        await expect(
-            page.getByRole('button', { name: 'Return to Requestor' }),
-            `Return to Requestor button is visible for Request ${requestId}`
-        ).toBeVisible();
-
-        //Verify Save 
+      //Verify Save 
         await page.getByRole('button', { name: 'Edit Justification for' }).click();
         await messageBoxText.press('ControlOrMeta+a');
         await messageBoxText.fill('Testing');
@@ -56,31 +52,35 @@ import { test, expect, Page } from '@playwright/test';
         await page.getByRole('button', { name: 'Save Change' }).click();
 
         //Verify Justification field save when editing the Form
+        await expect(
+            page.getByRole('button', { name: 'Return to Requestor' }),
+            `Return to Requestor button is visible for Request ${requestId}`
+        ).toBeVisible();
         await page.getByRole('button', { name: 'Return to Requestor' }).click();
+        await expect (page.getByText('Returned to Requestor')).toBeVisible();
         await page.reload();
-        await page.waitForLoadState('load');
+       // await page.waitForLoadState('load');
+
         await expect(
             page.getByRole('button', { name: 'Edit this form' }),
             `Edit the Form button is visible`
         ).toBeVisible();
      
         await page.getByRole('button', { name: 'Edit this form' }).click();
-        await expect(
-            page.locator('#nextQuestion'),
-        `Next Question is visible`
-        ).toBeVisible();
+        await page.waitForLoadState('load');
+
+        const element = page.locator('#xhr').filter({ hasText: 'userName:VTRSHHZOFIA' });
+        await element.waitFor();
+
+        await page.locator('#save_indicator').click();
         await page.locator('#nextQuestion').click();
-        
-        await expect(page.locator('#xhr'),
-        `Message Text is present above the Justification text box`
-        ).toContainText(messageText);
-    
-        const myButton = await page.locator('#nextQuestion');
+     
         const errorMessageLocator = page.getByText('Please provide a more');
         await messageBoxText.press('ControlOrMeta+a');
         await messageBoxText.fill('Testing');
         await myButton.click();
 
+        await expect(page.getByText(messageText).first()).toBeVisible();
         const errorMessageText = await errorMessageLocator.textContent();
 
         //Verify message is displayed when less than 25 chars
