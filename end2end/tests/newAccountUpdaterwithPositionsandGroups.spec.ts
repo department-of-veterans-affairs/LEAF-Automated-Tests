@@ -27,8 +27,9 @@ let toUser:UserInfo = {
   userDisplay: 'Predovic, Augustine Hammes.',
 };
 
+/** the two methods here are used only in this file */
 /**
- * Set from and to accounts and preview results.
+ * Set the from and to accounts and preview results.
  * @param page page instance of the test
  * @param fromUser from account info
  * @param toUser to account info
@@ -43,13 +44,14 @@ const fillAndPreview = async (page:Page, fromUser:UserInfo, toUser:UserInfo) => 
     await expect(page.getByText('New Account Search results')).toBeVisible();
     await page.getByRole('button', {name: 'Preview Changes'}).click();
     await page.waitForLoadState('networkidle');
+    await expect(page.getByText("Building report")).toHaveCount(0);
 
     await expect(page.getByRole('button', { name: 'Update Records' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Start Over' })).toBeVisible();
 }
 
 /**
- * Confirm outcome of account updater action.
+ * Confirm outcome of account updater swap tests.
  * @param page page instance of the test
  */
 const verifySwaps = async (page:Page) => {
@@ -122,7 +124,7 @@ test.describe('Account Updater functionalities', () => {
   });
 
   //Switch Groups & Positions back to the Disabled User
-  test('checkboxes can select fields, groups and positions', async ({ page }) => {
+  test('swap back - checkboxes can select fields, groups and positions', async ({ page }) => {
     await page.goto(LEAF_URLS.ACCOUNT_UPDATER);
 
     //Sync the Service first
