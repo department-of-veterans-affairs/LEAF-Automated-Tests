@@ -138,6 +138,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(massCancelTitle);
     await awaitQuery;
     await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
+    await expect(page.getByText("Building report")).toHaveCount(0);
 
     // Look for the specific checkboxes by row content (from original test pattern)
     for (let i = 0; i < cancelledRecords.length; i++) {
@@ -208,6 +209,7 @@ test.describe('LEAF - 4872, Cancel Submitted Request, Cancel unSubmitted Request
     await page.getByRole('textbox', { name: 'Enter your search text' }).fill(massCancelTitle);
     await awaitQuery;
     await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
+    await expect(page.getByText("Building report")).toHaveCount(0);
 
     const requestRow = page.getByRole('row', { name: new RegExp(`${requestId}.*General Form.*LEAF-4872`) });
     await expect(
