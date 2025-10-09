@@ -46,7 +46,7 @@ func TestPendingGroupDesignatedNames(t *testing.T) {
 
 	//group that does not exist in the portal for warning display
 	got = rec550["-3"].ApproverName
-	want = "Warning: Group has not been imported into the User Access Group"
+	want = "A User Group has not been selected for this action."
 	if !cmp.Equal(got, want) {
 		t.Errorf("dependency group 550 warning = %v, want = %v", got, want)
 	}
