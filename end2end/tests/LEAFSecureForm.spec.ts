@@ -8,49 +8,33 @@ import { test, expect, Page } from '@playwright/test';
     
     const messageText ='Minimum 25 characters required.';
     const textBoxErrorMsg = 'Please provide a more detailed justification. Minimum 25 characters required.';
-    const resubmitButton = page.getByRole('button', { name: 'Re-Submit Request' });
+    const returnRequestorButton = page.getByRole('button', { name: 'Return to Requestor' });
     const messageBoxText = page.getByRole('textbox',{name: 'Justification for collection' });
     const myButton = page.locator('#nextQuestion');
 
-    //Check to see if the API has runned if not only check for Save
+    //Verify Save
+        await expect(
+            page.getByRole('button', { name: 'Edit Justification for' }),
+            `Edit Justification Field is Present`
+            ).toBeVisible();
+        page.getByRole('button', { name: 'Edit Justification for' }).click();
+        await messageBoxText.press('ControlOrMeta+a');
+        await messageBoxText.fill('Testing');
+    
+        await expect(
+            page.locator('[id="-2_required"]')
+        ).toContainText(textBoxErrorMsg);
+        await expect(
+            page.getByRole('button', { name: 'Save Change' }),
+            `Save Change should be disabled when Justification is under 25 chars`
+        ).toBeDisabled();
+        await messageBoxText.press('ControlOrMeta+a');
+        await messageBoxText.fill(messageText);
+        await page.getByRole('button', { name: 'Save Change' }).click();
 
     // (await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();)
-    if( await resubmitButton.isVisible())
+    if(await returnRequestorButton.isVisible())
     {
-        console.log(`API has not run only testing the Save Function`);
-        //Verify Save 
-        await page.getByRole('button', { name: 'Edit Justification for' }).click();
-        await messageBoxText.press('ControlOrMeta+a');
-        await messageBoxText.fill('Testing');
-    
-        await expect(
-            page.locator('[id="-2_required"]')
-        ).toContainText(textBoxErrorMsg);
-        await expect(
-            page.getByRole('button', { name: 'Save Change' }),
-            `Save Change should be disabled when Justification is under 25 chars`
-        ).toBeDisabled();
-        await messageBoxText.press('ControlOrMeta+a');
-        await messageBoxText.fill(messageText);
-        await page.getByRole('button', { name: 'Save Change' }).click();
-    } else //Else Statement
-    {
-      //Verify Save 
-        await page.getByRole('button', { name: 'Edit Justification for' }).click();
-        await messageBoxText.press('ControlOrMeta+a');
-        await messageBoxText.fill('Testing');
-    
-        await expect(
-            page.locator('[id="-2_required"]')
-        ).toContainText(textBoxErrorMsg);
-        await expect(
-            page.getByRole('button', { name: 'Save Change' }),
-            `Save Change should be disabled when Justification is under 25 chars`
-        ).toBeDisabled();
-        await messageBoxText.press('ControlOrMeta+a');
-        await messageBoxText.fill(messageText);
-        await page.getByRole('button', { name: 'Save Change' }).click();
-
         //Verify Justification field save when editing the Form
         await expect(
             page.getByRole('button', { name: 'Return to Requestor' }),
@@ -82,14 +66,6 @@ import { test, expect, Page } from '@playwright/test';
 
         await expect(page.getByText(messageText).first()).toBeVisible();
         const errorMessageText = await errorMessageLocator.textContent();
-
-        //Verify message is displayed when less than 25 chars
-        if (errorMessageText?.includes(messageText))
-            {
-                console.log(`Next Button Click failed: ${errorMessageText}`);
-            } else{
-                console.error(`ERROR this should fail not enough characters`);
-            }
 
         await messageBoxText.press('ControlOrMeta+a');
         await messageBoxText.fill(messageText);
