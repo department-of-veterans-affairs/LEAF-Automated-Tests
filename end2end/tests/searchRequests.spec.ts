@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import {
   LEAF_URLS, getRandomId,
-  awaitPromise, fillAndVerifyField
+  awaitPromise, fillAndVerifyField, selectChosenDropdownOption
 } from '../leaf_test_utils/leaf_util_methods.ts'
 
 const reservedTestCase = '957';
@@ -42,8 +42,10 @@ test.describe('URL can be searched for using basic and advanced search inputs', 
   test('Advanced search for URL in title is functional', async ({ page }) => {
     await page.goto(LEAF_URLS.PORTAL_HOME);
     await page.getByRole('button', { name: 'Advanced Options' }).click();
-    await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
-    await page.getByRole('option', { name: 'Title' }).click();
+    const selectLocator = page.locator('table[id$="_searchTerms"] tr td select').first();
+    const selectID = await selectLocator.getAttribute('id') ?? "";
+    const chosenID = `#${selectID}_chosen`;
+    await selectChosenDropdownOption(page, chosenID, 'Title');
 
     const searchLocator = page.getByLabel('text', { exact: true });
     await fillAndVerifyField(searchLocator, searchTestTitle);
