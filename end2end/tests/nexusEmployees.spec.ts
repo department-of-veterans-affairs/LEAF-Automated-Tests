@@ -31,7 +31,11 @@ test('Add a new backup and open that person in a new tab', async ({ page }) => {
   let backupAdded = false;
 
   try {
+    const awaitEmployeeInfo = page.waitForResponse(res =>
+      res.url().includes('ajaxEmployee') && res.status() === 200
+    );
     await page.goto('https://host.docker.internal/Test_Nexus/?a=view_employee&empUID=1');
+    await awaitEmployeeInfo;
     await page.getByRole('button', { name: 'Assign Backup' }).click();
     
     await page.getByLabel('Search for user to add as').fill('a');
