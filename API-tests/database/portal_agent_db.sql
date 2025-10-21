@@ -125,7 +125,8 @@ CREATE TABLE `category_count` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `category_count` (`recordID`, `categoryID`, `count`) VALUES
-(1,	'leaf_agent',	1);
+(1,	'leaf_agent',	1),
+(2,	'leaf_agent',	1);
 
 DROP TABLE IF EXISTS `category_privs`;
 CREATE TABLE `category_privs` (
@@ -171,7 +172,11 @@ INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `ti
 (1,	2,	1,	'https://host.docker.internal/platform/agent/',	NULL,	1756342601,	'tester'),
 (1,	3,	1,	'1',	NULL,	1756342601,	'tester'),
 (1,	4,	1,	'[{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Review active tasks and decommission duplicates&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Ensure staged tasks were authored by a local admin&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Activate task&quot;}}]',	NULL,	1756343376,	'tester'),
-(1,	6,	1,	'1756330534',	NULL,	1756330534,	'*LEAF Agent*');
+(1,	6,	1,	'1756330534',	NULL,	1756330534,	'*LEAF Agent*'),
+(2,	2,	1,	'https://host.docker.internal/platform/agent/',	NULL,	1756342601,	'tester'),
+(2,	3,	1,	'2',	NULL,	1756342601,	'tester'),
+(2,	4,	1,	'[{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Decommission duplicate tasks&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Execute tasks&quot;}}]',	NULL,	1759885734,	'tester'),
+(2,	6,	1,	'1756330534',	NULL,	1756330534,	'*LEAF Agent*');
 
 DROP TABLE IF EXISTS `data_action_log`;
 CREATE TABLE `data_action_log` (
@@ -453,7 +458,8 @@ CREATE TABLE `records` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `priority`, `lastStatus`, `submitted`, `deleted`, `isWritableUser`, `isWritableGroup`, `userMetadata`) VALUES
-(1,	1747005173,	0,	'tester',	'Record',	0,	'',	0,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
+(1,	1747005173,	0,	'tester',	'Record',	0,	'',	0,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(2,	1747005173,	0,	'tester',	'Record',	0,	'',	0,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
 
 DROP TABLE IF EXISTS `records_dependencies`;
 CREATE TABLE `records_dependencies` (

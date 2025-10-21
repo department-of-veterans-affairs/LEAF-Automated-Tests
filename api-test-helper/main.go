@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -25,13 +26,18 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 var runningTests = false
 var mxRunningTests sync.Mutex
 
+func printLog(w http.ResponseWriter, msg string) {
+	log.Println(msg)
+	fmt.Fprintln(w, msg)
+}
+
 func handleRunTest(w http.ResponseWriter, r *http.Request) {
 	modeVerbose := r.URL.Query().Has("-v")
 
 	mxRunningTests.Lock()
 	if !runningTests {
 		runningTests = true
-		log.Println("Starting a test run")
+		printLog(w, "Running API tests: LEAF/API-tester")
 
 		cmdClear := exec.Command("go", "clean", "-testcache")
 		cmdClear.Dir = "../API-tests/"
@@ -39,7 +45,7 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 
 		var cmd *exec.Cmd
 		if modeVerbose {
-			log.Println("Running in verbose mode")
+			printLog(w, "Running in verbose mode")
 			cmd = exec.Command("go", "test", "-v")
 		} else {
 			cmd = exec.Command("go", "test")
@@ -54,9 +60,27 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		io.Copy(w, pipe)
 		cmd.Wait()
 
+		printLog(w, "\n")
+
+		// Run Unit tests
+		printLog(w, "Running Unit tests: leaf-agent")
+		if modeVerbose {
+			printLog(w, "Running in verbose mode")
+			cmd = exec.Command("go", "test", "-v")
+		} else {
+			cmd = exec.Command("go", "test")
+		}
+		cmd.Dir = "../LEAF/LEAF_Agent/"
+		pipe, err = cmd.StdoutPipe()
+		if err != nil {
+			log.Println(err)
+		}
+		cmd.Start()
+		io.Copy(w, pipe)
+		cmd.Wait()
+
 		runningTests = false
 		mxRunningTests.Unlock()
-		log.Println("Completed test run")
 	} else {
 		io.WriteString(w, "Already running tests")
 	}
