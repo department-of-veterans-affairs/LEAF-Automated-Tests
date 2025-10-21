@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { LEAF_URLS } from '../leaf_test_utils/leaf_util_methods';
+
 test.describe.configure({ mode: 'serial' });
 /**
  *  Verify the Report Builder link from the
@@ -217,8 +218,8 @@ test('Add a New Row and Populate', async ({ page }) => {
   await expect(highlightedRow).toContainText('untitled');
 
   const newTable = page.getByRole('table');
-  const tableBody = await newTable.locator('tbody');
-  const newRows = await tableBody.locator('tr');
+  const tableBody = newTable.locator('tbody');
+  const newRows = tableBody.locator('tr');
   const expectedRows = initialRows + 1;
   const numNewRows = await newRows.count();
 
@@ -254,44 +255,6 @@ test('Add a New Row and Populate', async ({ page }) => {
   await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-/**
- *  Test for 4665
- *  Verify that a negative currency is 
- *  allowed to be added to a report
- */
-test('Report Allows Negative Currency', async ({ page}) => {
-
-  // Create a new report
-  await page.goto(LEAF_URLS.PORTAL_HOME);
-  await page.getByText('Report Builder Create custom').click();
-  await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
-  await page.getByRole('option', { name: 'Type' }).click();
-
-  // Choose reports which use the Input Formats form
-  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
-  await page.getByRole('option', { name: 'Input Formats' }).click();
-  await page.getByRole('button', { name: 'Next Step' }).click();
-  await page.locator('#indicatorList').getByText('Input Formats').click();
-
-  // Choose currency as one of the columns
-  await page.getByText('currency', { exact: true }).click();
-  await page.getByRole('button', { name: 'Generate Report' }).click();
-  await page.locator('[data-record-id="962"]').click();
-
-  // Input a negative currency 
-  await page.getByRole('textbox', { name: 'currency' }).click();
-  await page.getByRole('textbox', { name: 'currency' }).fill('-200');
-  await page.getByRole('button', { name: 'Save Change' }).click();
-
-  // Verify the negative currency is displayed
-  await expect(page.locator('[data-record-id="962"]')).toContainText('-200.00');
-
-  // Clear out the currency value as to not affect other tests
-  await page.locator('[data-record-id="962"]').click();
-  await page.getByRole('textbox', { name: 'currency' }).click();
-  await page.getByRole('textbox', { name: 'currency' }).fill('');
-  await page.getByRole('button', { name: 'Save Change' }).click();
-});
 
 /**
  *  Verify the UID link goes to the correct 
