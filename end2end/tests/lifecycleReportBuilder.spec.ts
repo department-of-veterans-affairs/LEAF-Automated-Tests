@@ -8,7 +8,7 @@ test.describe.configure({ mode: 'serial' });
 test('Report Builder Link is Functional', async ({ page }) => {
 
   // Go to the LEAF Homepage
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
 
   // Click on the Report Builder link
   await page.getByText('Report Builder').click();
@@ -66,7 +66,7 @@ test('Correct Data Columns Available to Select', async ({ page}) => {
 test('Correct Columns Displayed', async ({ page }) => {
 
   // Go to Report Builder
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
 
   // Filter by Type IS General Form
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
@@ -91,7 +91,7 @@ test('Modify Search', async ({ page }) => {
 
   // Go to an existing report which is filtered by "General Form" with
   // the "Assigned Group" column selected 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwQ8ABgDsXQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyTT6iyKo0hNAXXoArYjQAOwQUXxA4UjAkYG0QQlMqAjwkZBAAThBwozQYNGjEAEZpEvocvLAAeUFBOFNnTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgE5mtBvjABBFiwgBzKGRgACAOLpUAVwAOzNug54eAXSA%3D');
+  await page.goto(`${LEAF_URLS.REPORT_BUILDER}&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwQ8ABgDsXQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyTT6iyKo0hNAXXoArYjQAOwQUXxA4UjAkYG0QQlMqAjwkZBAAThBwozQYNGjEAEZpEvocvLAAeUFBOFNnTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgE5mtBvjABBFiwgBzKGRgACAOLpUAVwAOzNug54eAXSA%3D`);
   
   // Click on "Modify Search"
   await page.getByRole('button', { name: 'Modify Search' }).click();
@@ -125,7 +125,7 @@ test('Modify Search', async ({ page }) => {
 test('Edit Labels', async ({ page }) => {
 
   // Go to Report Builder
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
 
   // Keep default search filter
   await page.getByRole('button', { name: 'Next Step' }).click();
@@ -170,7 +170,7 @@ test('Edit Labels', async ({ page }) => {
 test('Change Report Title', async ({ page }) => {
 
   // Go to Report Builder page
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
 
   // Keep default options on both pages
   await page.getByRole('button', { name: 'Next Step' }).click();
@@ -192,7 +192,7 @@ test('Add a New Row and Populate', async ({ page }) => {
   const randNum = Math.random();
   const uniqueText = `My New Request ${randNum}`;
 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
 
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
@@ -262,7 +262,7 @@ test('Add a New Row and Populate', async ({ page }) => {
 test('Report Allows Negative Currency', async ({ page}) => {
 
   // Create a new report
-  await page.goto("https://host.docker.internal/Test_Request_Portal/")
+  await page.goto(LEAF_URLS.PORTAL_HOME);
   await page.getByText('Report Builder Create custom').click();
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
@@ -300,7 +300,7 @@ test('Report Allows Negative Currency', async ({ page}) => {
 test('Go to UID Link', async ({ page }) => {
 
   // Go to Report Builder page
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
 
   // Change search filter to Type IS General Form
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
@@ -352,14 +352,14 @@ test('Go to UID Link', async ({ page }) => {
 
 test('New Row Added in Correct Place After Sorting', async ({ page }) => {
   
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwBGAEyC8XQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyQAGeosiqNITQF16AK2I0ADsEFD8QOFIwJGBtEEJTKgJ5FBAAFnEQCKM0GDQYxElnEvpc%2FLAAeUFBOFMXTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgBYArM1oN8YeAAsy8ANYAjVAA8yLAAQAKADIBRAIIAxALSLlKgJTM26Dnh4BdIA%3D%3D');
+  await page.goto(`${LEAF_URLS.REPORT_BUILDER}&query=N4IgLgpgTgtgziAXAbVASwCZJAYwIaQDmA9lAJ4CSAIiADQjEAO0Bp2AvHSDATgBbYAZqRgB9AKwBGAEyC8XQgQjYAggDkaAX1rosiEBggAbCJCz0mLMG32d6PMPyQAGeosiqNITQF16AK2I0ADsEFD8QOFIwJGBtEEJTKgJ5FBAAFnEQCKM0GDQYxElnEvpc%2FLAAeUFBOFMXTSA&indicators=NobwRAlgdgJhDGBDALgewE4EkAiYBcYyEyANgKZgA0YUiAthQVWAM4bL4AMAvpeNHCRosuAgBYArM1oN8YeAAsy8ANYAjVAA8yLAAQAKADIBRAIIAxALSLlKgJTM26Dnh4BdIA%3D%3D`);
   
   // Add a new row
-  const createRowButton =  await page.getByRole('button', { name: 'Create Row' });
+  const createRowButton =  page.getByRole('button', { name: 'Create Row' });
   createRowButton.click();
 
   // Get row that has highlight
-  const highlightedRow = await page.locator(
+  const highlightedRow = page.locator(
     'table tbody tr[style*="background-color"]',
     { hasText: 'untitled' }
   );
@@ -386,7 +386,7 @@ test('New Row Added in Correct Place After Sorting', async ({ page }) => {
   const UIDs = await page.locator('table tbody tr td:first-child').allTextContents();
   
   // Confirm that the new row/s UID is not the first UID in the array
-  await expect(UIDs[0]).not.toEqual(newestUID);
+  expect(UIDs[0]).not.toEqual(newestUID);
 
   // Delete the new requests that were created
 
@@ -408,7 +408,7 @@ test('New Row Added in Correct Place After Sorting', async ({ page }) => {
 test('No Trailing Space After Resolver Name', async ({ page }) => {
 
   // Go to Report Builder
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
   await page.getByText('Report Builder').click();
 
   // Set filter to Current Status IS Resolved
