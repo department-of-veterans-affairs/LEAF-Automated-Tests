@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { LEAF_URLS } from '../leaf_test_utils/leaf_util_methods';
 test.describe.configure({ mode: 'serial' });
 /**
  *  Verify the Report Builder link from the
@@ -21,9 +22,19 @@ test('Report Builder Link is Functional', async ({ page }) => {
  *  to select for the selected form type
  */
 test('Correct Data Columns Available to Select', async ({ page}) => {
-
+  const formMenuLocator = page.locator('#indicatorList div.category[class*="form_"]:visible');
+  const expectedFields:Array<string> = [
+    'Single line text',
+    'Multi line text',
+    'Numeric',
+    'Single line text B',
+    'Radio',
+    'Assigned Person',
+    'Assigned Person 2',
+    'Assigned Group',
+  ]
   // Go to Report Builder page
-  await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
 
   // Filter by Type IS General Form
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
@@ -33,8 +44,19 @@ test('Correct Data Columns Available to Select', async ({ page}) => {
   await page.getByRole('button', { name: 'Next Step' }).click();
 
   // Verify the "Assigned Group" column is listed under the "General Form"
-  await page.locator('#indicatorList').getByText('General Form').click();
-  await expect(page.getByText('Assigned Group')).toBeVisible();
+  const menuCount = await formMenuLocator.count();
+  expect(
+    menuCount,
+    'One submenu of form fields to be visible'
+  ).toBe(1);
+
+  await formMenuLocator.click();
+  for(let i = 0; i < expectedFields.length; i++) {
+    await expect(
+      formMenuLocator.getByLabel(expectedFields[i], { exact: true }),
+      `${expectedFields[i]} to be visible`
+    ).toBeVisible();
+  }
 });
 
 /**
