@@ -3,17 +3,19 @@ SET time_zone = '+00:00';
 SET foreign_key_checks = 0;
 SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
+SET NAMES utf8mb4;
+
 DROP TABLE IF EXISTS `action_history`;
 CREATE TABLE `action_history` (
   `actionID` mediumint unsigned NOT NULL AUTO_INCREMENT,
   `recordID` mediumint unsigned NOT NULL,
-  `userID` varchar(50) NOT NULL,
+  `userID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `stepID` smallint NOT NULL DEFAULT '0',
   `dependencyID` smallint NOT NULL,
-  `actionType` varchar(50) NOT NULL,
+  `actionType` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `actionTypeID` tinyint unsigned NOT NULL,
   `time` int unsigned NOT NULL,
-  `comment` text,
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `userMetadata` json DEFAULT NULL,
   PRIMARY KEY (`actionID`),
   KEY `time` (`time`),
@@ -23,15 +25,15 @@ CREATE TABLE `action_history` (
   KEY `actionType` (`actionType`),
   CONSTRAINT `action_history_ibfk_2` FOREIGN KEY (`actionTypeID`) REFERENCES `action_types` (`actionTypeID`),
   CONSTRAINT `fk_records_action_history_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 DROP TABLE IF EXISTS `action_types`;
 CREATE TABLE `action_types` (
   `actionTypeID` tinyint unsigned NOT NULL AUTO_INCREMENT,
-  `actionTypeDesc` varchar(50) NOT NULL,
+  `actionTypeDesc` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   PRIMARY KEY (`actionTypeID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `action_types` (`actionTypeID`, `actionTypeDesc`) VALUES
 (1,	'approved'),
@@ -45,16 +47,16 @@ INSERT INTO `action_types` (`actionTypeID`, `actionTypeDesc`) VALUES
 
 DROP TABLE IF EXISTS `actions`;
 CREATE TABLE `actions` (
-  `actionType` varchar(50) NOT NULL,
-  `actionText` varchar(50) NOT NULL,
-  `actionTextPasttense` varchar(50) NOT NULL,
-  `actionIcon` varchar(50) NOT NULL,
-  `actionAlignment` varchar(20) NOT NULL,
+  `actionType` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `actionText` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `actionTextPasttense` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `actionIcon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `actionAlignment` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `sort` tinyint NOT NULL,
   `fillDependency` tinyint NOT NULL,
   `deleted` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`actionType`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `actions` (`actionType`, `actionText`, `actionTextPasttense`, `actionIcon`, `actionAlignment`, `sort`, `fillDependency`, `deleted`) VALUES
 ('Activate',	'Activate',	'Activated',	'go-next.svg',	'right',	0,	1,	0),
@@ -74,18 +76,18 @@ DROP TABLE IF EXISTS `approvals`;
 CREATE TABLE `approvals` (
   `approvalID` mediumint unsigned NOT NULL AUTO_INCREMENT,
   `recordID` mediumint unsigned NOT NULL,
-  `userID` varchar(50) NOT NULL,
+  `userID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `groupID` mediumint NOT NULL DEFAULT '0',
-  `approvalType` varchar(50) NOT NULL,
+  `approvalType` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `time` int unsigned NOT NULL,
-  `comment` text,
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`approvalID`),
   KEY `time` (`time`),
   KEY `recordID` (`recordID`),
   KEY `groupID` (`groupID`),
   KEY `record_group` (`recordID`,`groupID`),
   KEY `record_time` (`recordID`,`time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 DROP TABLE IF EXISTS `categories`;
@@ -149,8 +151,6 @@ CREATE TABLE `category_staples` (
   CONSTRAINT `category_staples_ibfk_1` FOREIGN KEY (`categoryID`) REFERENCES `categories` (`categoryID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
-
-SET NAMES utf8mb4;
 
 DROP TABLE IF EXISTS `data`;
 CREATE TABLE `data` (
@@ -245,7 +245,7 @@ CREATE TABLE `dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `dependencies` (`dependencyID`, `description`) VALUES
-(-4,  'LEAF Agent'),
+(-4,	'LEAF Agent'),
 (-3,	'Group Designated by the Requestor'),
 (-2,	'Requestor Followup'),
 (-1,	'Person Designated by the Requestor'),
@@ -326,12 +326,12 @@ CREATE TABLE `email_tracker` (
 
 DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
-  `eventID` varchar(40) NOT NULL,
-  `eventDescription` varchar(200) NOT NULL,
-  `eventType` varchar(40) NOT NULL,
-  `eventData` text NOT NULL,
+  `eventID` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `eventDescription` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `eventType` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `eventData` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   PRIMARY KEY (`eventID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `events` (`eventID`, `eventDescription`, `eventType`, `eventData`) VALUES
 ('LeafSecure_Certified',	'Marks site as LEAF Secure',	'',	''),
@@ -502,15 +502,15 @@ DROP TABLE IF EXISTS `route_events`;
 CREATE TABLE `route_events` (
   `workflowID` smallint NOT NULL,
   `stepID` smallint NOT NULL,
-  `actionType` varchar(50) NOT NULL,
-  `eventID` varchar(40) NOT NULL,
+  `actionType` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `eventID` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   UNIQUE KEY `workflowID_2` (`workflowID`,`stepID`,`actionType`,`eventID`),
   KEY `eventID` (`eventID`),
   KEY `workflowID` (`workflowID`,`stepID`,`actionType`),
   KEY `actionType` (`actionType`),
-  CONSTRAINT `route_events_ibfk_1` FOREIGN KEY (`actionType`) REFERENCES `actions` (`actionType`),
+  CONSTRAINT `route_events_ibfk_1` FOREIGN KEY (`actionType`) REFERENCES `actions` (`actionType`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `route_events_ibfk_2` FOREIGN KEY (`eventID`) REFERENCES `events` (`eventID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `route_events` (`workflowID`, `stepID`, `actionType`, `eventID`) VALUES
 (-1,	-2,	'approve',	'LeafSecure_Certified'),
@@ -566,7 +566,7 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`setting`, `data`) VALUES
 ('adPath',	'{}'),
-('dbversion',	'2025042400'),
+('dbversion',	'2025100200'),
 ('emailBCC',	'{}'),
 ('emailCC',	'{}'),
 ('heading',	'LEAF Agent Repository'),
@@ -701,14 +701,14 @@ CREATE TABLE `workflow_routes` (
   `workflowID` smallint NOT NULL,
   `stepID` smallint NOT NULL,
   `nextStepID` smallint NOT NULL,
-  `actionType` varchar(50) NOT NULL,
-  `displayConditional` text NOT NULL,
+  `actionType` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `displayConditional` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   UNIQUE KEY `workflowID` (`workflowID`,`stepID`,`actionType`),
   KEY `stepID` (`stepID`),
   KEY `actionType` (`actionType`),
   CONSTRAINT `workflow_routes_ibfk_1` FOREIGN KEY (`workflowID`) REFERENCES `workflows` (`workflowID`),
-  CONSTRAINT `workflow_routes_ibfk_3` FOREIGN KEY (`actionType`) REFERENCES `actions` (`actionType`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  CONSTRAINT `workflow_routes_ibfk_3` FOREIGN KEY (`actionType`) REFERENCES `actions` (`actionType`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `workflow_routes` (`workflowID`, `stepID`, `nextStepID`, `actionType`, `displayConditional`) VALUES
 (-2,	-4,	0,	'approve',	''),
