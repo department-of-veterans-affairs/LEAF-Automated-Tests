@@ -79,7 +79,7 @@ import { test, expect, Page } from '@playwright/test';
 
     const nowTimeStamp = new Date();
     const currentTimeStamp = nowTimeStamp.toLocaleTimeString();
-    console.log('Current:',currentTimeStamp);
+   
 
     const dateMainDiv = page.locator('div.file_history_options_date >> div');
     console.log('System Time1:', dateMainDiv);
@@ -87,7 +87,7 @@ import { test, expect, Page } from '@playwright/test';
     console.log('System Time:',timeStamped);
     let timeSplit = timeStamped.split("\n", 3 );
     const currentTimeStamped = timeSplit[1];
-    console.log('System Time:',currentTimeStamped);
+    
     expect(currentTimeStamped).toBe(currentTimeStamp);
 
     await expect(page.getByRole('button', { name: 'Delete File' })).toBeVisible();
