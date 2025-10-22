@@ -70,7 +70,7 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		} else {
 			cmd = exec.Command("go", "test")
 		}
-		cmd.Dir = "../LEAF/LEAF_Agent/"
+		cmd.Dir = "../LEAF/pkg/agent"
 		pipe, err = cmd.StdoutPipe()
 		if err != nil {
 			log.Println(err)
