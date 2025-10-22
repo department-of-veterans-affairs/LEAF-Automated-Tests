@@ -2,16 +2,18 @@ import { test, expect } from '@playwright/test';
 import {
   LEAF_URLS,
   createTestRequest,
-  getRandomId
+  getRandomId,
+  selectChosenDropdownOption
 } from '../leaf_test_utils/leaf_util_methods';
 
 
 test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
   const testId = getRandomId();
   const testComment = `testing purpose ${testId}`;
+  const requestTitle = `test request ${testId}`;
 
-  //create and submit a request to move it to an actionable step where comments will be made
-  const testRequestID = await createTestRequest(page, 'Cotton Computers', `test request ${testId}`, 'Simple Form');
+  //create and submit a request to move it to an actionable step where approval/comments will be made
+  const testRequestID = await createTestRequest(page, 'Cotton Computers', requestTitle, 'Simple Form');
   await page.getByLabel('single line text').fill(`test entry ${testId}`);
   await page.getByRole('button', { name: 'Next Question' }).first().click();
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
@@ -21,26 +23,47 @@ test('Comment approval functionality and comment visibility on record page', asy
   await page.getByRole('button', { name: 'Submit Request' }).click();
   await awaitSubmit;
 
-  await page.reload(); //view will initially show 'pending' submenues
+  await page.goto(LEAF_URLS.REPORT_BUILDER);
+  const selectLocator = page.locator('table[id$="_searchTerms"] tr td select').first();
+  const selectID = await selectLocator.getAttribute('id') ?? "";
+  const chosenID = `#${selectID}_chosen`;
+  await selectChosenDropdownOption(page, chosenID, 'Record ID');
+  await page.getByLabel('text', { exact: true }).fill(testRequestID);
+  await page.getByRole('button', { name: 'Next Step' }).click();
+  await page.locator('label[for="indicators_actionButton"]').click();
+  await page.locator('#generateReport').click();
 
-  const NumberTextBoxes = 2; //this is the number of requirements on workflow step 1
-  await expect(page.locator('div[id^="form_dep_container"]')).toHaveCount(NumberTextBoxes);
+  const row = page.locator('table tr').filter({ hasText: requestTitle });
+  const actionBtn = row.getByText('Take Action', { exact: true })
+  const expectedNumContainers = 2; //this is the number of requirements on workflow step 1
+  let approvedCount = 0;
+  let commentsAdded:Array<string> = [];
 
-  for (let i = 0; i < NumberTextBoxes; i++) {
-    await page.waitForLoadState('networkidle'); //internal form field might be present
+  for (let i = 0; i < expectedNumContainers; i++) {
     const comment = `test-${i}--${testComment}`;
     const container = page.locator('div[id^="form_dep_container"]').first();
     const awaitActionSuccess = page.waitForResponse(res =>
       res.url().includes(`formWorkflow/${testRequestID}/apply`) && res.status() === 200
     );
+    await expect(row).toBeVisible();
+    await actionBtn.click();
+    await expect(page.locator('.mainform')).toBeVisible(); //there is a form field we need to wait for
+
+    await expect(page.locator('div[id^="form_dep_container"]')).toHaveCount(expectedNumContainers - approvedCount);
     await expect(container.getByRole('button', { name: 'Approve' })).toBeVisible();
-    await expect(container.getByRole('button', { name: 'Approve' })).toBeEnabled();
     await expect(container.locator('textarea')).toBeVisible();
+    await expect(container.getByRole('button', { name: 'Approve' })).toBeEnabled();
     await container.locator('textarea').fill(comment);
     await container.getByRole('button', { name: 'Approve' }).click();
     await awaitActionSuccess;
+    commentsAdded.push(comment);
+    approvedCount++;
+    await page.reload();
+  }
 
-    await expect(page.locator('#comments')).toContainText(comment);
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + testRequestID);
+  for (let i = 0; i < commentsAdded.length; i++) {
+    await expect(page.locator('#comments')).toContainText(commentsAdded[i]);
   }
 });
 
