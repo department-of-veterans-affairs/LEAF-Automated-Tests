@@ -1,10 +1,23 @@
 import { test, expect, Page } from '@playwright/test';
 
+import {
+  getRandomId,
+  createTestForm,
+  selectChosenDropdownOption,
+  loadForm,
+  loadWorkflow,
+  addFormQuestion,
+  deleteTestFormByFormID,
+  createBaseTestWorkflow
+} from '../leaf_test_utils/leaf_util_methods.ts';
+
 test.describe.configure({ mode: 'serial' });
 
 // Generate unique text to help ensure that fields are being filled correctly.
-let randNum = Math.random();
-let uniqueText = `New Form ${randNum}`;
+const testId = getRandomId();
+let uniqueText = `New Form ${testId}`;
+
+
 
 /**
  *  Create a new form with name in the variable 'uniqueText'
@@ -119,7 +132,8 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
   // Add condition where the sub-question will only be visible if the user selects "Yes"
   await page.getByTitle('select controller question').selectOption({label: optionToSelectNoSpace});
   await page.getByLabel('select condition').selectOption('==');
-  await page.getByLabel('select a value').selectOption('Yes');
+  await page.getByRole('searchbox', { name: 'parent value choices'}).click();
+  await page.getByRole('option', { name: 'Yes Press to select' }).click();
 
   // When the sub-question is displayed, pre-fill the answer as "Jane Doe"
   await page.getByLabel('Enter a pre-fill value').click();
@@ -129,7 +143,7 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
   // Verify the if/then statement
   await expect(page.locator('#condition_editor_inputs')).toContainText('THEN \'Supervisor Name\' will have the value \'Jane Doe\'');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByLabel('Conditions For Supervisor').getByRole('listitem')).toContainText(`If \'Are you a VA Employee?\' is Yes then pre-fill this question.`);
+  await expect(page.getByLabel('Conditions For Supervisor').getByRole('listitem')).toContainText(`\'Are you a VA Employee?\' includes Yes`);
   await page.getByText('Close').click();
 })
 
@@ -381,4 +395,120 @@ test.describe('Tests for LEAF 4697', () => {
     // await expect(page.getByText('single line text')).toBeVisible();
     
   });
+});
+
+/**
+ * Test for LEAF 5038 - no form modification when indicitor is used on workflow
+ */
+test('Elements attached to a workflow cannot be deleted from form', async ({ page }) => {
+
+    let formEditorFieldsFormID = '';
+    let workflowID = '';
+    let stepID = '';
+
+    const workflowName = `workflow_name_${testId}`;
+    const stepTitle = "Step 1";
+    const stepElement = page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
+
+    try {
+      // Create the form and add sections
+      formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
+      const personSectionID = await addFormQuestion(page, 'Add Section', 'Assigned Person', 'Orgchart Employee');
+      const groupSectionID = await addFormQuestion(page, 'Add Section', 'Assigned Group', 'Orgchart Group');
+      const textSectionID = await addFormQuestion(page, 'Add Section', 'Single line text', 'Single line text');
+
+      // Create workflow
+      const workflowAndStepIDs = await createBaseTestWorkflow(page, workflowName, stepTitle);
+      workflowID = workflowAndStepIDs[0];
+      stepID = workflowAndStepIDs[1];
+
+      // Attach workflow to form
+      await loadForm(page, formEditorFieldsFormID);
+      await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowID);
+
+      // Go back to the workflow
+      await loadWorkflow(page, workflowID);
+      await expect(stepElement).toBeVisible();
+      stepElement.click();
+
+      // Add Person designated requirement
+      const addRequirement = await page.getByRole('button', { name: 'Add Requirement' });
+      await expect(addRequirement).toBeVisible()
+      await addRequirement.click();
+
+      await selectChosenDropdownOption(page, '#dependencyID_chosen', 'Person Designated by the Requestor');
+      
+      const saveButton = await page.getByRole('button', { name: 'Save' });
+      saveButton.click();
+
+      // Set the Available Person data field
+      const setDataField = await page.getByRole('button', { name: 'Set Data Field' });
+      await expect(setDataField).toBeVisible();
+      setDataField.click();
+
+      await expect(page.getByText('Set Indicator ID')).toBeVisible();
+      await page.locator('#indicatorID').selectOption(personSectionID);
+      await saveButton.click();
+      await expect(stepElement).toBeVisible();
+
+      // Set the Single Line Text form field
+      await stepElement.click();
+      await page.getByLabel('Form Field:').selectOption(textSectionID);
+      await stepElement.click();
+      
+      // Confirm that the Input Form and Delete/Archive options are not available on Assigned Person
+      await loadForm(page, formEditorFieldsFormID);
+      await expect(page.getByText('Assigned Person')).toBeVisible();
+      await page.getByTitle('edit indicator ' + personSectionID).click();
+      await expect(page.locator('#input-format')).toContainText('This field is used in a workflow and must be removed from there before you can change its format.');
+      await expect(page.locator('#indicator-editing-attributes')).toContainText('This field is used in a workflow and must be removed from there before you can Archive or Delete it.');
+      await page.getByRole('button', { name: 'Cancel' }).click();
+
+      // Confirm the Archive and Delete are not available on the Single Line Text
+      await page.getByTitle('edit indicator ' + textSectionID).click();
+      await expect(page.locator('#indicator-editing-attributes')).toContainText('This field is used in a workflow and must be removed from there before you can Archive or Delete it.');
+      await page.getByRole('button', { name: 'Cancel' }).click();
+
+      // Confirm the Archive/Delete and Input Dropdown are avaiable on the Assigned Group
+      await page.getByTitle('edit indicator ' + groupSectionID).click();
+      await expect(page.getByText('Input Format')).toBeVisible();
+      await expect(page.getByText('Archive', { exact: true })).toBeVisible();
+      await expect(page.getByText('Delete', { exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Cancel' }).click();
+
+    } finally {
+
+      // Delete the work flow if it was created
+      if(workflowID != '') {
+        
+        await loadWorkflow(page, workflowID);
+
+        // Delete the step if it was created
+        if(stepID != '') {
+          
+          await expect(stepElement).toBeVisible();
+          stepElement.click();
+
+          await expect(page.locator(`id=stepInfo_${stepID}`)).toBeVisible();
+          await page.getByLabel('Remove Step').click();
+          await page.getByRole('button', { name: 'Yes' }).click();
+          await expect(stepElement).not.toBeVisible();
+        }
+      }
+      
+      if(formEditorFieldsFormID != '') {
+
+        // Delete the form
+        await deleteTestFormByFormID(page, formEditorFieldsFormID);
+      }
+
+      if(workflowID != '') {
+
+        // Delete the workflow
+        await loadWorkflow(page, workflowID);
+        await page.getByRole('button', { name: 'Delete Workflow' }).click();
+        await page.getByRole('button', { name: 'Yes' }).click();
+      }
+    }
+    
 });

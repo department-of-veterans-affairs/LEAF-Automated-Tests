@@ -1,194 +1,279 @@
 import { test, expect, Page } from '@playwright/test';
+import {
+  LEAF_URLS,
+  createTestForm,
+  deleteTestFormByFormID,
+  addFormQuestion,
+  createTestRequest,
+} from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'serial'});
 
+// Generate unique text to help ensure that fields are being filled correctly.
 let page: Page;
+
+const randNum = Math.random();
+const testFormName = `lifecycle ${randNum}`;
+const testFormDescription = `test edit, copy, archive, deletion, visibility`;
+let formCategoryID = '';
+let newRequestID = '';
+let negCurrencyRequestID = '';
+
+const firstIndLabel = 'Reviewer 1';
+const secondIndLabel = 'Reviewer 2';
+const thirdIndLabel = 'single line text';
+let reviewer1_indID = '';
+let reviewer2_indID = '';
+let singleLineText_indID = '';
+
+const uniqueText = `My New Request ${randNum}`;
+
+/**
+ * Creates a simple form specific to tests that must be isolated because
+ * they include archiving form questions and changing the form's status/availability.
+ * @param page
+ */
+const lifecycleNewRequestSetup = async (page:Page) => {
+  formCategoryID = await createTestForm(page, testFormName, testFormDescription);
+  reviewer1_indID = await addFormQuestion(page, 'Add Section', firstIndLabel, 'orgchart_employee');
+  reviewer2_indID = await addFormQuestion(page, 'Add Question to Section', secondIndLabel, 'orgchart_employee');
+  singleLineText_indID = await addFormQuestion(page, 'Add Question to Section', thirdIndLabel, 'text');
+}
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
+  await lifecycleNewRequestSetup(page);
 });
 
-// Generate unique text to help ensure that fields are being filled correctly.
-let randNum = Math.random();
-let uniqueText = `My New Request ${randNum}`;
-
-/**
- *  Verify the New Request page loads correctly
- */
-test('Verify New Request Page', async () => {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    
-    // Click on New Request button
-    await page.getByText('New Request', { exact: true }).click();
-
-    // Verify Create New Request Page displays
-    await expect(page.locator('#record')).toContainText('Step 1 - General Information');
-
-});
-
-/**
- *  Verify a form with a status of 'Available' is available
- *  to be selected when creating a new request
- */
-test('Available Form is Visible to New Request', async () => {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Simple form', exact: true }).click();
-
-    // Set the status of the "Simple form" form to "Available"
-    await page.getByLabel('Status:').selectOption('1');
-    await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByText('New Request', { exact: true }).click();
-
-    // Verify the form is a choice when creating a new request
-    await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
-    await expect(page.getByText('Simple form')).toBeVisible();
-});
- 
-/**
- *  Verify a new request can be edited 
- *  before being submitted
- */
-test('Edit a New Request', async () => {
-    // Create a new request
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
-    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-    await page.getByRole('option', { name: 'Concrete Electronics' }).click();
-    await page.getByLabel('Title of Request').click();
-    await page.getByLabel('Title of Request').fill(uniqueText + ' to Edit, Copy, and Cancel');
-    await page.locator('label').filter({ hasText: 'Simple form' }).locator('span').click();
-    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-    // Fill in the text with '12345'
-    await page.getByLabel('single line text').click();
-    await page.getByLabel('single line text').fill('12345');
-    await page.locator('#nextQuestion2').click();
-
-    // Verify the 'Single line text' is populated with '12345'
-    await expect(page.locator('#data_11_1')).toContainText('12345');
-
-    // Edit the form to replace '12345' with 'New Text'
-    await page.getByRole('button', { name: 'Edit this form' }).click();
-    await page.getByLabel('single line text').fill('New Text');
-    await page.locator('#nextQuestion2').click();
-
-    // Verify that 'single line text' is now populated with 'New Text'
-    await expect(page.locator('#data_11_1')).toContainText('New Text');
-});
-
-/**
- *   Verify a request using a form whose status is
- *  'Available' can be copied
- */
-test('Request With Available Form Can Be Copied', async () => {
-
-    // Set the status of the 'Simple Form' to Available
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Simple form' }).click();
-    await expect(page.getByLabel('Status:')).toHaveValue('1');
-
-    // Copy the request created in 'Edit a New Request'
-    await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' }).click();
-    await page.getByRole('button', { name: 'Copy Request' }).click();
-    await page.getByRole('button', { name: 'Save Change' }).click();
-
-    // Change the value of 'single line text' in the copied request
-    await page.getByLabel('single line text').click();
-    await page.getByLabel('single line text').fill('New Text Available');
-    await page.locator('#nextQuestion2').click();
-
-    // Verify 'New Text Available' is displayed
-    await expect(page.locator('#data_11_1')).toContainText('New Text Available');
-    await page.getByRole('link', { name: 'Home' }).click();
-
-    // Verify there are 2 requests with the name uniqueText + ' to Edit, Copy, and Cancel'
-    await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(2);
-});
-
-/**
- *  Verify a form with a status of 'Unpublished' is not available
- *  to be selected when creating a new request
- */
-test('Unpublished Form Not Visible to New Request', async () => {
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Simple form', exact: true }).click();
-
-    // Set the status of the "Simple form" form to "Unpublished"
-    await page.getByLabel('Status:').selectOption('-1');
-    await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByText('New Request', { exact: true }).click();
-
-    // Verify the form is not a choice when creating a new request
-    await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
-    await expect(page.getByText('Simple form')).not.toBeVisible();
-  });
-
-
-test("Request with Unpublished Form Cannot Be Copied", async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Simple form' }).click();
-    await expect(page.getByLabel('Status:')).toHaveValue('-1');
-    await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' }).first().click();
-    await page.getByRole('button', { name: 'Copy Request' }).click();
-    await page.getByRole('button', { name: 'Save Change' }).click();
-    await expect(page.getByText('Request could not be copied:')).toBeVisible();
-})
-  
-/**
- *  Verify a form with a status of 'Hidden' is not available
- *  to be selected when creating a new request 
- */
-test('Hidden Form Not Visible to New Request', async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: 'Simple form', exact: true }).click();
-
-  // Set the status of the "Simple form" form to "Hidden"
-  await page.getByLabel('Status:').selectOption('0');
-  await page.getByRole('link', { name: 'Home' }).click();
+test('New Request page can be navigated to from the Portal Home Page', async () => {
+  await page.goto(LEAF_URLS.PORTAL_HOME);
   await page.getByText('New Request', { exact: true }).click();
+  await expect(page.locator('#record')).toContainText('Step 1 - General Information');
+});
 
-   // Verify the form is not a choice when creating a new request
+test('an unpublished Form without a workflow is Not Visible to New Request', async () => {
+  await page.goto(LEAF_URLS.INITIAL_FORM);
   await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
-  await expect(page.getByText('Simple form')).not.toBeVisible();
+  await expect(
+    page.getByText(testFormName),
+    'unpublished form not to be an option on the New Request view'
+  ).not.toBeVisible();
+});
+
+test('a status-available form without a workflow is not Visible to New Request', async () => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
+  await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
+  await page.getByLabel('Status:').selectOption('1');
+  await expect(page.locator('#form_properties_last_update')).toBeVisible();
+
+  await page.goto(LEAF_URLS.INITIAL_FORM);
+  await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
+  await expect(page.getByText(testFormName)).not.toBeVisible();
+});
+
+test('a status-available form with a workflow is Visible to New Request', async () => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
+  await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
+  await page.getByLabel('Workflow:').selectOption('4');
+  await expect(page.locator('#form_properties_last_update')).toBeVisible();
+
+  await page.goto(LEAF_URLS.INITIAL_FORM);
+  await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
+  await expect(page.getByText(testFormName)).toBeVisible();
+});
+
+test('a new request can be created, and edited before being submitted', async () => {
+  newRequestID = await createTestRequest(page, 'Concrete Electronics', uniqueText + ' to Edit, Copy, and Cancel', testFormName);
+  await page.getByLabel('single line text').fill('12345');
+  await page.locator('#nextQuestion2').click();
+  await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('12345');
+
+  await page.getByRole('button', { name: 'Edit this form' }).click();
+  await page.getByLabel('single line text').fill('New Text');
+  await page.locator('#nextQuestion2').click();
+
+  await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('New Text');
+
+  //fill approver fields to prep for archive test
+  await page.getByRole('button', { name: 'Edit this form' }).click();
+  // Add Adam Bauch and Dorian Balistreri as Reviewers by username
+  await page.getByLabel('Search for user to add as Reviewer 1').click();
+  await page.getByLabel('Search for user to add as Reviewer 1').fill('userName:VTRSHHZOFIA');
+  await page.getByLabel('Search for user to add as Reviewer 2').click();
+  await page.getByLabel('Search for user to add as Reviewer 2').fill('userName:VTRUXEJAMIE');
+
+  // Verify the correct users were found
+  await expect(page.getByTitle('87 - VTRSHHZOFIA')).toContainText('Bauch, Adam Koelpin');
+  await expect(page.getByTitle('25 - VTRUXEJAMIE')).toContainText('Balistreri, Dorian Dickens');
+  // Ensure selections have completely loaded before clicking the Next Question button
+  await expect(page.locator(`#loadingIndicator_${reviewer2_indID}`)).not.toBeVisible();
+  await page.locator('#nextQuestion2').click();
+
+  // Verify the request is populated with the correct users
+  await expect(page.locator(`#data_${reviewer1_indID}_1`)).toContainText('Adam Bauch');
+  await expect(page.locator(`#data_${reviewer2_indID}_1`)).toContainText('Dorian Balistreri');
+
+  // Submit the request and verify it has been submitted 
+  await page.getByRole('button', { name: 'Submit Request' }).click();
+  await expect(
+    page.locator('#workflowbox_dep-1'),
+    'warning to be displayed because the form does not include the indicator set in the workflow'
+  ).toContainText('Warning: User not selected for current action (Contact Administrator)');
+});
+
+test('a request can be copied if its form status is set to Available', async () => {
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
+  await page.getByRole('button', { name: 'Copy Request' }).click();
+  await page.getByRole('button', { name: 'Save Change' }).click();
+
+  await page.getByLabel('single line text').fill('New Text Available');
+  await page.locator('#nextQuestion2').click();
+
+  await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('New Text Available');
+  await page.getByRole('link', { name: 'Home' }).click();
+
+  await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(2);
+});
+
+test('a request can not be copied if its form status is set to Unpublished', async () => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
+  await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
+  await page.getByLabel('Status:').selectOption('-1');
+
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
+  await page.getByRole('button', { name: 'Copy Request' }).click();
+  await page.getByRole('button', { name: 'Save Change' }).click();
+  await expect(page.getByText('Request could not be copied:')).toBeVisible();
+});
+
+test('a status-hidden form with a workflow is not Visible to New Request', async () => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
+  await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
+  await page.getByLabel('Status:').selectOption('0');
+
+  await page.goto(LEAF_URLS.INITIAL_FORM);
+  await expect(page.getByRole('heading', { name: 'Step 2 - Select type of' })).toBeVisible();
+  await expect(page.getByText(testFormName)).not.toBeVisible();
 });
 
 test("Request with Hidden Form Can Be Copied", async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: 'Simple form' }).click();
-  await expect(page.getByLabel('Status:')).toHaveValue('0');
-  await page.getByRole('link', { name: 'Home' }).click();
-  await page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' }).first().click();
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
   await page.getByRole('button', { name: 'Save Change' }).click();
-  await page.getByLabel('single line text').click();
+
   await page.getByLabel('single line text').fill('New Text Hidden');
   await page.locator('#nextQuestion2').click();
-  await expect(page.locator('#data_11_1')).toContainText('New Text Hidden');
+  await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('New Text Hidden');
   await page.getByRole('link', { name: 'Home' }).click();
-  // Verify there are 3 requests now with the name uniqueText + ' to Edit, Copy, and Cancel'
+
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(3);
-})
+});
+
 
 /**
- *  Verify copied request in can be cancelled
+ *  Set of tests which do the following:
+ *  Archive the "Reviewer 2" field and verify that
+ *  it is not visible on a request but the data is still visible in reports
+ *  Restore the "Reviewer 2" field and verify that
+ *  it is again visible on a request and still visible in reports
  */
-test('Cancel Requests', async () => {
+test.describe('Archive and Restore Question', () => {
+  // Subsequent tests will make changes that will cause previous tests 
+  // to fail so no retries
+  test.describe.configure({ retries: 0});
 
-  // Select previously created request
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  test('archived questions are not visible in reports', async () => {
+    // Archive the Reviewer 2 field
+    await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
+    await expect(page.locator('.indicator-name-preview', { hasText: firstIndLabel })).toBeVisible();
+    await page.locator(`#edit_indicator_${reviewer2_indID}`).click();
+    await page.locator('label').filter({ hasText: 'Archive' }).locator('span').click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.locator('span').filter({ hasText: secondIndLabel })).not.toBeVisible();
+
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
+    await expect(
+      page.getByText(firstIndLabel, { exact: true }),
+      'active question to be visible on the request'
+    ).toBeVisible();
+    await expect(
+      page.getByText(secondIndLabel, { exact: true }),
+      'archived question not to be visible on the request'
+    ).not.toBeVisible();
+  });
+
+
+  test('archived questions are still visible in reports', async () => {
+    // Create a new report containing the created request
+    await page.goto(LEAF_URLS.REPORT_BUILDER);
+    await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+    await page.getByRole('option', { name: 'Record ID' }).click();
+    await page.getByLabel('text', { exact: true }).fill(newRequestID);
+    await page.getByRole('button', { name: 'Next Step' }).click();
+
+    // Ensure both Reviewer fields are displayed in the report
+    await page.getByText(testFormName, { exact: true }).click();
+    await page.getByTitle(`indicatorID: ${reviewer1_indID}\nReviewer`).locator('span').click();
+    await page.getByTitle(`indicatorID: ${reviewer2_indID}\nReviewer 2 (Archived)`).locator('span').click();
+    await expect(
+      page.getByTitle(`indicatorID: ${reviewer2_indID}\nReviewer 2 (Archived)`),
+      'Archived status to be noted in Report Configuration section'
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Generate Report' }).click();
+
+    //Verify both archived and nonarchived fields are populated
+    await expect(
+      page.locator(`[data-indicator-id="${reviewer1_indID}"]`),
+      'active question\'s data to be populated in the report'
+    ).toContainText('Adam Bauch');
+    await expect(
+      page.locator(`[data-indicator-id="${reviewer2_indID}"]`),
+      'archived question\'s data to be populated in the report'
+    ).toContainText('Dorian Balistreri');
+  });
+
+  test('the restored question is again visible on the request', async () => {
+    // Restore the Reviewer 2 field
+    await page.goto(LEAF_URLS.FORM_EDITOR_FORM + formCategoryID);
+    await page.getByRole('link', { name: 'Restore Fields' }).click();
+    const restoreBtn = page.locator(`#restore_indicator_${reviewer2_indID}`);
+    await expect(
+      restoreBtn,
+      'archived question to be available for restore action'
+    ).toBeVisible();
+    await restoreBtn.click();
+    await expect(
+      restoreBtn,
+      'restored question to be removed from table after restore'
+    ).not.toBeVisible();
+
+    // Verify both fields are visible on the request again
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
+    await expect(page.getByText(firstIndLabel, { exact: true })).toBeVisible();
+    await expect(page.getByText(secondIndLabel, { exact: true })).toBeVisible();
+
+    await expect(
+      page.locator(`#data_${reviewer1_indID}_1`),
+      'active question to be visible on the request'
+    ).toContainText('Adam Bauch');
+    await expect(
+      page.locator(`#data_${reviewer2_indID}_1`),
+      'restored question to be visible on the request'
+    ).toContainText('Dorian Balistreri');
+  });
+});
+
+
+test('original request and copied requests can be cancelled', async () => {
+  await page.goto(LEAF_URLS.PORTAL_HOME);
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(3);
 
-  const requests = await page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' });
+  const requests = page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' });
 
   let numRequests = await requests.count();
-
   while(numRequests--) {
-    
-    // Cancel request
     await requests.nth(numRequests).click();
     await page.getByRole('button', { name: 'Cancel Request' }).click();
-    await page.getByPlaceholder('Enter Comment').click();
     await page.getByPlaceholder('Enter Comment').fill('No longer needed');
     await page.getByRole('button', { name: 'Yes' }).click();
 
@@ -196,251 +281,71 @@ test('Cancel Requests', async () => {
     await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
     await page.getByRole('link', { name: 'Home' }).click();
   }
- 
-  // Verify request no longer appears on the home page
-  //await page.getByRole('link', { name: 'Home' }).click();
+
   await expect(page.getByText('New Request', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(0);
 });
 
-/**
- *  Test for 4665
- *  Verify that a negative amount is allowed for currency
- *  in a new request
- */
-test('Negative Currency Allowed in New Request', async () => {
-    
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
-    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-    await page.getByRole('option', { name: 'Concrete Music' }).click();
-    await page.getByLabel('Title of Request').click();
-    await page.getByLabel('Title of Request').fill(uniqueText + ' to Test Negative Currency');
 
-    // Choose the Input Formats form
-    await page.locator('label').filter({ hasText: 'Input Formats (For testing' }).locator('span').click();
-    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-    await page.getByLabel('currency').click();
-
-    // Fill in a negative number for the currency
-    await page.getByLabel('currency').fill('-300');
-
-    // After saving, verify the negative number is still visible 
-    await page.locator('#save_indicator').click();
-    await expect(page.getByLabel('currency')).toHaveValue('-300.00');
-
-    // Verify negative number is still visible after the request is created
-    await page.getByRole('button', { name: 'Show single page' }).click();
-    await expect(page.locator('#data_37_1')).toContainText('-$300.00');
+test('a negative currency is allowed in a new request', { tag: ['@LEAF-4665'] }, async () => {
+  negCurrencyRequestID = await createTestRequest(
+    page, 'Concrete Music', uniqueText + ' to Test Negative Currency', 'Input Formats'
+  );
+  await page.getByLabel('currency').fill('-300');
+  await page.locator('#save_indicator').click();
+  await expect(page.getByLabel('currency')).toHaveValue('-300.00');
+  //verify correct display on the print view
+  await page.getByRole('button', { name: 'Show single page' }).click();
+  await expect(
+    page.locator('#data_37_1'),
+    'negative currency to display correct on the print view'
+  ).toContainText('-$300.00');
 });
 
-/**
- *  Test for 4665
- *  Verify that a negative amount is allowed for currency
- *  when editing a request
- */
 
-test("Negative Currency Allowed When Editing a Request", async ({ page }) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+test('a negative currency is allowed when editing a request', { tag: ['@LEAF-4665'] }, async () => {
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + negCurrencyRequestID);
 
-  const recordLink = page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' });
-  await recordLink.waitFor({ state: 'visible', timeout: 10000 });
-  await recordLink.click();
-
-  const editButton = page.getByRole('button', { name: 'Edit Basic input types field' });
-  await editButton.waitFor({ state: 'visible', timeout: 10000 });
-  await editButton.click();
+  await page.getByRole('button', { name: 'Edit Basic input types field' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Editing #' });
+  await expect(dialog.locator('div[id$="_loadIndicator"]')).toBeHidden();
 
   const currencyInput = page.getByLabel('currency');
-  await currencyInput.waitFor({ state: 'visible', timeout: 10000 });
-  await currencyInput.click();
+  await expect(currencyInput).toBeVisible();
   await currencyInput.fill('-50');
 
-  const saveButton = page.getByRole('button', { name: 'Save Change' });
-  await saveButton.waitFor({ state: 'visible', timeout: 10000 });
-  await saveButton.click();
+  const awaitPrint = page.waitForResponse(res =>
+    res.url().includes('getprintindicator') &&
+    res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Save Change' }).click();
+  await awaitPrint;
 
-  const updatedField = page.locator('#data_37_1');
-  await expect(updatedField).toHaveText('-$50.00', { timeout: 10000 });
+  await expect(
+    page.locator('#data_37_1'),
+    'edited negative currency to display correct on the print view'
+  ).toHaveText('-$50.00');
+
+  //cleanup
+  await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-/**
- * Test for LEAF 4913 
- */
-test('Closing pop up window does not cause active form to disappear', async () => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=965');
+
+test('Closing pop up window does not cause workflow form fields to disappear', { tag: ['@LEAF-4913'] }, async ({ page }) => {
+  const testCase = '495';
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + testCase);
   await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
-  //await page.getByRole('button', { name: 'View History' }).click();
-  await page.getByText('View History').click();
-  await expect(page.getByText('History of Request ID#:')).toBeVisible();
-  await page.getByRole('button', { name: 'Close' }).click();
-  await expect(page.locator('#format_label_4').getByText('Multi line text', { exact: true })).toBeVisible();
+  await page.locator('#tools').getByText('View History').click();
+  await expect(page.getByText(`History of Request ID#: ${testCase}`)).toBeVisible();
+  await page.locator('#genericDialogxhr').press('Escape');
+  await expect(
+    page.locator('#format_label_4').getByText('Multi line text', { exact: true }),
+    'workflow internal form field to still be visible'
+  ).toBeVisible();
 });
 
-/**
- *    Set of tests which do the following:
- *    1. Create a request with the "Multiple Person Designated" form
- *    2. Add values to both the "Reviewer 1" and "Reviewer 2" fields
- *    3. Archive the "Reviewer 2" field and verify the report still shows the entered value
- *    4. Restore the "Reviewer 2" field and verify the request still has the old value
- */
-test.describe('Archive and Restore Question',() => {
-
-  // Subsequent tests will make changes that will cause previous tests 
-  // to fail so no retries
-  test.describe.configure({ retries: 0});
-  
-  /**
-   *  Create and submit the initial request
-   *  with data in the field that is going to be archived
-   */
-  test('Create and Submit Request', async () => {
-      
-    // Create a new request with the form "Multiple Person Designated"
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=newform');
-    await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-    await page.getByRole('option', { name: 'Bronze Music' }).click();
-    await page.getByLabel('Title of Request').click();
-    await page.getByLabel('Title of Request').fill(uniqueText + ' to Create');
-    await page.locator('label').filter({ hasText: 'Multiple person designated' }).locator('span').click();
-    await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-    // Add Adam Bauch and Dorian Balistreri as Reviewers by username
-    await page.getByLabel('Search for user to add as Reviewer 1').click();
-    await page.getByLabel('Search for user to add as Reviewer 1').fill('userName:VTRSHHZOFIA');
-    await page.getByLabel('Search for user to add as Reviewer 2').click();
-    await page.getByLabel('Search for user to add as Reviewer 2').fill('userName:VTRUXEJAMIE');
-
-    // Verify the correct users were found
-    await expect(page.getByTitle('87 - VTRSHHZOFIA')).toContainText('Bauch, Adam Koelpin');
-    await expect(page.getByTitle('25 - VTRUXEJAMIE')).toContainText('Balistreri, Dorian Dickens');
-
-    // Ensure page has completely loaded before clicking the Next Question button
-    await expect(page.locator('#loadingIndicator_15')).not.toBeVisible();
-    await page.locator('#nextQuestion2').click();
-        
-    // Verify the request is populated with the correct users
-    await expect(page.locator('#data_14_1')).toContainText('Adam Bauch');
-    await expect(page.locator('#data_15_1')).toContainText('Dorian Balistreri');
-
-    // Submit the request and verify it has been submitted
-    await page.getByRole('button', { name: 'Submit Request' }).click();
-    await expect(page.locator('#workflowbox_dep-1')).toContainText('Pending action from Adam Bauch');
-  });
-
-  /**
-   *  After archiving the form question, 
-   *  verify the data is no longer visible on the 
-   *  original request
-   */
-  test('Archived Question Not Visible to New Request', async () => {
-        
-    // Archive the Reviewer 2 field
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-    await page.getByRole('button', { name: 'Edit', exact: true }).click();
-    await page.locator('label').filter({ hasText: 'Archive' }).locator('span').click();
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator('span').filter({ hasText: 'Reviewer 2,'})).not.toBeVisible();
-    await page.getByRole('link', { name: 'Home' }).click();
-
-    // Verify the Reviewer 1 field is visible but the Reviewer 2 field is not in the created request
-    await page.getByRole('link', { name: uniqueText + ' to Create' }).click();
-    await expect(page.getByText('Reviewer 1', { exact: true })).toBeVisible();
-    await expect(page.getByText('Reviewer 2', { exact: true })).not.toBeVisible();
-  });
-
-  /**
-   *  Show that despite the data of the archived question 
-   *  not being visible in the original request, it is still 
-   *  visible in a report.
-   */
-  test('Value Still Visible in Report After Archiving Question', async () => {
-        
-    // Create a new report containing the created request
-    await page.goto('https://host.docker.internal/Test_Request_Portal/?a=reports&v=3');
-    await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
-    await page.getByRole('option', { name: 'Title' }).click();
-    await page.getByLabel('text', { exact: true }).click();
-    await page.getByLabel('text', { exact: true }).fill(uniqueText + ' to Create');
-    await page.getByRole('button', { name: 'Next Step' }).click();
-
-    // Ensure both Reviewer fields are displayed in the report
-    await page.getByText('Multiple person designated', { exact: true }).click();
-    await page.getByTitle('indicatorID: 14\nReviewer').locator('span').click();
-    await page.getByTitle('indicatorID: 15\nReviewer 2 (Archived)').locator('span').click();
-    await page.getByRole('button', { name: 'Generate Report' }).click();
-
-    // Verify the Reviewer 2 field is populated despite being archived
-    await expect(page.locator('[data-indicator-id="15"]')).toContainText('Dorian Balistreri');
-  });
-
-  /**
-   *  After restoring the form question, verify
-   *  that the value is once again visible on the 
-   *  original request.
-   */
-  test('Previous Value Still Available to Request After Restoring Question', async () => {
-
-    // Restore the Reviewer 2 field
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-
-    // Verify the 'Multiple person designated' form loaded
-    await expect(page.getByLabel('Form name (24)')).toHaveValue('Multiple person designated');
-    await page.getByRole('link', { name: 'Restore Fields' }).click();
-    await page.getByRole('button', { name: 'Restore this field' }).click();
-        
-    // Verify the Reviewer 2 field is no longer on the 'Restore Fields' page 
-    await expect(page.getByText('Reviewer 2')).not.toBeVisible();
-    await page.getByRole('link', { name: 'Form Browser' }).click();
-    await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-
-    // Verify 'Reviewer 2' is once again on the form
-    await expect(page.getByText('Reviewer 2')).toBeVisible();
-    await page.getByRole('link', { name: 'Home' }).click();
-    await page.getByRole('link', { name: uniqueText + ' to Create' }).click();
-
-    // Verify Reviewer 2 is again visible on the created request and 
-    // its value is 'Dorian Balistreri' as before
-    await expect(page.getByText('Reviewer 2')).toBeVisible();
-    await expect(page.locator('#data_15_1')).toContainText('Dorian Balistreri');
-  });
-});
-
+//delete created form.
 test.afterAll(async () => {
-
-    // Set status of Simple Form back to 'Available'
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-    await page.getByRole('link', { name: 'Simple form', exact: true }).click();
-    await page.getByLabel('Status:').selectOption('1');
-
-    // Cancel created form
-    await page.getByRole('link', { name: 'Home' }).click();
-    // await page.getByRole('link', { name: uniqueText + ' to Create' }).click({force:true}); { delay: 200 }
-    const searchBar = page.locator('div#searchContainer div input');
-    const magnifierIcon = page.locator('img.searchIcon').nth(0);
-
-    await searchBar.type(uniqueText + ' to Create');
-    await magnifierIcon.waitFor({ state: 'visible' });
-    await page.locator('((//td)[2] //a)[2]').first().click();
-    await page.getByRole('button', { name: 'Cancel Request' }).click({force:true});
-    await page.getByPlaceholder('Enter Comment').click();
-    await page.getByPlaceholder('Enter Comment').fill('No longer needed');
-    await page.getByRole('button', { name: 'Yes' }).click();
-    await expect(page.locator('#bodyarea')).toContainText('has been cancelled!');
-
-    // Cancel the form used for testing negative currency
-    await page.goto('https://host.docker.internal/Test_Request_Portal/');
-    // await page.getByRole('link', { name: uniqueText + ' to Test Negative Currency' }).click();
-    await searchBar.clear();
-    await searchBar.type(uniqueText + ' to Test Negative Currency');
-    await magnifierIcon.waitFor({ state: 'visible' }); 
-    await page.locator('((//td)[2] //a)[2]').first().click();
-
-    await page.getByRole('button', { name: 'Cancel Request' }).click();
-    await page.getByRole('button', { name: 'Yes' }).click();
-
-    // Close the page
-    await page.close();
-  });
-
+  await deleteTestFormByFormID(page, formCategoryID);
+});
