@@ -70,12 +70,9 @@ CREATE TABLE `actions` (
 
 INSERT INTO `actions` (`actionType`, `actionText`, `actionTextPasttense`, `actionIcon`, `actionAlignment`, `sort`, `fillDependency`, `deleted`) VALUES
 ('approve',	'Approve',	'Approved',	'gnome-emblem-default.svg',	'right',	0,	1,	0),
-('changeInitiator',	'Change Initiator',	'Changed Initiator',	'',	'',	0,	0,	0),
 ('concur',	'Concur',	'Concurred',	'go-next.svg',	'right',	1,	1,	0),
 ('defer',	'Defer',	'Deferred',	'software-update-urgent.svg',	'left',	0,	-2,	0),
-('deleted',	'Cancel',	'Cancelled',	'',	'',	0,	0,	0),
 ('disapprove',	'Disapprove',	'Disapproved',	'process-stop.svg',	'left',	0,	-1,	0),
-('move',	'Change Step',	'Changed Step',	'',	'',	0,	0,	0),
 ('Note',	'Note',	'Note',	'accessories-text-editor.svg',	'right',	0,	1,	0),
 ('sendback',	'Return to Requestor',	'Returned to Requestor',	'edit-undo.svg',	'left',	0,	0,	0),
 ('sign',	'Sign',	'Signed',	'application-certificate.svg',	'right',	0,	1,	0),
@@ -109,7 +106,7 @@ CREATE TABLE `categories` (
   `sort` tinyint NOT NULL DEFAULT '0',
   `needToKnow` tinyint NOT NULL DEFAULT '0',
   `formLibraryID` smallint DEFAULT NULL,
-  `visible` tinyint NOT NULL DEFAULT '-1',
+  `visible` tinyint NOT NULL DEFAULT '1',
   `disabled` tinyint NOT NULL DEFAULT '0',
   `type` varchar(50) NOT NULL DEFAULT '',
   `destructionAge` mediumint unsigned DEFAULT NULL,
@@ -123,18 +120,18 @@ INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDes
 ('form_2ca98',	'',	'Complex Form',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1695395465),
 ('form_2d609',	'',	'Requestor Followup',	'',	2,	0,	1,	NULL,	1,	0,	'',	NULL,	1697554085),
 ('form_47236',	'',	'Grid',	'',	0,	0,	0,	NULL,	1,	0,	'',	NULL,	1693258372),
-('form_512fa',	'',	'Input Formats',	'For testing the direct behavior and display of indictor format types',	1,	0,	0,	0,	1,	0,	'',	NULL,	1736121124),
 ('form_548f8',	'',	'Sensitive Fields',	'',	0,	0,	1,	NULL,	1,	0,	'',	NULL,	1692287284),
 ('form_5ea07',	'',	'General Form',	'',	1,	0,	1,	NULL,	1,	0,	'',	NULL,	1695339032),
 ('form_66c33',	'form_98693',	'Categorization',	'',	0,	0,	0,	NULL,	1,	0,	'',	NULL,	1761137136),
-('form_7664a',	'',	'IFTHEN display status progress checking',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1733265434),
 ('form_98693',	'',	'Request Support',	'Test automatic categorization with LEAF Agent',	5,	0,	0,	NULL,	1,	0,	'',	NULL,	1761136994),
 ('form_a9b9f',	'',	'Service Chief',	'',	3,	0,	1,	NULL,	1,	0,	'',	NULL,	1697554796),
 ('form_ce46b',	'',	'Simple form',	'',	1,	0,	1,	NULL,	1,	0,	'',	NULL,	1697476029),
-('form_dac2a',	'',	'Test IFTHEN staple',	'',	0,	10,	0,	NULL,	1,	0,	'',	NULL,	1733840407),
 ('form_f8b95',	'',	'Multiple person designated',	'',	4,	0,	1,	NULL,	1,	0,	'',	NULL,	1698274593),
 ('leaf_devconsole',	'',	'LEAF Developer Console',	'',	-2,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
-('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0);
+('leaf_secure',	'',	'Leaf Secure Certification',	'',	-1,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
+('form_7664a',	'',	'IFTHEN display status progress checking',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1733265434),
+('form_dac2a',	'',	'Test IFTHEN staple',	'',	0,	10,	0,	NULL,	1,	0,	'',	NULL,	1733840407),
+('form_512fa',	'',	'Input Formats',	'For testing the direct behavior and display of indictor format types',	1,	0,	0,	0,	1,	0,	'',	NULL,	1736121124);
 
 DROP TABLE IF EXISTS `category_count`;
 CREATE TABLE `category_count` (
@@ -1145,16 +1142,16 @@ CREATE TABLE `data` (
   `recordID` mediumint unsigned NOT NULL,
   `indicatorID` smallint NOT NULL,
   `series` tinyint unsigned NOT NULL DEFAULT '1',
-  `data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `data` text NOT NULL,
   `metadata` json DEFAULT NULL,
   `timestamp` int unsigned NOT NULL DEFAULT '0',
-  `userID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `userID` varchar(50) NOT NULL,
   UNIQUE KEY `unique` (`recordID`,`indicatorID`,`series`),
   KEY `indicator_series` (`indicatorID`,`series`),
   KEY `fastdata` (`indicatorID`,`data`(10)),
   FULLTEXT KEY `data` (`data`),
   CONSTRAINT `fk_records_data_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`) VALUES
 (1,	-4,	1,	'271',	'{\"email\": \"Ashly.Ernser@fake-email.com\", \"lastName\": \"Ernser\", \"userName\": \"vtrkfylulu\", \"firstName\": \"Ashly\", \"middleName\": \"Littel\"}',	1692287247,	'tester'),
@@ -5512,16 +5509,19 @@ CREATE TABLE `data_history` (
   `recordID` mediumint unsigned NOT NULL,
   `indicatorID` smallint NOT NULL,
   `series` tinyint unsigned NOT NULL DEFAULT '1',
-  `data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `data` text NOT NULL,
   `metadata` json DEFAULT NULL,
   `timestamp` int unsigned NOT NULL DEFAULT '0',
-  `userID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `userDisplay` varchar(90) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `userID` varchar(50) NOT NULL,
+  `userDisplay` varchar(90) DEFAULT NULL,
   KEY `recordID` (`recordID`,`indicatorID`,`series`),
   KEY `timestamp` (`timestamp`),
   CONSTRAINT `fk_records_data_history_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `data_history` (`recordID`, `indicatorID`, `series`, `data`, `timestamp`, `userID`) VALUES
+(530,	9,	1,	'205',	1699056186,	'tester'),
+(7,	3,	1,	'12345',	1700253733,	'tester');
 
 DROP TABLE IF EXISTS `data_log_items`;
 CREATE TABLE `data_log_items` (
@@ -5541,7 +5541,6 @@ CREATE TABLE `dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `dependencies` (`dependencyID`, `description`) VALUES
-(-4,	'LEAF Agent'),
 (-3,	'Group Designated by the Requestor'),
 (-2,	'Requestor Followup'),
 (-1,	'Person Designated by the Requestor'),
@@ -5601,7 +5600,7 @@ CREATE TABLE `email_templates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `email_templates` (`emailTemplateID`, `label`, `emailTo`, `emailCc`, `subject`, `body`) VALUES
-(-7,	'Cancel Notification',	'LEAF_cancel_notification_emailTo.tpl',	'LEAF_cancel_notification_emailCc.tpl',	'LEAF_cancel_notification_subject.tpl',	'LEAF_cancel_notification_body.tpl'),
+(-7, 'Cancel Notification', 'LEAF_cancel_notification_emailTo.tpl', 'LEAF_cancel_notification_emailCc.tpl', 'LEAF_cancel_notification_subject.tpl', 'LEAF_cancel_notification_body.tpl'),
 (-5,	'Automated Email Reminder',	'LEAF_automated_reminder_emailTo.tpl',	'LEAF_automated_reminder_emailCc.tpl',	'LEAF_automated_reminder_subject.tpl',	'LEAF_automated_reminder_body.tpl'),
 (-4,	'Mass Action Email Reminder Template',	'LEAF_mass_action_remind_emailTo.tpl',	'LEAF_mass_action_remind_emailCc.tpl',	'LEAF_mass_action_remind_subject.tpl',	'LEAF_mass_action_remind_body.tpl'),
 (-3,	'Notify Requestor of Completion',	'LEAF_notify_complete_emailTo.tpl',	'LEAF_notify_complete_emailCc.tpl',	'LEAF_notify_complete_subject.tpl',	'LEAF_notify_complete_body.tpl'),
@@ -5714,7 +5713,6 @@ CREATE TABLE `indicators` (
   `timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `disabled` int unsigned NOT NULL DEFAULT '0',
   `is_sensitive` tinyint NOT NULL DEFAULT '0',
-  `trackChanges` tinyint NOT NULL DEFAULT '1',
   PRIMARY KEY (`indicatorID`),
   KEY `categoryID` (`categoryID`),
   KEY `parentID` (`parentID`),
@@ -5820,10 +5818,10 @@ CREATE TABLE `records` (
   `recordID` mediumint unsigned NOT NULL AUTO_INCREMENT,
   `date` int unsigned NOT NULL,
   `serviceID` smallint NOT NULL DEFAULT '0',
-  `userID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `title` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `userID` varchar(50) NOT NULL,
+  `title` text,
   `priority` tinyint NOT NULL DEFAULT '0',
-  `lastStatus` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `lastStatus` varchar(200) DEFAULT NULL,
   `submitted` int NOT NULL DEFAULT '0',
   `deleted` int NOT NULL DEFAULT '0',
   `isWritableUser` tinyint unsigned NOT NULL DEFAULT '1',
@@ -5835,7 +5833,7 @@ CREATE TABLE `records` (
   KEY `serviceID` (`serviceID`),
   KEY `userID` (`userID`),
   KEY `submitted` (`submitted`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `priority`, `lastStatus`, `submitted`, `deleted`, `isWritableUser`, `isWritableGroup`, `userMetadata`) VALUES
 (1,	1692287010,	0,	'tester',	'LEAF Secure Certification',	0,	NULL,	0,	1692287465,	1,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
@@ -7283,6 +7281,13 @@ INSERT INTO `records_dependencies` (`recordID`, `dependencyID`, `filled`, `time`
 (99,	-1,	0,	NULL),
 (99,	5,	1,	1694021488),
 (99,	9,	0,	NULL),
+(100,	-4,	0,	NULL),
+(100,	-3,	0,	NULL),
+(100,	-2,	0,	1694021488),
+(100,	-1,	0,	NULL),
+(100,	5,	1,	1694021488),
+(100,	9,	0,	NULL),
+(101,	-4,	0,	NULL),
 (101,	-3,	0,	NULL),
 (101,	-2,	0,	1694021488),
 (101,	-1,	0,	NULL),
@@ -12692,6 +12697,8 @@ CREATE TABLE `sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
+SET NAMES utf8mb4;
+
 DROP TABLE IF EXISTS `settings`;
 CREATE TABLE `settings` (
   `setting` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -12759,7 +12766,7 @@ CREATE TABLE `sites` (
   `orgchart_path` varchar(250) DEFAULT NULL,
   `orgchart_database` varchar(250) DEFAULT NULL,
   `decommissionTimestamp` int DEFAULT '0',
-  `isVAPO` varchar(8) NOT NULL DEFAULT 'true',
+  `isVAPO` varchar(8) NOT NULL DEFAULT 'false',
   `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -12781,7 +12788,6 @@ CREATE TABLE `step_dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 INSERT INTO `step_dependencies` (`stepID`, `dependencyID`) VALUES
-(10,	-4),
 (4,	-3),
 (3,	-2),
 (5,	-2),
