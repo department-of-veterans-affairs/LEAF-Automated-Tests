@@ -122,6 +122,7 @@ CREATE TABLE `categories` (
 INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDescription`, `workflowID`, `sort`, `needToKnow`, `formLibraryID`, `visible`, `disabled`, `type`, `destructionAge`, `lastModified`) VALUES
 ('form_2ca98',	'',	'Complex Form',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1695395465),
 ('form_2d609',	'',	'Requestor Followup',	'',	2,	0,	1,	NULL,	1,	0,	'',	NULL,	1697554085),
+('form_4025b',	'form_d5910',	'Categorization',	'',	0,	0,	0,	NULL,	-1,	0,	'',	NULL,	1761149865),
 ('form_47236',	'',	'Grid',	'',	0,	0,	0,	NULL,	1,	0,	'',	NULL,	1693258372),
 ('form_512fa',	'',	'Input Formats',	'For testing the direct behavior and display of indictor format types',	1,	0,	0,	0,	1,	0,	'',	NULL,	1736121124),
 ('form_548f8',	'',	'Sensitive Fields',	'',	0,	0,	1,	NULL,	1,	0,	'',	NULL,	1692287284),
@@ -129,6 +130,7 @@ INSERT INTO `categories` (`categoryID`, `parentID`, `categoryName`, `categoryDes
 ('form_7664a',	'',	'IFTHEN display status progress checking',	'',	1,	0,	0,	NULL,	1,	0,	'',	NULL,	1733265434),
 ('form_a9b9f',	'',	'Service Chief',	'',	3,	0,	1,	NULL,	1,	0,	'',	NULL,	1697554796),
 ('form_ce46b',	'',	'Simple form',	'',	1,	0,	1,	NULL,	1,	0,	'',	NULL,	1697476029),
+('form_d5910',	'',	'Request Support',	'Testing LEAF Agent',	0,	0,	0,	NULL,	-1,	0,	'',	NULL,	1761149786),
 ('form_dac2a',	'',	'Test IFTHEN staple',	'',	0,	10,	0,	NULL,	1,	0,	'',	NULL,	1733840407),
 ('form_f8b95',	'',	'Multiple person designated',	'',	4,	0,	1,	NULL,	1,	0,	'',	NULL,	1698274593),
 ('leaf_devconsole',	'',	'LEAF Developer Console',	'',	-2,	0,	0,	NULL,	1,	0,	'',	NULL,	0),
@@ -5485,9 +5487,6 @@ CREATE TABLE `data_action_log` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-INSERT INTO `data_action_log` (`empUID`, `id`, `action`, `userID`, `timestamp`, `userDisplay`) VALUES
-(NULL,	1,	'add-workflow_route',	1,	'2023-11-17 20:43:38',	'tester tester');
-
 DROP TABLE IF EXISTS `data_cache`;
 CREATE TABLE `data_cache` (
   `cacheKey` varchar(32) NOT NULL,
@@ -5787,7 +5786,9 @@ INSERT INTO `indicators` (`indicatorID`, `name`, `format`, `description`, `defau
 (50,	'orgchart group (LEAF-orgchart, group)',	'orgchart_group',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0,	1),
 (51,	'orgchart position (LEAF-orgchart, position)',	'orgchart_position',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-125,	'2025-01-05 23:52:04',	0,	0,	1),
 (52,	'custom widget (LEAF-raw data)',	'raw_data',	'',	'',	47,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-124,	'2025-01-05 23:52:04',	0,	0,	1),
-(53,	'orgchart group 2 (LEAF-orgchart, group)',	'orgchart_group',	'',	'',	50,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0,	1);
+(53,	'orgchart group 2 (LEAF-orgchart, group)',	'orgchart_group',	'',	'',	50,	'form_512fa',	NULL,	NULL,	NULL,	NULL,	0,	-126,	'2025-01-05 23:52:04',	0,	0,	1),
+(54,	'Provide a brief description of the project, issue, or request.',	'textarea',	'',	'',	NULL,	'form_d5910',	NULL,	NULL,	NULL,	NULL,	1,	-128,	'2025-10-22 16:16:27',	0,	0,	1),
+(55,	'Type of Request',	'dropdown\n\nConsultation\nTechnical Issue\nIdea',	'',	'',	NULL,	'form_4025b',	NULL,	NULL,	NULL,	NULL,	0,	-128,	'2025-10-22 16:17:45',	0,	0,	1);
 
 DROP TABLE IF EXISTS `notes`;
 CREATE TABLE `notes` (
@@ -12783,6 +12784,7 @@ CREATE TABLE `step_dependencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 INSERT INTO `step_dependencies` (`stepID`, `dependencyID`) VALUES
+(10,	-4),
 (4,	-3),
 (3,	-2),
 (5,	-2),
@@ -12944,7 +12946,8 @@ INSERT INTO `workflow_routes` (`workflowID`, `stepID`, `nextStepID`, `actionType
 (4,	8,	9,	'approve',	''),
 (4,	8,	0,	'sendback',	'{\"required\":false}'),
 (4,	9,	0,	'approve',	''),
-(4,	9,	0,	'sendback',	'{\"required\":false}');
+(4,	9,	0,	'sendback',	'{\"required\":false}'),
+(5,	10,	0,	'Note',	'');
 
 DROP TABLE IF EXISTS `workflow_steps`;
 CREATE TABLE `workflow_steps` (
@@ -12977,7 +12980,8 @@ INSERT INTO `workflow_steps` (`workflowID`, `stepID`, `stepTitle`, `stepBgColor`
 (2,	5,	'Followup',	'#fffdcd',	'black',	'1px solid black',	'',	533,	134,	NULL,	NULL,	NULL,	NULL),
 (3,	7,	'Service Chief',	'#fffdcd',	'black',	'1px solid black',	'',	625,	135,	NULL,	NULL,	NULL,	NULL),
 (4,	8,	'Reviewer 1',	'#fffdcd',	'black',	'1px solid black',	'',	526,	147,	14,	NULL,	NULL,	NULL),
-(4,	9,	'Reviewer 2',	'#fffdcd',	'black',	'1px solid black',	'',	530,	242,	15,	NULL,	NULL,	NULL);
+(4,	9,	'Reviewer 2',	'#fffdcd',	'black',	'1px solid black',	'',	530,	242,	15,	NULL,	NULL,	NULL),
+(5,	10,	'Categorize',	'#fffdcd',	'black',	'1px solid black',	'',	552,	153,	NULL,	NULL,	NULL,	NULL);
 
 DROP TABLE IF EXISTS `workflows`;
 CREATE TABLE `workflows` (
@@ -12993,4 +12997,5 @@ INSERT INTO `workflows` (`workflowID`, `initialStepID`, `description`) VALUES
 (1,	1,	'General Workflow'),
 (2,	5,	'Test Requestor Followup'),
 (3,	7,	'Service Chief'),
-(4,	8,	'Multiple person designated');
+(4,	8,	'Multiple person designated'),
+(5,	10,	'Request Support');
