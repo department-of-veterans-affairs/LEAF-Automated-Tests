@@ -156,7 +156,7 @@ test.describe('Account Updater functionalities', () => {
       } else {
         //uncheck all requests
         await expect(gridLoc.locator('th input')).toBeVisible();
-        await gridLoc.locator('th input').click();
+        await gridLoc.locator('th input').setChecked(false);
         await expect(gridLoc.locator('th input')).not.toBeChecked();
         //confirm all checkboxes are unchecked before updating specific requests;
         const gridRows = await gridLoc.getByRole('row').all();
@@ -168,21 +168,21 @@ test.describe('Account Updater functionalities', () => {
           case 1: //employee swaps
             for (let e = 0; e < originalRequestsEmployee.length; e++) {
               const row = gridLoc.locator(`tr:has(td[id$="_${originalRequestsEmployee[e]}_uid"])`);
-              await row.getByRole('checkbox').click();
+              await row.getByRole('checkbox').setChecked(true);
             }
             break;
           case 2: //groups
             for (let g = 0; g < originalGroups.length; g++) {
               const hasCell = page.locator('td', { hasText: originalGroups[g] });
               const row = gridLoc.locator('tr').filter({ has: hasCell });
-              await row.getByRole('checkbox').click();
+              await row.getByRole('checkbox').setChecked(true);
             }
             break;
           case 3: //positions
             for (let p = 0; p < originalPositions.length; p++) {
               const hasCell = page.locator('td', { hasText: originalPositions[p] });
               const row = gridLoc.locator('tr').filter({ has: hasCell });
-              await row.getByRole('checkbox').click();
+              await row.getByRole('checkbox').setChecked(true);
             }
           default:
           break;
@@ -210,11 +210,12 @@ test.describe('Account Updater functionalities', () => {
     await fillAndPreview(page, fromUser, toUser);
 
     //do not move employee fields
+    const gridRows = await page.locator('#grid_orgchart_employee').getByRole('row').all();
     const gridEmployee = page.locator('#grid_orgchart_employee th input');
     await expect(gridEmployee).toBeVisible();
-    await gridEmployee.click();
+    await gridEmployee.setChecked(false);
     await expect(gridEmployee).not.toBeChecked();
-    const gridRows = await page.locator('#grid_orgchart_employee').getByRole('row').all();
+
     for (let i = 0; i < gridRows.length; i++) {
       await expect(gridRows[i].getByRole('checkbox')).not.toBeChecked();
     }
