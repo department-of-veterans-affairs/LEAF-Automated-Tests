@@ -5,6 +5,11 @@ test('change title', async ({ page }) => {
 
   let randNum = Math.random();
   let uniqueText = `LEAF Test Site ${randNum}`;
+  let leafWithCharsTitle = 'Leaf & Test';
+  let facilityWithCharsName = 'Facility & Name';
+  let originalLeafTitle = 'Leaf Test Site';
+  let originalFacilityName = 'Standard test database';
+
 
   await page.getByRole('button', { name: ' Site Settings Edit site' }).click();
 
@@ -21,23 +26,24 @@ test('change title', async ({ page }) => {
   //Verify encoded chars does not display
 
   await page.getByRole('textbox', { name: 'Title of LEAF site' }).press('ControlOrMeta+a');
-  await page.getByRole('textbox', { name: 'Title of LEAF site' }).fill('Leaf & Test');
+  await page.getByRole('textbox', { name: 'Title of LEAF site' }).fill(leafWithCharsTitle);
   await page.getByRole('textbox', { name: 'Facility Name' }).press('ControlOrMeta+a');
-  await page.getByRole('textbox', { name: 'Facility Name' }).fill('Facility & Name');
+  await page.getByRole('textbox', { name: 'Facility Name' }).fill(facilityWithCharsName);
   await page.getByRole('button', { name: 'Save' }).click();
   // Reload the page
   await page.reload();
 
-  await expect(page.getByRole('textbox', { name: 'Title of LEAF site' })).toHaveValue('Leaf & Test');
-  await expect(page.getByRole('textbox', { name: 'Facility Name' })).toHaveValue('Facility & Name');
-  await expect(page.locator('#headerDescription')).toContainText('Leaf & Test');
+  await expect(page.getByRole('textbox', { name: 'Title of LEAF site' })).toHaveValue(leafWithCharsTitle);
+  await expect(page.getByRole('textbox', { name: 'Facility Name' })).toHaveValue(facilityWithCharsName);
+  await expect(page.locator('#headerDescription')).toContainText(leafWithCharsTitle);
 
   //Reset the Settings 
   await page.getByRole('textbox', { name: 'Title of LEAF site' }).press('ControlOrMeta+a');
-  await page.getByRole('textbox', { name: 'Title of LEAF site' }).fill('Leaf Test Site');
+  await page.getByRole('textbox', { name: 'Title of LEAF site' }).fill(originalLeafTitle);
   await page.getByRole('textbox', { name: 'Facility Name' }).press('ControlOrMeta+a');
-  await page.getByRole('textbox', { name: 'Facility Name' }).fill('Standard test database');
+  await page.getByRole('textbox', { name: 'Facility Name' }).fill(originalFacilityName);
   await page.getByRole('button', { name: 'Save' }).click();
+  
   // Reload the page
   await page.reload();
 });
