@@ -10,7 +10,6 @@ test('change title', async ({ page }) => {
   let originalLeafTitle = 'Leaf Test Site';
   let originalFacilityName = 'Standard test database';
 
-
   await page.getByRole('button', { name: ' Site Settings Edit site' }).click();
 
   // This is necessary because the input field starts off empty on this page
@@ -30,20 +29,23 @@ test('change title', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Facility Name' }).press('ControlOrMeta+a');
   await page.getByRole('textbox', { name: 'Facility Name' }).fill(facilityWithCharsName);
   await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('#headerDescription')).toContainText(leafWithCharsTitle);
   // Reload the page
   await page.reload();
-
+  
+  const element = page.getByRole('textbox', { name: 'Title of LEAF site' });
+  element.waitFor();
+ 
   await expect(page.getByRole('textbox', { name: 'Title of LEAF site' })).toHaveValue(leafWithCharsTitle);
   await expect(page.getByRole('textbox', { name: 'Facility Name' })).toHaveValue(facilityWithCharsName);
-  await expect(page.locator('#headerDescription')).toContainText(leafWithCharsTitle);
-
+  
   //Reset the Settings 
   await page.getByRole('textbox', { name: 'Title of LEAF site' }).press('ControlOrMeta+a');
   await page.getByRole('textbox', { name: 'Title of LEAF site' }).fill(originalLeafTitle);
   await page.getByRole('textbox', { name: 'Facility Name' }).press('ControlOrMeta+a');
   await page.getByRole('textbox', { name: 'Facility Name' }).fill(originalFacilityName);
   await page.getByRole('button', { name: 'Save' }).click();
-  
+
   // Reload the page
   await page.reload();
 });
