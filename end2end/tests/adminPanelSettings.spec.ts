@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('change title', async ({ page }) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
+ 
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_system');
 
   let randNum = Math.random();
   let uniqueText = `LEAF Test Site ${randNum}`;
@@ -9,8 +10,6 @@ test('change title', async ({ page }) => {
   let facilityWithCharsName = 'Facility & Name';
   let originalLeafTitle = 'Leaf Test Site';
   let originalFacilityName = 'Standard test database';
-
-  await page.getByRole('button', { name: ' Site Settings Edit site' }).click();
 
   // This is necessary because the input field starts off empty on this page
   // So we'll wait until the async request populates it
