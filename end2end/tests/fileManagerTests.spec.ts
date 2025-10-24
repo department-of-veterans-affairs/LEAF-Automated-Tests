@@ -12,7 +12,7 @@ test('Upload .mjs files to File Manager', async ({ page }) => {
     // Go to file manager and upload test .mjs file
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
     await page.getByRole('button', { name: 'Upload File' }).click();
-    await page.getByLabel('Select file to upload').setInputFiles('./LEAF-Automated-Tests/end2end/artifacts/LEAF-5086.mjs');
+    await page.getByLabel('Select file to upload').setInputFiles('./artifacts/LEAF-5086.mjs');
 
     // Verify file has been uploaded
     await expect(page.locator("[id$='_0_file']")).toContainText('../files/LEAF-5086.mjs');
