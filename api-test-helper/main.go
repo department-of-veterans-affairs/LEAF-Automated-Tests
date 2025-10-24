@@ -71,7 +71,7 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		} else {
 			cmd = exec.Command("go", "test")
 		}
-		cmd.Dir = "../LEAF/pkg/agent"
+		cmd.Dir = "../pkg/agent"
 		pipe, err = cmd.StdoutPipe()
 		if err != nil {
 			log.Println(err)
@@ -96,7 +96,7 @@ func handleRunTestLLM(w http.ResponseWriter, r *http.Request) {
 		printLog(w, "Running API tests: LEAF/LEAF_Agent (LLM tests)")
 
 		cmdClear := exec.Command("go", "clean", "-testcache")
-		cmdClear.Dir = "../LEAF/LEAF_Agent"
+		cmdClear.Dir = "../LEAF_Agent"
 		cmdClear.Run()
 
 		var cmd *exec.Cmd
@@ -107,7 +107,7 @@ func handleRunTestLLM(w http.ResponseWriter, r *http.Request) {
 			cmd = exec.Command("go", "test")
 		}
 
-		cmd.Dir = "../LEAF/LEAF_Agent"
+		cmd.Dir = "../LEAF_Agent"
 		pipe, err := cmd.StdoutPipe()
 		if err != nil {
 			log.Println(err)
