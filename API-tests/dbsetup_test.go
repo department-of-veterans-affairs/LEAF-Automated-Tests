@@ -98,9 +98,9 @@ func setupTestDB() {
 	if err != nil && err.Error() == "sql: no rows in result set" {
 		_, err = db.Exec(
 			`INSERT INTO sites (launchpadID, site_type, site_path, site_uploads, portal_database, orgchart_path, orgchart_database, decommissionTimestamp)
-			VALUES (0, "portal", "/LEAF/library", "/var/www/LEAF_library_test_uploads/", ?,	"/Test_Nexus", ?, 0)`,
+			VALUES (0, "portal", "/LEAF/library", "/var/www/LEAF_library_test_uploads/", ?,	"/LEAF_NationalNexus", ?, 0)`,
 			testLibraryDbName,
-			testNexusDbName,
+			testNationalNexusDbName,
 		)
 	}
 }

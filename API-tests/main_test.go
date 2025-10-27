@@ -24,6 +24,7 @@ var dbUsername = os.Getenv("MYSQL_USER")
 var dbPassword = os.Getenv("MYSQL_PASSWORD")
 var testPortalDbName = "leaf_portal_API_testing"
 var testNexusDbName = "leaf_users_API_testing"
+var testNationalNexusDbName = "national_orgchart"
 var testLibraryDbName = "leaf_library_testing"
 
 var CsrfToken string
