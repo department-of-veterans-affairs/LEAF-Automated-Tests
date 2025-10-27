@@ -91,6 +91,18 @@ func setupTestDB() {
 				SET orgchart_database = ?
 				WHERE site_path="/LEAF_Nexus"`,
 		testNexusDbName)
+
+	err = db.QueryRow(`SELECT portal_database FROM sites
+				WHERE portal_database="leaf_library_testing"`).
+	Scan(&testLibraryDbName)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		_, err = db.Exec(
+			`INSERT INTO sites (launchpadID, site_type, site_path, site_uploads, portal_database, orgchart_path, orgchart_database, decommissionTimestamp)
+			VALUES (0, "portal", "/LEAF/library", "/var/www/LEAF_library_test_uploads/", ?,	"/Test_Nexus", ?, 0)`,
+			testLibraryDbName,
+			testNexusDbName,
+		)
+	}
 }
 
 func updateTestDBSchema() {
