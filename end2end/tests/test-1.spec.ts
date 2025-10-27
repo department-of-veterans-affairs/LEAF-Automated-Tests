@@ -8,14 +8,18 @@ import {
 const testID = getRandomId();
 
 
-test('test', async ({ page }) => {
+test('Verify Default Form Values are set', async ({ page }) => {
+
+  let formID = '';
+
+  try {
 
   const NO_WORKFLOW = '0';
   const UNPUBLISHED = '-1';
   const NEED_TO_KNOW_ON = '1';
   const FORM_TYPE_STANDARD = '';
 
-  let formID = await createTestForm(page, `form_name_${testID}`, `form_descr_${testID}`);
+  formID = await createTestForm(page, `form_name_${testID}`, `form_descr_${testID}`);
 
   const selectWorkflow = page.locator('#workflowID');
   await expect(selectWorkflow).toHaveValue(NO_WORKFLOW);
@@ -29,5 +33,10 @@ test('test', async ({ page }) => {
   const formType = page.locator('#formType');
   await expect(formType).toHaveValue(FORM_TYPE_STANDARD);
 
-  await deleteTestFormByFormID(page, formID);
+  } finally {
+
+    if(formID != '')
+      await deleteTestFormByFormID(page, formID);
+
+  }
 });
