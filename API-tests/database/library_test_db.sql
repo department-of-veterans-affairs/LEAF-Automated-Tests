@@ -27,6 +27,10 @@ CREATE TABLE `action_history` (
   CONSTRAINT `fk_records_action_history_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `action_history` (`actionID`, `recordID`, `userID`, `stepID`, `dependencyID`, `actionType`, `actionTypeID`, `time`, `comment`, `userMetadata`) VALUES
+(1,	1,	'tester',	0,	5,	'submit',	6,	1761587544,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(2,	1,	'tester',	1,	9,	'ApproveandPost',	8,	1761587550,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
+
 DROP TABLE IF EXISTS `action_types`;
 CREATE TABLE `action_types` (
   `actionTypeID` tinyint unsigned NOT NULL AUTO_INCREMENT,
@@ -136,6 +140,9 @@ CREATE TABLE `category_count` (
   CONSTRAINT `fk_records_category_count_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `category_count` (`recordID`, `categoryID`, `count`) VALUES
+(1,	'form_68aa4',	1);
+
 DROP TABLE IF EXISTS `category_privs`;
 CREATE TABLE `category_privs` (
   `categoryID` varchar(20) NOT NULL,
@@ -172,6 +179,19 @@ CREATE TABLE `data` (
   FULLTEXT KEY `data` (`data`),
   CONSTRAINT `fk_records_data_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`) VALUES
+(1,	1,	1,	'LEAF_TEST_FormPacket_form_512fa.txt',	NULL,	1761587415,	'tester'),
+(1,	3,	1,	'a:8:{i:0;s:2:\"no\";i:1;s:2:\"no\";i:2;s:2:\"no\";i:3;s:2:\"no\";i:4;s:2:\"no\";i:5;s:22:\"Information Technology\";i:6;s:2:\"no\";i:7;s:2:\"no\";}',	NULL,	1761587525,	'tester'),
+(1,	4,	1,	'input formats, basic, simple, testing',	NULL,	1761587525,	'tester'),
+(1,	5,	1,	'LEAF Library Field Format Testing',	NULL,	1761587474,	'tester'),
+(1,	6,	1,	'LEAF_TEST_Screenshot.png',	NULL,	1761587458,	'tester'),
+(1,	7,	1,	'',	NULL,	1761587474,	'tester'),
+(1,	9,	1,	'Tester Tester',	NULL,	1761587538,	'tester'),
+(1,	10,	1,	'',	NULL,	1761587538,	'tester'),
+(1,	11,	1,	'anonymous',	NULL,	1761587538,	'tester'),
+(1,	20,	1,	'https://host.docker.internal/Test_Request_Portal/',	NULL,	1761587525,	'tester'),
+(1,	54,	1,	'No',	NULL,	1761587474,	'tester');
 
 DROP TABLE IF EXISTS `data_action_log`;
 CREATE TABLE `data_action_log` (
@@ -218,6 +238,19 @@ CREATE TABLE `data_history` (
   KEY `timestamp` (`timestamp`),
   CONSTRAINT `fk_records_data_history_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+INSERT INTO `data_history` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `timestamp`, `userID`, `userDisplay`) VALUES
+(1,	1,	1,	'LEAF_TEST_FormPacket_form_512fa.txt',	NULL,	1761587415,	'tester',	'Tester Tester'),
+(1,	6,	1,	'LEAF_TEST_Screenshot.png',	NULL,	1761587458,	'tester',	'Tester Tester'),
+(1,	5,	1,	'LEAF Library Field Format Testing',	NULL,	1761587474,	'tester',	'Tester Tester'),
+(1,	7,	1,	'',	NULL,	1761587474,	'tester',	'Tester Tester'),
+(1,	54,	1,	'No',	NULL,	1761587474,	'tester',	'Tester Tester'),
+(1,	4,	1,	'input formats, basic, simple, testing',	NULL,	1761587525,	'tester',	'Tester Tester'),
+(1,	20,	1,	'https://host.docker.internal/Test_Request_Portal/',	NULL,	1761587525,	'tester',	'Tester Tester'),
+(1,	3,	1,	'a:8:{i:0;s:2:\"no\";i:1;s:2:\"no\";i:2;s:2:\"no\";i:3;s:2:\"no\";i:4;s:2:\"no\";i:5;s:22:\"Information Technology\";i:6;s:2:\"no\";i:7;s:2:\"no\";}',	NULL,	1761587525,	'tester',	'Tester Tester'),
+(1,	9,	1,	'Tester Tester',	NULL,	1761587538,	'tester',	'Tester Tester'),
+(1,	10,	1,	'',	NULL,	1761587538,	'tester',	'Tester Tester'),
+(1,	11,	1,	'anonymous',	NULL,	1761587538,	'tester',	'Tester Tester');
 
 DROP TABLE IF EXISTS `data_log_items`;
 CREATE TABLE `data_log_items` (
@@ -501,6 +534,9 @@ CREATE TABLE `records` (
   KEY `submitted` (`submitted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `priority`, `lastStatus`, `submitted`, `deleted`, `isWritableUser`, `isWritableGroup`, `userMetadata`) VALUES
+(1,	1761587302,	0,	'tester',	'LEAF Library Format Tests',	0,	'Approved and Posted',	1761587544,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
+
 DROP TABLE IF EXISTS `records_dependencies`;
 CREATE TABLE `records_dependencies` (
   `recordID` mediumint unsigned NOT NULL,
@@ -514,6 +550,12 @@ CREATE TABLE `records_dependencies` (
   CONSTRAINT `fk_records_dependencyID` FOREIGN KEY (`dependencyID`) REFERENCES `dependencies` (`dependencyID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+INSERT INTO `records_dependencies` (`recordID`, `dependencyID`, `filled`, `time`) VALUES
+(1,	5,	1,	1761587550),
+(1,	9,	1,	1761587550),
+(1,	10,	0,	1761587550),
+(1,	11,	0,	1761587550);
+
 DROP TABLE IF EXISTS `records_step_fulfillment`;
 CREATE TABLE `records_step_fulfillment` (
   `recordID` mediumint unsigned NOT NULL,
@@ -522,6 +564,9 @@ CREATE TABLE `records_step_fulfillment` (
   UNIQUE KEY `recordID` (`recordID`,`stepID`) USING BTREE,
   CONSTRAINT `fk_records_step_fulfillment_deletion` FOREIGN KEY (`recordID`) REFERENCES `records` (`recordID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+INSERT INTO `records_step_fulfillment` (`recordID`, `stepID`, `fulfillmentTime`) VALUES
+(1,	1,	1761587550);
 
 DROP TABLE IF EXISTS `records_workflow_state`;
 CREATE TABLE `records_workflow_state` (
