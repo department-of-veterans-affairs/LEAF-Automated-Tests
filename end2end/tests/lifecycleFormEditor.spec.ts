@@ -228,8 +228,8 @@ test('Import Form', async ({ page }) => {
   await page.getByRole('button', { name: 'Import Form' }).click();
 
   // Get the form to import
-  const fileChooser = await page.locator('#formPacket');
-  fileChooser.setInputFiles('./forms/' + uniqueText + '.txt');
+  const fileChooser = page.locator('#formPacket');
+  await fileChooser.setInputFiles('./forms/' + uniqueText + '.txt');
   
   // Click on the Import button
   await page.getByRole('button', { name: 'Import', exact: true }).click();
