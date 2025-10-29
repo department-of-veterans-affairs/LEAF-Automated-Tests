@@ -522,3 +522,25 @@ func TestForm_GetProgress_ReturnValue(t *testing.T) {
 		t.Errorf("progress check got = %v, want = %v", got, want)
 	}
 }
+
+// If a stapled form is assocated with more than one parent form, the indicator list should not contain duplicate indicators
+func TestForm_DuplicateIndicatorsInIndicatorListWithFormFilter(t *testing.T) {
+	res, _ := httpGet(RootURL + "api/form/indicator/list?includeHeadings=1&forms=form_2ca98,form_5ea07,form_7664a,form_512fa,form_ce46b")
+	var list FormIndicatorList
+
+	err := json.Unmarshal([]byte(res), &list)
+	if err != nil {
+		t.Error(err)
+	}
+
+	count := 0
+	for _, field := range list {
+		if field.IndicatorID == 31 {
+			count++
+		}
+	}
+
+	if count > 1 {
+		t.Errorf("Got %v instances of indicatorID 31, want 1 instance", count)
+	}
+}
