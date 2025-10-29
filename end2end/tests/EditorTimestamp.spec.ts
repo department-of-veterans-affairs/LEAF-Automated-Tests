@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { uptime } from 'process';
 
 
   test('Verify Template Editor Timestamp', async ({ page }) => {
@@ -92,13 +93,14 @@ import { test, expect, Page } from '@playwright/test';
 
  test ('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_reports&file=example');
- 
+    
+    const fileName = "custom_dev_LEAF2";
     await expect(page.getByRole('button', { name: 'New File' })).toBeVisible();
     await page.getByRole('button', { name: 'New File' }).click();
-    await page.getByRole('textbox', { name: 'Filename:' }).fill('custom_dev_LEAF2');
+    await page.getByRole('textbox', { name: 'Filename:' }).fill(fileName);
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
      
-    const fileName = "custom_dev_LEAF2";
+    
     let savePromise = page.waitForResponse(res =>
       res.url().includes(fileName) && res.status() === 200
     );
@@ -121,9 +123,9 @@ import { test, expect, Page } from '@playwright/test';
 
     const nowTimeStamp = new Date();
     const currentSystemTimeStamp = nowTimeStamp.toLocaleTimeString();
-    const dateMainDiv = page.locator('div.file_history_options_date >> div');
+    const dateMainDiv = page.locator('div.file_history_options_date >> div').first();
     const displayedTimeStamped = await dateMainDiv.innerText();
-    let displayedTimeSplit = displayedTimeStamped.split("\n", 3 );
+    const displayedTimeSplit = displayedTimeStamped.split("\n", 3 );
     const currentDisplayedTimeStamped = displayedTimeSplit[1];
     
     const updatedSytemTimeString = currentSystemTimeStamp.replace(/(AM|PM)/, "").trim();
@@ -134,7 +136,8 @@ import { test, expect, Page } from '@playwright/test';
 
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
-  
+    
+    const toleranceInSeconds = 1;  
     expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
 
     await expect(page.getByRole('button', { name: 'Delete File' })).toBeVisible();
@@ -156,17 +159,9 @@ import { test, expect, Page } from '@playwright/test';
     await page.getByRole('button', { name: 'Select file to upload' }).setInputFiles(`./artifacts/LEAF-5005.txt`);
     
     const nowDateStamp = new Date();
-    const currentDateStamp = nowDateStamp.toLocaleTimeString('en-US', {
-     year: 'numeric',
-     month: '2-digit',
-     day: '2-digit',
-    });
-    let dateSplit = currentDateStamp.split(" ", 2 );
-    const currentDateStampSplit = dateSplit[0];
-    const currentDateupdate = currentDateStampSplit.replace(/,/g, '');
-    const currentDateFinal = currentDateupdate.toString();
-   
-    
+    const currentDateStamp = nowDateStamp.toLocaleTimeString();
+    console.log("check1", currentDateStamp);
+         
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
 
     const mainDiv = page.locator('#fileList >> div');
@@ -182,8 +177,24 @@ import { test, expect, Page } from '@playwright/test';
     {
         //Verify Date this test does not include Time
         const cellTime = await rows.nth(i).locator('td:nth-child(2)').innerText();
-       
-        expect(cellTime).toBe(currentDateFinal);
+
+        const displayedTimeSplit = cellTime.split(" ", 2 );
+        console.log("the Split", displayedTimeSplit);
+
+        const displayTimeStamp = displayedTimeSplit[1];
+        console.log("after", displayTimeStamp);
+        
+        const updatedSytemTimeString = currentDateStamp.replace(/(AM|PM)/, "").trim();
+
+        const [sysHours, sysMinutes, sysSeconds] = updatedSytemTimeString.split(':').map(Number);
+        const systemTimeStamp = (sysHours * 3600 + sysMinutes * 60 + sysSeconds) * 1000; // Convert to milliseconds
+
+        const [displayHours, displayMinutes, displaySeconds] = displayTimeStamp.split(':').map(Number);
+        const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
+        
+        console.log("check1", systemTimeStamp);
+        console.log("check2", displayedTimeStamp);
+        expect(systemTimeStamp).toBeCloseTo(displayedTimeStamp);
         const deleteRow = rows.nth(i).locator('td:nth-child(3) a');
         await deleteRow.click();
         await expect(
