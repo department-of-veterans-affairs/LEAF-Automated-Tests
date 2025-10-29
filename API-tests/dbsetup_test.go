@@ -39,6 +39,12 @@ func setupTestDB() {
 	}
 	importNexusSql := string(f)
 
+	f, err = os.ReadFile("database/library_test_db.sql")
+	if err != nil {
+		log.Fatal("Couldn't open the file: ", err.Error())
+	}
+	importLibrarySql := string(f)
+
 	db.Exec("USE national_leaf_launchpad")
 
 	// Get original DB config
@@ -64,6 +70,11 @@ func setupTestDB() {
 	db.Exec("USE " + testNexusDbName)
 	db.Exec(importNexusSql)
 
+	db.Exec("DROP DATABASE " + testLibraryDbName)
+	db.Exec("CREATE DATABASE " + testLibraryDbName)
+	db.Exec("USE " + testLibraryDbName)
+	db.Exec(importLibrarySql)
+
 	// Switch to test DB
 	db.Exec("USE national_leaf_launchpad")
 
@@ -80,6 +91,18 @@ func setupTestDB() {
 				SET orgchart_database = ?
 				WHERE site_path="/LEAF_Nexus"`,
 		testNexusDbName)
+
+	err = db.QueryRow(`SELECT portal_database FROM sites
+				WHERE portal_database="leaf_library_testing"`).
+	Scan(&testLibraryDbName)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		_, err = db.Exec(
+			`INSERT INTO sites (launchpadID, site_type, site_path, site_uploads, portal_database, orgchart_path, orgchart_database, decommissionTimestamp)
+			VALUES (0, "portal", "/LEAF/library", "/var/www/LEAF_library_test_uploads/", ?,	"/LEAF_NationalNexus", ?, 0)`,
+			testLibraryDbName,
+			testNationalNexusDbName,
+		)
+	}
 }
 
 func updateTestDBSchema() {
@@ -98,9 +121,18 @@ func updateTestDBSchema() {
 	fmt.Println("OK")
 
 	fmt.Print("Updating DB Schema: National Nexus (Orgchart)... ")
+	//the LEAF_Nexus dir maps to the LEAF_NationalNexus, LEAF_Nexus and Test_Nexus docker volumes
 	res, _ = httpGet(NationalOrgchartURL + `scripts/updateDatabase.php`)
 	if strings.Contains(res, `Db Update failed`) {
 		log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
+	}
+
+	fmt.Println("OK")
+	//LEAF_Request_Portal dir maps to LEAF_Request_Portal, Test_Request_Portal and LEAF/library Docker volumes
+	fmt.Print("Updating DB Schema: LEAF Library ... ")
+	res, _ = httpGet(LibraryURL + `scripts/updateDatabase.php`)
+	if strings.Contains(res, `Db Update failed`) {
+		log.Fatal(`Could not update LEAF Library schema: ` + res)
 	}
 	fmt.Println("OK")
 }
