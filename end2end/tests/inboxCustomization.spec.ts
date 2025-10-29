@@ -1,839 +1,455 @@
 import {test, expect, Page, Locator} from '@playwright/test';
+import { LEAF_URLS, createTestRequest, deleteTestRequestByRequestID } from '../leaf_test_utils/leaf_util_methods.ts';
 
 //This test is designed to test LEAF
-test.describe.configure({ mode: 'default' });
+test.describe.configure({ mode: 'serial' });
 
 //Global Variables
-let siteMapname = `LEAF 4832 - Customization`;
-let siteMapDesc = 'Testing for LEAF 4823 Customization';
-let leafSiteCard = 'LEAF 4832 - CustomizationTesting for LEAF 4823 Customization';
+const siteMapname = `LEAF 4832 - Customization`;
+const editorCardText = `☰ ${siteMapname}`;
+const siteMapDesc = 'Testing for LEAF 4823 Customization';
+const leafSiteCard = siteMapname + 'Testing for LEAF 4823 Customization';
 
-let serviceRequest ='LEAF 4832 - Request';
-let serviceRequest2 ='LEAF 4832 - Request2';
-let stapledRequest = 'LEAF 4832 - Stapled Request';
-let stapleName = 'Test IFTHEN staple | Multiple person designated';
-let requestId;
-let requestId2
-let stapledRequestId;
+const serviceRequest ='LEAF 4832 - Request';
+const serviceRequest2 ='LEAF 4832 - Request2';
+const stapledRequest = 'LEAF 4832 - Stapled Request';
+const stapleName = 'Test IFTHEN staple | Multiple person designated';
+const customFormID = 'form_f8b95';
+const initialFormViewColumns = [ 'UID', 'Service', 'Title', 'Status', 'Action' ];
+const initialRoleViewColumns = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Action' ];
+
+const customFormViewColumns = [ 'UID', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
+const customRoleViewColumns = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
+
+const customForm_formViewColumns = [ 'UID', 'Service', 'Title', 'Date Submitted', 'Reviewer 1', 'Action' ];
+const customForm_roleViewOneForm = [ 'UID', 'Type', 'Service', 'Title', 'Date Submitted', 'Reviewer 1', 'Action' ];
+const customForm_roleViewMultiForms = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
+
+let requestId_oneForm:string;
+let requestId_multForms:string
+let requestId_withStaple:string;
+
+/**
+ * Validates inbox table headers.  Accounts for service potentially being abscent.
+ * @param tableLocator of table being validated
+ * @param headers array of expected header values, in the order they are expected
+ */
+const validateInboxTableColumns = async (tableLocator:Locator, headers:Array<string>) => {
+  let idx = 0;
+  for(let i = 0; i < headers.length; i++) {
+    const h = headers[i].toLowerCase();
+    if (h !== 'service') {
+      await expect(tableLocator.locator('thead th')
+        .nth(idx)
+        .getByText(headers[i]),
+        `${headers[i]} to be a header in the table and in place ${idx}`
+      ).toBeVisible();
+      idx++;
+    } else {
+      //The service header is only present if at least one request has a service selected
+      //If it is present, it should be at the indicated index.  Only increment idx if it exists.
+      const sCount = await tableLocator.locator('thead th').nth(i).getByText(headers[i]).count();
+      if (sCount > 0) {
+        expect(sCount, `service column is present at index ${i}`).toBeGreaterThan(0);
+        idx++;
+      }
+    }
+  }
+}
 
 test.describe('SiteMap Creation, Verification and Inbox Customazation', () => {
-test('create New Sitemap Card', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await page.getByRole('button', { name: ' Sitemap Editor Edit portal' }).click();
+test('create New Sitemap Card', async ({ page }) => {
+  const awaitSettings = page.waitForResponse(res =>
+    res.url().includes('settings') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_sitemaps_template');
+  await awaitSettings;
 
   await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
-
-
- //Check to see if Custom LEAF Sitemap is present
-  if ( await page.getByText(leafSiteCard).isVisible() ){
-    //Perform Cleanup
-  console.log("Cleanup");
-  await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
-  await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
-  await page.getByRole('button', { name: 'Delete Site' }).click();
-
-  } 
-    console.log ("Sitemap not present");
-  
 
   //Style the Sitemap
-  let siteMapURL = 'https://host.docker.internal/Test_Request_Portal/';
-  let siteMapColor = '#5d1adb';
-  let siteMapFontColor = '#e2db08';
+  const siteMapColor = '#5d1adb';
+  const siteMapFontColor = '#e2db08';
   await page.getByRole('button', { name: '+ Add Site' }).click();
-  await page.locator('#button-title').click();
+  
+  //TODO: replace locators with the commented ones below when their labels are fixed
+  await expect(page.locator('#button-title')).toBeVisible();
   await page.locator('#button-title').fill(siteMapname);
-  await page.getByRole('textbox', { name: 'Enter group name' }).click();
-  await page.getByRole('textbox', { name: 'Enter group name' }).fill(siteMapDesc);
-  await page.locator('#button-target').click();
-  await page.locator('#button-target').click();
-  await page.locator('#button-target').fill(siteMapURL);
+  await page.locator('#button-description').fill(siteMapDesc);
+  await page.locator('#button-target').fill(LEAF_URLS.PORTAL_HOME);
+  //await page.getByLabel('Site Title').fill(siteMapname);
+  //await page.getByLabel('Site Description').fill(siteMapDesc);
+  //await page.getByLabel('Target Site Address').fill(LEAF_URLS.PORTAL_HOME);
   await page.locator('input[name="btnColor"]').click();
   await page.locator('input[name="btnColor"]').fill(siteMapColor);
   await page.locator('input[name="btnFntColor"]').click();
   await page.locator('input[name="btnFntColor"]').fill(siteMapFontColor);
-  await page.locator('#xhr').click();
   await page.getByRole('img', { name: 'application-x-executable.svg' }).click();
+
+  const awaitSave = page.waitForResponse(res =>
+    res.url().includes('sitemap_json') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Save Change' }).click();
+  await awaitSave;
 
-  //Verify the customized card is present
   await expect(page.getByText(leafSiteCard)).toBeVisible();
- 
-  //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
 });
 
-//Inbox before Customization
-test('Display Inbox Sitemap Personalization', async ({ page }, testInfo) => {
+test('Display of Inbox Sitemap Personalization and initial columns', async ({ page }) => {
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await awaitInboxData;
 
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  
-  //Open the Inbox
-  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-  await page.getByText('Inbox Review and apply').click();
-
-  await page.waitForLoadState('load');
-
-  //Verify the customization is present 
   await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
   await expect(page.locator('#indexSites')).toContainText(siteMapname);
 
-  //Verify display based on View
   //Form View
-   await page.getByRole('button', { name: 'Toggle sections' }).click();
-
-  //Complex Form View
-  const uidCol = page.locator('text=UID').nth(0);
-  expect(await uidCol.isVisible()).toBeTruthy();
-
-  const serviceCol = page.locator('text=Service').nth(0);
-  expect(await serviceCol.isVisible).toBeTruthy();
-
-  const titleCol = page.locator('text=Title').nth(0);
-  expect(await titleCol.isVisible).toBeTruthy();
-
-  const statusCol = page.locator('text=Status').nth(0);
-  expect(await statusCol.isVisible).toBeTruthy();
-
-  const actionCol = page.locator('text=Action').nth(0);
-  expect(await actionCol.isVisible).toBeTruthy();
-
-   //Role View
-   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
-   await page.getByRole('button', { name: 'Organize by Roles' }).click();
-
-  await expect(page.locator('.siteFormContainers')).toBeVisible();
-  const mainDivContainer = page.locator('.siteFormContainers'); 
-  const roleDivCountainer = mainDivContainer.locator('.depContainer');
-  const counter =  await roleDivCountainer.count();
-  console.log(`#number of Headers: ${counter}`);
-
-    for (let i=0; i<counter; i++)
-  {
-    
-    const expandButton = await roleDivCountainer.nth(i).locator('button');
-    const spanText =await roleDivCountainer.nth(i).locator('div span').nth(0).innerText();
-    const requestSpan = await roleDivCountainer.nth(i).locator('button').nth(0).innerText();
-    const parts = requestSpan.split("View");
-    const requestString = parts[1];
-    const requestValue = requestString.split('requests');
-    console.log(requestValue[0]);
-    const requestAmount = Number(requestValue[0]);
-    //LEAF-5029 check to see if Request is more than zero expand the Request
-       if(requestAmount > 0)
-    {
-      await expandButton.click();
-
-    } 
-    await expect(page.getByText('UID').nth(i)).toBeVisible();
-    await expect(page.getByText('Type').nth(i)).toBeVisible();
-    await expect(page.getByText('Title').nth(i)).toBeVisible();
-    await expect(page.getByText('Status').nth(i)).toBeVisible();
-    await expect(page.getByText('Action').nth(i)).toBeVisible();
-
-  }
-
-});
-//Add additional customization
-test('Customized Column Display', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
-  await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
-
-   await page.waitForLoadState('load');
-  await expect(page.getByText(siteMapname, { exact: true })).toBeVisible();
-
-  //Get ID
-  const option =await (page.getByText('☰ LEAF 4832 - Customization'));
- const siteId = await option.getAttribute('value');
- const  leafSiteId = `#site-container-${siteId}`;
-
-  console.log('Text ID:', leafSiteId);
- 
-
- //Add Customization
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('p');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('d');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
-
-  await page.getByRole('link', { name: 'Home' }).click();
-  await expect(page.getByText('Review and apply actions to')).toBeVisible();
-
-   await page.waitForLoadState('load');
-  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-  await page.getByText('Inbox Review and apply').click();
-
+  await page.getByRole('button', { name: 'Toggle sections' }).click();
+  const firstTable = page.locator('.depContainer table').first();
+  await validateInboxTableColumns(firstTable, initialFormViewColumns);
+  
+  //Role View
+  awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
+  await awaitInboxData;
+  
+  const roleDivCountainer = page.locator('.siteFormContainers .depContainer');
+  await expect(roleDivCountainer.first()).toBeVisible();
+
+  const counter =  await roleDivCountainer.count();
+  for (let i = 0; i < counter; i++) {
+    const container = page.locator('div.depContainer').nth(i);
+    const expandButton = container.locator('button');
+    const table = container.getByRole('table');
+
+    await expandButton.click();
+    const requestSpanText = await expandButton.locator('> span').innerText();
+    const tableTdRows = await table.locator('tbody tr').all();
+    const rowCount = tableTdRows.length;
+    expect(rowCount).toBeGreaterThan(0);
+    expect(requestSpanText).toBe(`View ${rowCount} requests`);
+    await validateInboxTableColumns(table, initialRoleViewColumns);
+  }
+});
+
+test('General Customization of LEAF Inbox Columns and Inbox Display', async ({ page }) => {
+  const colsToAdd = [ 'Priority', 'Days Since Last Action' ];
+
+  //Add Customization (addition of priority and days since action columns)
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_combined_inbox');
+  await expect(page.getByText(siteMapname, { exact: true })).toBeVisible();
+
+  const siteId = await page.getByText(editorCardText).getAttribute('value');
+  const leafSiteId = `#site-container-${siteId}`;
+ 
+  for (let i = 0; i < colsToAdd.length; i++) {
+    const awaitSave = page.waitForResponse(res =>
+      res.url().includes('sitemap_json') && res.status() === 200
+    );
+    await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill(colsToAdd[i]);
+    await page.locator(leafSiteId).locator('.choices__list div').getByText(colsToAdd[i]).click();
+    await awaitSave;
+  }
+
+  //Verify the customization is present
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
+
+  //Verify Role Customization
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
+  await page.getByRole('button', { name: 'Organize by Roles' }).click();
+  await awaitInboxData;
 
   const dynTxt = 'Tester Tester View';
   const dynRegex = new RegExp(`^${dynTxt}.*`);
-  await page.getByRole('button', { name: dynRegex}).click();
+  const testerMenu = page.getByRole('button', { name: dynRegex});
+  const container = page.locator('div.depContainer').filter({ has: testerMenu });
+  await testerMenu.click();
+  await validateInboxTableColumns(container.getByRole('table'), customRoleViewColumns);
 
-  //Verify Role Customization
-  const uidColrole = page.locator('text=UID').nth(0);
-  expect(await uidColrole.isVisible()).toBeTruthy();
-
-    const typeColrole = page.locator('text=Type').nth(0);
-  expect(await typeColrole.isVisible).toBeTruthy();
-
-  const serviceColrole = page.locator('text=Service').nth(2);
-  expect(await serviceColrole.isVisible).toBeTruthy();
-
-  const titleColrole = page.locator('text=Title').nth(0);
-  expect(await titleColrole.isVisible).toBeTruthy();
-
-  const statusColrole = page.locator('text=Status').nth(0);
-  expect(await statusColrole.isVisible).toBeTruthy();
-
-  const actionColrole = page.locator('text=Action').nth(0);
-  expect(await actionColrole.isVisible).toBeTruthy();
-
-  const priorityColrole = page.locator('text=Priority').nth(0);
-  expect(await priorityColrole.isVisible).toBeTruthy();
-
-  const daysColrole = page.locator('text=Days Since Last Action').nth(0);
-  expect(await daysColrole.isVisible).toBeTruthy();
-
-
- //Form View
+  //Form View
+  awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Organize by Forms' }).click();
+  await awaitInboxData;
  
   const dynTxt2 = 'Complex Form';
   const dynRegex2 = new RegExp(`^${dynTxt2}.*`);
-  await page.getByRole('button', { name: dynRegex2}).click();
+  const formMenu = page.getByRole('button', { name: dynRegex2 });
+  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
+  await formMenu.click();
+  await validateInboxTableColumns(formContainer.getByRole('table'), customFormViewColumns);
+});
+
+test('Form View: Customization of a specific form and Inbox display', async ({ page }) => {
+  const colsToAdd = [ 'Date Submitted', 'Multiple person designated: Reviewer 1 (ID: 14)' ];
+
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_combined_inbox');
+  await expect(page.getByText(editorCardText)).toBeVisible();
   
-  //Complex Form View
-  const uidCol = page.locator('text=UID').nth(0);
-  expect(await uidCol.isVisible()).toBeTruthy();
+  const siteId = await page.getByText(editorCardText).getAttribute('value');
+  const leafSiteId = `#site-container-${siteId}`;
+  const formSelectId = `#form_select_${siteId}`;
 
-  const serviceCol = page.locator('text=Service').nth(0);
-  expect(await serviceCol.isVisible).toBeTruthy();
+  const awaitIndicators = page.waitForResponse(res =>
+    res.url().includes(`forms=${customFormID}`) && res.status() === 200
+  );
+  await page.locator(formSelectId).selectOption(customFormID);
+  await awaitIndicators;
 
-  const titleCol = page.locator('text=Title').nth(0);
-  expect(await titleCol.isVisible).toBeTruthy();
+  //this is here to help make sure choices js updates its selections
+  await page.evaluate(() => {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => resolve(1));
+    });
+  });
 
-  const statusCol = page.locator('text=Status').nth(0);
-  expect(await statusCol.isVisible).toBeTruthy();
+  await page.locator(leafSiteId).getByLabel(`Remove item: 'status'`).click();
 
-  const actionCol = page.locator('text=Action').nth(0);
-  expect(await actionCol.isVisible).toBeTruthy();
+  for (let i = 0; i < colsToAdd.length; i++) {
+    const awaitSave = page.waitForResponse(res =>
+      res.url().includes('sitemap_json') && res.status() === 200
+    );
+    await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill(colsToAdd[i]);
+    await page.locator(leafSiteId).locator('.choices__list div').getByText(colsToAdd[i]).click();
+    await awaitSave;
+  }
 
-   const priorityCol = page.locator('text=Priority').nth(0);
-  expect(await priorityCol.isVisible).toBeTruthy();
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await awaitInboxData;
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
 
-  const daysCol = page.locator('text=Days Since Last Action').nth(0);
-  expect(await daysCol.isVisible).toBeTruthy();
-
- });
-
-//Personalized a Form
-test('Personalized a Form', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  
-  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await expect(page.getByRole('button', { name: ' Combined Inbox Editor Edit' })).toBeVisible();
-  await page.getByRole('button', { name: ' Combined Inbox Editor Edit' }).click();
-  
-  await page.waitForLoadState();
-
-  await expect(page.getByText('☰ LEAF 4832 - Customization')).toBeVisible();
-  
-    //Get ID
-  const option =await (page.getByText('☰ LEAF 4832 - Customization'));
-  const siteId = await option.getAttribute('value');
-  const  leafSiteId = `#site-container-${siteId}`;
-  const formSiteId = `#form_select_${siteId}`;
-
-  console.log('Text ID:', leafSiteId);
-
-
-  await page.locator(formSiteId).selectOption('form_f8b95');
-
- await page.locator(leafSiteId).getByText('StatusRemove item').click();
-
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('d');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('ArrowDown');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).click();
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill('s');
-  await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).press('Enter');
-
-
-   //Check Inbox to verify updates
-  await page.getByRole('link', { name: 'Home' }).click();
-
-  //Open the Inbox
-  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-  await page.getByText('Inbox Review and apply').click();
- 
- await page.waitForLoadState('load');
-  //await page.getByRole('button', { name: 'Toggle sections' }).click();
-
-  const dynTxt2 = 'Multiple person designated View';
+  const dynTxt2 = 'Multiple person designated';
   const dynRegex2 = new RegExp(`^${dynTxt2}.*`);
-
-  await page.getByRole('button', { name: dynRegex2}).click();
-
-  const reviewCol = page.locator('text=Reviewer 1').nth(0);
-  expect(await reviewCol.isVisible).toBeTruthy();
-
-  const dateCol = page.locator('text=Date Submitted').nth(0);
-  expect(await dateCol.isVisible).toBeTruthy();
-
-  //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
+  const formMenu = page.getByRole('button', { name: dynRegex2 });
+  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
+  await formMenu.click();
+  await validateInboxTableColumns(formContainer.getByRole('table'), customForm_formViewColumns);
 });
 
-//End of Creation and Customization
+test('Create Multiple Person Form requests (Config)', async ({ page }) => {
+  const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
+  //for role view, one form represented
+  requestId_oneForm = await createTestRequest(page, 'AS - Service', serviceRequest, 'Multiple person designated');
 
-//Create a New MUltipleperson request
-test('Create a new Multiple Person Form', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  //Start a new Multiple person designated
-  await page.getByText('New Request Start a new').click();
-
-  //Enter data needed to create Request
-  await expect(page.getByRole('heading', { name: 'Step 1 - General Information' })).toBeVisible();
-  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-  await page.getByRole('option', { name: 'AS - Service' }).click();
-  await page.getByText('Please enter keywords to').click();
-  await page.getByRole('textbox', { name: 'Title of Request' }).click();
-  await page.getByRole('textbox', { name: 'Title of Request' }).fill(serviceRequest);
-  await page.locator('label').filter({ hasText: 'Multiple person designated' }).locator('span').click();
-
-  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-  //Enter the Reviewer Information
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-
-  //Get UID
-  requestId = await page.textContent('#headerTab');
-  console.log('Text inside span:', requestId);
-  let str: string = requestId;
-  let parts = str.split("#", 2);
-  let firstPart = parts[0];
-  let secondPart = parts[1];
-  console.log(firstPart, secondPart);
-  requestId =secondPart;
-  let indicatorID;
-
-  const indicators = page.locator('[id^="loadingIndicator_"]');
- 
-  const reviewer1Id = await indicators.nth(0).getAttribute('id');
-  const reviewer2Id = await indicators.nth(1).getAttribute('id');
- 
-  console.log('Reviewer 1 ID:', reviewer1Id);
-  console.log('Reviewer 2 ID:', reviewer2Id);
-
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
-  await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
-
-  await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
-
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
-  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-
-
-  const loadingInc = await page.locator(`#${reviewer2Id}`);
-  await expect(loadingInc).toBeVisible();
-  console.log('text', loadingInc);
-  await expect(loadingInc).not.toBeVisible();
-  //await page.locator(reviewer2Id).to
-
-  await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
-
- // const myLocator = page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' });
-//  myLocator.waitFor();
-
-
-//await page.waitForSelector('searchbox', { name: 'Search for user to add as Reviewer 2' }).
-//console.log('Search results are visible!');/
-
- //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
-  await expect(page.locator('#nextQuestion2')).toBeVisible();
-  await page.locator('#nextQuestion2').click({force:true});
-  
-   //Submit Request
-   //await page.waitForSelector('#')
-
- page.waitForLoadState('domcontentloaded');
-
-  await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
-  await page.getByRole('button', { name: 'Submit Request' }).click({force:true});
-  await page.getByRole('link', { name: 'Home' }).click();
-
-
-});
-
-test('View Request in Inbox', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  await page.getByText('Review and apply actions to').click();
-
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
-  
-
- // await page.getByRole('button', {name:'Multiple person designated'}).click();
-  await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  await page.getByRole('button', { name: 'View as Admin' }).click();
-
-  const dynTxt = 'Adan Wolf View ';
-  const dynRegex = new RegExp(`^${dynTxt}.*`);
-  await page.getByRole('button', { name: dynRegex}).click();
- 
- //Verify Text
- 
-  await expect(page.getByRole('cell', { name: requestId })).toBeVisible();
- //await expect(page.getByRole('cell', { name: 'Adan Wolf' })).toBeVisible();
-  
-  const reviewCol = page.locator('text=Reviewer 1').nth(0);
-  expect(await reviewCol.isVisible).toBeTruthy();
-
-  const dateCol = page.locator('text=Date Submitted').nth(0);
-  expect(await dateCol.isVisible).toBeTruthy();
-
-  const typeColrole = page.locator('text=Type').nth(1);
-  expect(await typeColrole.isVisible).toBeTruthy();
-
- 
-   //Screenshot
-   const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
-});
-
-//Verify custom form columns should show if there is only one form type in the section.
-test('Create Multiple Form with User with multiple Forms', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
- //Start a new Multiple person designated
-  await page.getByText('New Request Start a new').click();
-
-  //Enter data needed to create Request
-  await expect(page.getByRole('heading', { name: 'Step 1 - General Information' })).toBeVisible();
-  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-  await page.getByRole('option', { name: 'AS - Service' }).click();
-  await page.getByText('Please enter keywords to').click();
-  await page.getByRole('textbox', { name: 'Title of Request' }).click();
-  await page.getByRole('textbox', { name: 'Title of Request' }).fill(serviceRequest2);
-  await page.locator('label').filter({ hasText: 'Multiple person designated' }).locator('span').click();
-
-  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-  //Enter the Reviewer Information
-  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
-
-  //Get UID
-  requestId2 = await page.textContent('#headerTab');
-  console.log('Text inside span:', requestId2);
-  let str: string = requestId2;
-  let parts = str.split("#", 2);
-  let firstPart = parts[0];
-  let secondPart = parts[1];
-  console.log(firstPart, secondPart);
-  requestId2 =secondPart;
-  
-  const indicators = page.locator('[id^="loadingIndicator_"]');
- 
-  const reviewer1Id = await indicators.nth(0).getAttribute('id');
-  const reviewer2Id = await indicators.nth(1).getAttribute('id');
- 
-  console.log('Reviewer 1 ID:', reviewer1Id);
-  console.log('Reviewer 2 ID:', reviewer2Id);
-
 
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('test');
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('test');
-  await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
+  await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
 
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
-  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-
-  const loadingInc = await page.locator(`#${reviewer2Id}`);
-  await expect(loadingInc).toBeVisible();
-  console.log('text', loadingInc);
-  await expect(loadingInc).not.toBeVisible();
-
-  await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
+  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
 
-  const myLocator = page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' });
-  myLocator.waitFor();
-
- //Screenshot
-   const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
-
+  await expect(loadingIndicators).toHaveCount(0);
+  await expect(page.locator('.input-required-error')).toHaveCount(0);
 
   await expect(page.locator('#nextQuestion2')).toBeVisible();
-  await page.locator('#nextQuestion2').click({force:true});
-  await page.waitForLoadState('domcontentloaded');
-  //Submit Request
+  await page.locator('#nextQuestion2').click();
+
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
-  await page.getByRole('button', { name: 'Submit Request' }).click({force:true});
-  await page.getByRole('link', { name: 'Home' }).click();
+  let awaitSubmit = page.waitForResponse(res => 
+    res.url().includes(`form/${requestId_oneForm}/submit`) && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Submit Request' }).click();
+  await awaitSubmit;
+
+  //for role view, multiple forms represented
+  requestId_multForms = await createTestRequest(page, 'AS - Service', serviceRequest2, 'Multiple person designated');
+
+  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
+
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('test');
+  await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:tester');
+
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toBeVisible();
+  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
+  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
+  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+
+  await expect(loadingIndicators).toHaveCount(0);
+  await expect(page.locator('.input-required-error')).toHaveCount(0);
+
+  await expect(page.locator('#nextQuestion2')).toBeVisible();
+  await page.locator('#nextQuestion2').click();
+
+  await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
+  awaitSubmit = page.waitForResponse(res => 
+    res.url().includes(`form/${requestId_multForms}/submit`) && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Submit Request' }).click();
+  await awaitSubmit;
 });
 
-//Verify custom column is not present when multiple forms are present in Role View
-test ('Validate Role View Custom Column not Present', async ({ page }, testInfo) => {
+test('Role View: Form specific columns display if only one form is present', async ({ page }) => {
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await awaitInboxData;
 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
- 
-  //Go to the Custom Inbox
-  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-  await page.getByText('Inbox').click();
+  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
+  
+  awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Organize by Roles' }).click();
+  await awaitInboxData;
 
-   await page.waitForLoadState('load');
+  awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'View as Admin' }).click();
+  await awaitInboxData;
 
-  //Switch to Role View
+  const dynTxt = 'Adan Wolf View ';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
+  const formMenu = page.getByRole('button', { name: dynRegex });
+  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
+  await formMenu.click();
+  await expect(page.getByRole('link', { name: requestId_oneForm, exact: true }).first()).toBeVisible();
+  await validateInboxTableColumns(formContainer.getByRole('table'), customForm_roleViewOneForm);
+});
+
+test('Role View: General custom columns display if multiple forms are present', async ({ page }) => {
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
+
+  //Verify Role Customization
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
   await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  
-  //Select Tester
+  await awaitInboxData;
+
   const dynTxt = 'Tester Tester View';
   const dynRegex = new RegExp(`^${dynTxt}.*`);
-  const formTxt = 'LeafFormGrid';
-  const formRegex =new RegExp('^${formTxt}.*')
-  
-  await page.getByRole ('button', {name: dynRegex}).click();
- 
-  await expect(page.getByRole('cell', { name: requestId2 })).toBeVisible();
-  
-  const typeColrole = page.locator('text=Type').nth(1);
-  expect(await typeColrole.isVisible).toBeTruthy();
-
-   await expect(page.getByRole('columnheader', { name: 'Sort by Reviewer' })).not.toBeVisible();
-
-  //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
- 
+  const testerMenu = page.getByRole('button', { name: dynRegex});
+  const container = page.locator('div.depContainer').filter({ has: testerMenu });
+  await testerMenu.click();
+  await expect(page.getByRole('link', { name: requestId_multForms, exact: true }).first()).toBeVisible();
+  await validateInboxTableColumns(container.getByRole('table'), customForm_roleViewMultiForms);
 });
 
-//Create a Stapled Form
-test ('Create a Stapled Form', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
- 
- 
-  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-
-  //Staple Form
-  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
-  await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-  await page.getByRole('button', { name: 'Staple other form' }).click();
-
+test('Submit a request with a stapled form (Config)', async ({ page }) => {
   //Add and Verify the Staples
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + customFormID);
+  await page.getByRole('button', { name: 'Staple other form' }).click();
   await page.getByLabel('Select a form to merge').selectOption('form_dac2a');
-  await expect(page.locator('#leaf_dialog_content_drag_handle')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-
   await page.getByText('Close').click();
+  await expect(page.getByRole('button', { name: 'Test IFTHEN staple, stapled' })).toBeVisible();
 
-   await expect(page.getByRole('button', { name: 'Test IFTHEN staple, stapled' })).toBeVisible();
-  
-  //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+  //create and submit request
+  requestId_withStaple = await createTestRequest(page, 'AS - Service', stapledRequest, 'Multiple person designated');
 
-  await page.getByRole('link', { name: 'Home' }).click();
-
-});
-
-//Create a new Stapled Request
-test('Create a new Stapled Request', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  //Create a new stapled Request
-  await expect(page.getByText('New Request Start a new')).toBeVisible();
-  await page.getByText('New Request Start a new').click();
-
-  await page.waitForLoadState('load');
-
-  //Enter the required information
-  await expect(page.getByRole('cell', { name: 'Select an Option Service' }).locator('a')).toBeVisible();
-  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-  await page.getByRole('option', { name: 'AS - Service' }).click();
-  await page.getByRole('textbox', { name: 'Title of Request' }).click();
-  await page.getByRole('textbox', { name: 'Title of Request' }).fill(stapledRequest);
-  await page.locator('label').filter({ hasText: 'Multiple person designated' }).locator('span').click();
-  await expect(page.getByRole('button', { name: 'Click here to Proceed' })).toBeVisible();
-  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-
-  await page.waitForLoadState('load');
-
-  //Enter information for multipledesginated form
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
-
-  const indicators = page.locator('[id^="loadingIndicator_"]');
-  const reviewer1Id = await indicators.nth(0).getAttribute('id');
-  const reviewer2Id = await indicators.nth(1).getAttribute('id');
- 
-  console.log('Reviewer 1 ID:', reviewer1Id);
-  console.log('Reviewer 2 ID:', reviewer2Id);
-
-  //Get UID
-  stapledRequestId = await page.textContent('#headerTab');
-  console.log('Text inside span:', stapledRequestId);
-  let str: string = stapledRequestId;
-  let parts = str.split("#", 2);
-  let firstPart = parts[0];
-  let secondPart = parts[1];
-  console.log(firstPart, secondPart);
-  stapledRequestId =secondPart;
+  await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
-  await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
-  await expect(page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' })).toBeVisible();
+  await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
 
-
- 
   await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
-  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-
-  const loadingInc = await page.locator(`#${reviewer2Id}`);
-  await expect(loadingInc).toBeVisible();
-  console.log('text', loadingInc);
-  await expect(loadingInc).not.toBeVisible();
-
-  await expect(page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' })).toBeVisible();
+  await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
   await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
 
-    const myLocator = page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' });
-  myLocator.waitFor();
+  const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
+  await expect(loadingIndicators).toHaveCount(0);
+  await expect(page.locator('.input-required-error')).toHaveCount(0);
 
- //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
-  await expect(page.locator('#nextQuestion')).toBeVisible();
- 
-  const buttonClick = await page.getByRole('button', {name: 'Next Question'}).first();
-  await buttonClick.click({force:true});
-  
-  await page.waitForLoadState('load');
- //Enter information for If then Form
-  await expect(page.locator('a').filter({ hasText: 'Select an Option' })).toBeVisible();
-  await page.locator('a').filter({ hasText: 'Select an Option' }).click();
-  await page.getByRole('option', { name: '1' }).click();
   await expect(page.locator('#nextQuestion2')).toBeVisible();
-  await page.locator('#nextQuestion2').click({force:true});
+  await page.locator('#nextQuestion2').click();
 
- await page.waitForLoadState('load');
+  await expect(page.getByLabel('parent dropdown')).toBeVisible(); //stapled page
+  await expect(page.locator('#nextQuestion2')).toBeVisible();
+  await page.locator('#nextQuestion2').click();
 
-   //Submit Request
-  await expect(page.locator('#submitControl')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
+  const awaitSubmit = page.waitForResponse(res => 
+    res.url().includes(`form/${requestId_withStaple}/submit`) && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Submit Request' }).click();
-  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
-  await page.getByRole('link', { name: 'Home' }).click();
-});
+  await awaitSubmit;
 
-//View Stapled Form
-test('View Stapled Request', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  //Go to the Inbox
-  await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-  await page.getByText('Inbox Review and apply').click();
-
-
-  await page.waitForLoadState('domcontentloaded');
-  //Organize by Role to verify the stapled
-  await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
-  await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
-  await page.getByRole('button', { name: 'View as Admin' }).click();
-
-  //Verify Stapled 
-  const formTxt = 'LeafFormGrid';
-  const formRegex =new RegExp('^${formTxt}.*')
-  const dynTxt = 'Adan Wolf View';
-  const dynRegex = new RegExp(`^${dynTxt}.*`);
-
-  await expect(page.getByRole('button', { name: dynRegex })).toBeVisible();
-  await page.getByRole('button', { name: dynRegex}).click();
-  console.log('------------------------stapleName', stapleName);
- 
-  await expect(page.getByRole('cell', { name: stapleName })).toBeVisible();
-
-  const typeColrole = page.locator('text=Type').nth(1);
-  expect(await typeColrole.isVisible).toBeTruthy();
-
-   //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
- 
-});
-
-//End of Form Verification
-
-//Cleanup Remove Request
-
-test('Clean up NewRequest Form', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  
- await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-
-  //Find Request
-  await expect(page.locator('#searchContainer')).toBeVisible();
-  let staples = await page.locator("span.browsecounter").allInnerTexts();
-  let indexofStaple = staples.indexOf(requestId);
-  await page.locator("span.browsecounter a").nth(indexofStaple).click();
-  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel Request' }).click();
-
-  // Verify you want to Cancel Request
-  await page.getByRole('dialog').getByText('Editor Close').click();
-  await page.getByRole('textbox', { name: 'Enter Comment' }).click();
-  await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
-  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-  await page.getByRole('button', { name: 'Yes' }).click();
-  
-});
-
-
-//Cleanup Remove Request2
-
-test('Clean up NewRequest Form2', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  await page.waitForLoadState('domcontentloaded');
- await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-  
-
-  //Find Request
-  await expect(page.locator('#searchContainer')).toBeVisible();
-  let staples = await page.locator("span.browsecounter").allInnerTexts();
-  let indexofStaple = staples.indexOf(requestId2);
-  await page.locator("span.browsecounter a").nth(indexofStaple).click();
-  await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel Request' }).click();
-
-  //Verify you want to Cancel Request
-  await page.getByRole('dialog').getByText('Editor Close').click();
-  await page.getByRole('textbox', { name: 'Enter Comment' }).click();
-  await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
-  await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-  await page.getByRole('button', { name: 'Yes' }).click();
-  
-});
-
-// //Cleanup Stapled Request
-
-test('Clean up Stapled Request Form', async ({ page }, testInfo) => {
-
- await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  await page.waitForLoadState('load');
-  
- await expect(page.getByText('Inbox Review and apply')).toBeVisible();
-
-
- //Find Request
- await expect(page.locator('#searchContainer')).toBeVisible();
-let staples = await page.locator("span.browsecounter").allInnerTexts();
-  let indexofStaple = staples.indexOf(stapledRequestId);
-  await page.locator("span.browsecounter a").nth(indexofStaple).click();
- await expect(page.getByRole('button', { name: 'Cancel Request' })).toBeVisible();
- await page.getByRole('button', { name: 'Cancel Request' }).click();
-
- //Verify you want to Cancel Request
-
- await page.getByRole('dialog').getByText('Editor Close').click();
- await page.getByRole('textbox', { name: 'Enter Comment' }).click();
- await page.getByRole('textbox', { name: 'Enter Comment' }).fill('Comment Delete');
- await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
- await page.getByRole('button', { name: 'Yes' }).click();
- 
-});
-
-
-// //Delete Customized Card
-
-test('delete Customized Sitemap Card', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await page.getByRole('button', { name: ' Sitemap Editor Edit portal' }).click();
-
-  await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
-  await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
-  await page.getByRole('button', { name: 'Delete Site' }).click();
-
-     //Screenshot
-  const screenshot = await page.screenshot();
-  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-
- });
-
-
-// //Removed Stapled Forms
-test('Remove Stapled Forms', async ({ page }, testInfo) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-
-   await page.waitForLoadState('load');
-
-  //Click on Form Editor
-  await expect(page.getByRole('link', { name: 'Admin Panel' })).toBeVisible();
-  await page.getByRole('link', { name: 'Admin Panel' }).click();
-  await expect(page.getByRole('button', { name: ' Form Editor Create and' })).toBeVisible();
-  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
-
-  //Find Multiple person designated Form
-  await expect(page.getByRole('link', { name: 'Multiple person designated', exact: true })).toBeVisible();
-  await page.getByRole('link', { name: 'Multiple person designated', exact: true }).click();
-
-  //Remove the stapled Form
+  //remove the staple, which is not needed once submitted
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + customFormID);
   await expect(page.getByRole('button', { name: 'Staple other form' })).toBeVisible();
   await page.getByRole('button', { name: 'Staple other form' }).click();
   await expect(page.getByText('Test IFTHEN staple [ Remove ]')).toBeVisible();
   await page.getByRole('button', { name: 'remove Test IFTHEN staple' }).click();
-  await expect(page.getByText('Close')).toBeVisible();
+  await expect(page.getByText('Test IFTHEN staple [ Remove ]')).not.toBeVisible();
   await page.getByText('Close').click();
+});
+
+test('Role View: Form specific columns display if only one form is present (with staple)', async ({ page }) => {
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await awaitInboxData;
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
+
+  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
   
+  awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'Organize by Roles' }).click();
+  await awaitInboxData;
+
+  awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.getByRole('button', { name: 'View as Admin' }).click();
+  await awaitInboxData;
+
+  const dynTxt = 'Adan Wolf View ';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
+  const formMenu = page.getByRole('button', { name: dynRegex });
+  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
+  await formMenu.click();
+  await expect(page.getByRole('link', { name: requestId_oneForm, exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('cell', { name: stapleName })).toBeVisible();
+  await validateInboxTableColumns(formContainer.getByRole('table'), customForm_roleViewOneForm);
 });
 
+test('Delete test requests and Site Card (cleanup)', async ({ page }) => {
+  const testRequests = [ requestId_oneForm, requestId_multForms, requestId_withStaple ];
+  for(let i = 0; i < testRequests.length; i++) {
+    await deleteTestRequestByRequestID(page, testRequests[i]);
+    console.log("deleted", testRequests[i]);
+  }
+  
+  const awaitSettings = page.waitForResponse(res =>
+    res.url().includes('settings') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_sitemaps_template');
+  await awaitSettings;
+  await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
 
+  await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
+  await page.getByRole('button', { name: 'Delete Site' }).click();
 });
 
-//End
+});
