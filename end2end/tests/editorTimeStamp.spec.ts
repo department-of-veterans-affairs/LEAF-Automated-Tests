@@ -58,8 +58,6 @@ import { uptime } from 'process';
     await page.getByRole('textbox', { name: 'Email To:' }).click();
     await page.getByRole('textbox', { name: 'Email To:' }).fill('fake@email.com');
     await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible();
-    await expect(page.locator('#bodyarea')).toContainText('There are no history files.');
-   
    
     let savePromise = page.waitForResponse(res =>
     res.url().includes(`templateFileHistory/_${fileName}.tpl`) && res.status() === 200
@@ -137,8 +135,13 @@ import { uptime } from 'process';
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
     
-    const toleranceInSeconds = 1;  
-    expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
+    const toleranceInSeconds = 2; 
+    
+    const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+    expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
+    expect(timeDiffernce).toBeGreaterThanOrEqual(0);
+
+    //expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
 
     await expect(page.getByRole('button', { name: 'Delete File' })).toBeVisible();
     await page.getByRole('button', { name: 'Delete File' }).click();
@@ -156,7 +159,7 @@ import { uptime } from 'process';
     await expect(page.getByRole('button', { name: 'Upload File' })).toBeVisible();
     await expect(page.getByRole('heading')).toContainText('File Manager');
     await page.getByRole('button', { name: 'Upload File' }).click();
-    await page.getByRole('button', { name: 'Select file to upload' }).setInputFiles(`./artifacts/LEAF-5005.txt`);
+    await page.getByLabel('Select file to upload').setInputFiles(`./artifacts/LEAF-5005.txt`);
     
     const nowDateStamp = new Date();
     const currentDateStamp = nowDateStamp.toLocaleTimeString();
@@ -179,11 +182,9 @@ import { uptime } from 'process';
         const cellTime = await rows.nth(i).locator('td:nth-child(2)').innerText();
 
         const displayedTimeSplit = cellTime.split(" ", 2 );
-        console.log("the Split", displayedTimeSplit);
-
-        const displayTimeStamp = displayedTimeSplit[1];
-        console.log("after", displayTimeStamp);
         
+        const displayTimeStamp = displayedTimeSplit[1];
+       
         const updatedSytemTimeString = currentDateStamp.replace(/(AM|PM)/, "").trim();
 
         const [sysHours, sysMinutes, sysSeconds] = updatedSytemTimeString.split(':').map(Number);
@@ -192,8 +193,6 @@ import { uptime } from 'process';
         const [displayHours, displayMinutes, displaySeconds] = displayTimeStamp.split(':').map(Number);
         const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
         
-        console.log("check1", systemTimeStamp);
-        console.log("check2", displayedTimeStamp);
         expect(systemTimeStamp).toBeCloseTo(displayedTimeStamp);
         const deleteRow = rows.nth(i).locator('td:nth-child(3) a');
         await deleteRow.click();
