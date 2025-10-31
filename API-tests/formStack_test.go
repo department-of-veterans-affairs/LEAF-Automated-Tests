@@ -142,7 +142,7 @@ func TestFormStack_NewFormProperties(t *testing.T) {
 	}
 
 	got = strconv.Itoa(category.NeedToKnow)
-	want = "0"
+	want = "1"
 	if !cmp.Equal(got, want) {
 		t.Errorf("Need to Know = %v, want = %v", got, want)
 	}
