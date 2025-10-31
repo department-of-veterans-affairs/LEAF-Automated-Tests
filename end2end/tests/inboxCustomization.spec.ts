@@ -1,33 +1,36 @@
-import {test, expect, Page, Locator} from '@playwright/test';
-import { LEAF_URLS, createTestRequest, deleteTestRequestByRequestID } from '../leaf_test_utils/leaf_util_methods.ts';
+import {test, expect, Locator} from '@playwright/test';
+import {
+  LEAF_URLS, getRandomId,
+  createTestRequest, deleteTestRequestByRequestID
+} from '../leaf_test_utils/leaf_util_methods.ts';
 
 //This test is designed to test LEAF
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'default' });
 
 //Global Variables
-const siteMapname = `LEAF 4832 - Customization`;
+const siteMapname = getRandomId();
 const editorCardText = `☰ ${siteMapname}`;
-const siteMapDesc = 'Testing for LEAF 4823 Customization';
-const leafSiteCard = siteMapname + 'Testing for LEAF 4823 Customization';
+const siteMapDesc = `LEAF ${siteMapname}`;
 
 const serviceRequest ='LEAF 4832 - Request';
 const serviceRequest2 ='LEAF 4832 - Request2';
 const stapledRequest = 'LEAF 4832 - Stapled Request';
-const stapleName = 'Test IFTHEN staple | Multiple person designated';
+const stapleType = 'Test IFTHEN staple | Multiple person designated';
 const customFormID = 'form_f8b95';
-const initialFormViewColumns = [ 'UID', 'Service', 'Title', 'Status', 'Action' ];
-const initialRoleViewColumns = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Action' ];
+const customField = 'Reviewer 1';
+const expectedInitialFormViewColumns = [ 'UID', 'Service', 'Title', 'Status', 'Action' ];
+const expectedInitialRoleViewColumns = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Action' ];
 
-const customFormViewColumns = [ 'UID', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
-const customRoleViewColumns = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
+const expectedCustomFormViewColumns = [ 'UID', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
+const expectedCustomRoleViewColumns = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
 
-const customForm_formViewColumns = [ 'UID', 'Service', 'Title', 'Date Submitted', 'Reviewer 1', 'Action' ];
-const customForm_roleViewOneForm = [ 'UID', 'Type', 'Service', 'Title', 'Date Submitted', 'Reviewer 1', 'Action' ];
+const customForm_formViewColumns = [ 'UID', 'Service', 'Title', 'Date Submitted', customField, 'Action' ];
+const customForm_roleViewOneForm = [ 'UID', 'Type', 'Service', 'Title', 'Date Submitted', customField, 'Action' ];
 const customForm_roleViewMultiForms = [ 'UID', 'Type', 'Service', 'Title', 'Status', 'Priority', 'Days Since Last Action', 'Action' ];
 
-let requestId_oneForm:string;
-let requestId_multForms:string
-let requestId_withStaple:string;
+let requestId_oneForm:string = '';
+let requestId_multForms:string = '';
+let requestId_withStaple:string = '';
 
 /**
  * Validates inbox table headers.  Accounts for service potentially being abscent.
@@ -58,7 +61,7 @@ const validateInboxTableColumns = async (tableLocator:Locator, headers:Array<str
 }
 
 test.describe('SiteMap Creation, Verification and Inbox Customazation', () => {
-test('create New Sitemap Card', async ({ page }) => {
+test('Sitemap Editor: Creation of a new Sitemap Card', async ({ page }) => {
   const awaitSettings = page.waitForResponse(res =>
     res.url().includes('settings') && res.status() === 200
   );
@@ -92,25 +95,45 @@ test('create New Sitemap Card', async ({ page }) => {
   await page.getByRole('button', { name: 'Save Change' }).click();
   await awaitSave;
 
-  await expect(page.getByText(leafSiteCard)).toBeVisible();
+  await expect(page.getByText(siteMapDesc)).toBeVisible();
 });
 
-test('Display of Inbox Sitemap Personalization and initial columns', async ({ page }) => {
+test('LEAF Inbox: Display of base Inbox customization, toggle, initial columns', async ({ page }) => {
   let awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
   await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
   await awaitInboxData;
 
+  //Organized by Form
   await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
   await expect(page.locator('#indexSites')).toContainText(siteMapname);
+  const inboxCountainers = page.locator('.siteFormContainers .depContainer');
+  await expect(inboxCountainers.first()).toBeVisible();
 
-  //Form View
+  let containerCount =  await inboxCountainers.count();
   await page.getByRole('button', { name: 'Toggle sections' }).click();
-  const firstTable = page.locator('.depContainer table').first();
-  await validateInboxTableColumns(firstTable, initialFormViewColumns);
+  await expect(page.locator('.depContainer table:visible')).toHaveCount(containerCount);
+
+  await page.getByRole('button', { name: 'Toggle sections' }).click();
+  await expect(page.locator('.depContainer table:visible')).toHaveCount(0);
   
-  //Role View
+  for (let i = 0; i < containerCount; i++) {
+    const container = page.locator('div.depContainer').nth(i);
+    const expandButton = container.locator('button.depInbox');
+    const table = container.getByRole('table');
+
+    await expandButton.click();
+    const requestSpanText = await expandButton.locator('> span').last().innerText();
+    const numRequests = +(requestSpanText.split(" ")?.[1] ?? 0);
+    expect(requestSpanText).toBe(`View ${numRequests} requests`);
+    expect(numRequests).toBeGreaterThan(0);
+    const expectedRows = numRequests > 50 ? 50 : numRequests;
+    await expect(table.locator('tbody tr')).toHaveCount(expectedRows);
+    await validateInboxTableColumns(table, expectedInitialFormViewColumns);
+  }
+  
+  //Organized by Role
   awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
@@ -118,29 +141,34 @@ test('Display of Inbox Sitemap Personalization and initial columns', async ({ pa
   await page.getByRole('button', { name: 'Organize by Roles' }).click();
   await awaitInboxData;
   
-  const roleDivCountainer = page.locator('.siteFormContainers .depContainer');
-  await expect(roleDivCountainer.first()).toBeVisible();
+  await expect(inboxCountainers.first()).toBeVisible();
+  containerCount =  await inboxCountainers.count();
 
-  const counter =  await roleDivCountainer.count();
-  for (let i = 0; i < counter; i++) {
+  await page.getByRole('button', { name: 'Toggle sections' }).click();
+  await expect(page.locator('.depContainer table:visible')).toHaveCount(containerCount);
+
+  await page.getByRole('button', { name: 'Toggle sections' }).click();
+  await expect(page.locator('.depContainer table:visible')).toHaveCount(0);
+
+  for (let i = 0; i < containerCount; i++) {
     const container = page.locator('div.depContainer').nth(i);
-    const expandButton = container.locator('button');
+    const expandButton = container.locator('button.depInbox');
     const table = container.getByRole('table');
 
     await expandButton.click();
-    const requestSpanText = await expandButton.locator('> span').innerText();
-    const tableTdRows = await table.locator('tbody tr').all();
-    const rowCount = tableTdRows.length;
-    expect(rowCount).toBeGreaterThan(0);
-    expect(requestSpanText).toBe(`View ${rowCount} requests`);
-    await validateInboxTableColumns(table, initialRoleViewColumns);
+    const requestSpanText = await expandButton.locator('> span').last().innerText();
+    const numRequests = +(requestSpanText.split(" ")?.[1] ?? 0);
+    expect(requestSpanText).toBe(`View ${numRequests} requests`);
+    expect(numRequests).toBeGreaterThan(0);
+    const expectedRows = numRequests > 50 ? 50 : numRequests;
+    await expect(table.locator('tbody tr')).toHaveCount(expectedRows);
+    await validateInboxTableColumns(table, expectedInitialRoleViewColumns);
   }
 });
 
-test('General Customization of LEAF Inbox Columns and Inbox Display', async ({ page }) => {
+test('Inbox Editor: Configuration of site-level Customization', async ({ page }) => {
   const colsToAdd = [ 'Priority', 'Days Since Last Action' ];
 
-  //Add Customization (addition of priority and days since action columns)
   await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_combined_inbox');
   await expect(page.getByText(siteMapname, { exact: true })).toBeVisible();
 
@@ -154,13 +182,15 @@ test('General Customization of LEAF Inbox Columns and Inbox Display', async ({ p
     await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill(colsToAdd[i]);
     await page.locator(leafSiteId).locator('.choices__list div').getByText(colsToAdd[i]).click();
     await awaitSave;
+    await expect(page.getByText(`${colsToAdd[i]}Remove item`)).toBeVisible();
   }
+});
 
-  //Verify the customization is present
+test('LEAF Inbox: Form and Role View display of site-level Inbox customization', async ({page}) => {
   await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
   await expect(page.locator('#indexSites')).toContainText(siteMapname);
 
-  //Verify Role Customization
+  //Organize by Role, button and nav
   let awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
@@ -173,9 +203,9 @@ test('General Customization of LEAF Inbox Columns and Inbox Display', async ({ p
   const testerMenu = page.getByRole('button', { name: dynRegex});
   const container = page.locator('div.depContainer').filter({ has: testerMenu });
   await testerMenu.click();
-  await validateInboxTableColumns(container.getByRole('table'), customRoleViewColumns);
+  await validateInboxTableColumns(container.getByRole('table'), expectedCustomRoleViewColumns);
 
-  //Form View
+  //Organize by Form, button and nav
   awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
@@ -187,11 +217,11 @@ test('General Customization of LEAF Inbox Columns and Inbox Display', async ({ p
   const formMenu = page.getByRole('button', { name: dynRegex2 });
   const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
   await formMenu.click();
-  await validateInboxTableColumns(formContainer.getByRole('table'), customFormViewColumns);
+  await validateInboxTableColumns(formContainer.getByRole('table'), expectedCustomFormViewColumns);
 });
 
-test('Form View: Customization of a specific form and Inbox display', async ({ page }) => {
-  const colsToAdd = [ 'Date Submitted', 'Multiple person designated: Reviewer 1 (ID: 14)' ];
+test('Inbox Editor: Configuration of form-level Customization', async ({ page }) => {
+  const colsToAdd = [ 'Date Submitted', `Multiple person designated: ${customField} (ID: 14)` ];
 
   await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_combined_inbox');
   await expect(page.getByText(editorCardText)).toBeVisible();
@@ -206,7 +236,7 @@ test('Form View: Customization of a specific form and Inbox display', async ({ p
   await page.locator(formSelectId).selectOption(customFormID);
   await awaitIndicators;
 
-  //this is here to help make sure choices js updates its selections
+  //this is here to help make sure choices js option selections are updated before proceeding
   await page.evaluate(() => {
     return new Promise((resolve) => {
       requestAnimationFrame(() => resolve(1));
@@ -222,39 +252,27 @@ test('Form View: Customization of a specific form and Inbox display', async ({ p
     await page.locator(leafSiteId).getByRole('textbox', { name: 'Click to search. Limit 7' }).fill(colsToAdd[i]);
     await page.locator(leafSiteId).locator('.choices__list div').getByText(colsToAdd[i]).click();
     await awaitSave;
+    await expect(page.getByText(`${colsToAdd[i]}Remove item`)).toBeVisible();
   }
-
-  let awaitInboxData = page.waitForResponse(res => 
-    res.url().includes('includeStandardLEAF') && res.status() === 200
-  );
-  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
-  await awaitInboxData;
-  await expect(page.locator('#indexSites')).toContainText(siteMapname);
-
-  const dynTxt2 = 'Multiple person designated';
-  const dynRegex2 = new RegExp(`^${dynTxt2}.*`);
-  const formMenu = page.getByRole('button', { name: dynRegex2 });
-  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
-  await formMenu.click();
-  await validateInboxTableColumns(formContainer.getByRole('table'), customForm_formViewColumns);
 });
 
-test('Create Multiple Person Form requests (Config)', async ({ page }) => {
+test('Create requests using Multiple Person Form (Config)', async ({ page }) => {
   const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
-  //for role view, one form represented
-  requestId_oneForm = await createTestRequest(page, 'AS - Service', serviceRequest, 'Multiple person designated');
+  const label1 = 'Search for user to add as Reviewer 1';
+  const label2 = 'Search for user to add as Reviewer 2';
 
+  requestId_oneForm = await createTestRequest(page, 'AS - Service', serviceRequest, 'Multiple person designated');
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
+  await expect(page.getByRole('searchbox', { name: label1 })).toBeVisible();
+  await page.getByRole('searchbox', { name: label1 }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
+  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue('userName:VTRHJHROSARIO');
 
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
+  await expect(page.getByRole('searchbox', { name: label2 })).toBeVisible();
+  await page.getByRole('searchbox', { name: label2 }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue('userName:VTRXVPMADELAINE');
 
   await expect(loadingIndicators).toHaveCount(0);
   await expect(page.locator('.input-required-error')).toHaveCount(0);
@@ -269,20 +287,19 @@ test('Create Multiple Person Form requests (Config)', async ({ page }) => {
   await page.getByRole('button', { name: 'Submit Request' }).click();
   await awaitSubmit;
 
-  //for role view, multiple forms represented
-  requestId_multForms = await createTestRequest(page, 'AS - Service', serviceRequest2, 'Multiple person designated');
 
+  requestId_multForms = await createTestRequest(page, 'AS - Service', serviceRequest2, 'Multiple person designated');
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('test');
+  await expect(page.getByRole('searchbox', { name: label1 })).toBeVisible();
+  await page.getByRole('searchbox', { name: label1 }).fill('test');
   await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:tester');
+  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue('userName:tester');
 
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
+  await expect(page.getByRole('searchbox', { name: label2 })).toBeVisible();
+  await page.getByRole('searchbox', { name: label2 }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue('userName:VTRXVPMADELAINE');
 
   await expect(loadingIndicators).toHaveCount(0);
   await expect(page.locator('.input-required-error')).toHaveCount(0);
@@ -296,62 +313,9 @@ test('Create Multiple Person Form requests (Config)', async ({ page }) => {
   );
   await page.getByRole('button', { name: 'Submit Request' }).click();
   await awaitSubmit;
-});
 
-test('Role View: Form specific columns display if only one form is present', async ({ page }) => {
-  let awaitInboxData = page.waitForResponse(res => 
-    res.url().includes('includeStandardLEAF') && res.status() === 200
-  );
-  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
-  await awaitInboxData;
 
-  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
-  
-  awaitInboxData = page.waitForResponse(res => 
-    res.url().includes('includeStandardLEAF') && res.status() === 200
-  );
-  await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  await awaitInboxData;
-
-  awaitInboxData = page.waitForResponse(res => 
-    res.url().includes('includeStandardLEAF') && res.status() === 200
-  );
-  await page.getByRole('button', { name: 'View as Admin' }).click();
-  await awaitInboxData;
-
-  const dynTxt = 'Adan Wolf View ';
-  const dynRegex = new RegExp(`^${dynTxt}.*`);
-  const formMenu = page.getByRole('button', { name: dynRegex });
-  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
-  await formMenu.click();
-  await expect(page.getByRole('link', { name: requestId_oneForm, exact: true }).first()).toBeVisible();
-  await validateInboxTableColumns(formContainer.getByRole('table'), customForm_roleViewOneForm);
-});
-
-test('Role View: General custom columns display if multiple forms are present', async ({ page }) => {
-  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
-  await expect(page.locator('#indexSites')).toContainText(siteMapname);
-
-  //Verify Role Customization
-  let awaitInboxData = page.waitForResponse(res => 
-    res.url().includes('includeStandardLEAF') && res.status() === 200
-  );
-  await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
-  await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  await awaitInboxData;
-
-  const dynTxt = 'Tester Tester View';
-  const dynRegex = new RegExp(`^${dynTxt}.*`);
-  const testerMenu = page.getByRole('button', { name: dynRegex});
-  const container = page.locator('div.depContainer').filter({ has: testerMenu });
-  await testerMenu.click();
-  await expect(page.getByRole('link', { name: requestId_multForms, exact: true }).first()).toBeVisible();
-  await validateInboxTableColumns(container.getByRole('table'), customForm_roleViewMultiForms);
-});
-
-test('Submit a request with a stapled form (Config)', async ({ page }) => {
-  //Add and Verify the Staples
+  //request with a staple
   await page.goto(LEAF_URLS.FORM_EDITOR_FORM + customFormID);
   await page.getByRole('button', { name: 'Staple other form' }).click();
   await page.getByLabel('Select a form to merge').selectOption('form_dac2a');
@@ -362,18 +326,18 @@ test('Submit a request with a stapled form (Config)', async ({ page }) => {
 
   //create and submit request
   requestId_withStaple = await createTestRequest(page, 'AS - Service', stapledRequest, 'Multiple person designated');
-
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' }).fill('ad');
+  await expect(page.getByRole('searchbox', { name: label1 })).toBeVisible();
+  await page.getByRole('searchbox', { name: label1 }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 1' })).toHaveValue('userName:VTRHJHROSARIO');
+  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue('userName:VTRHJHROSARIO');
 
-  await page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' }).fill('h');
+  await expect(page.getByRole('searchbox', { name: label2 })).toBeVisible();
+  await page.getByRole('searchbox', { name: label2 }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-  await expect(page.getByRole('searchbox', { name: 'Search for user to add as Reviewer 2' })).toHaveValue('userName:VTRXVPMADELAINE');
+  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue('userName:VTRXVPMADELAINE');
 
-  const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
   await expect(loadingIndicators).toHaveCount(0);
   await expect(page.locator('.input-required-error')).toHaveCount(0);
 
@@ -385,7 +349,7 @@ test('Submit a request with a stapled form (Config)', async ({ page }) => {
   await page.locator('#nextQuestion2').click();
 
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
-  const awaitSubmit = page.waitForResponse(res => 
+  awaitSubmit = page.waitForResponse(res => 
     res.url().includes(`form/${requestId_withStaple}/submit`) && res.status() === 200
   );
   await page.getByRole('button', { name: 'Submit Request' }).click();
@@ -401,7 +365,7 @@ test('Submit a request with a stapled form (Config)', async ({ page }) => {
   await page.getByText('Close').click();
 });
 
-test('Role View: Form specific columns display if only one form is present (with staple)', async ({ page }) => {
+test('LEAF Inbox (Form View): Display of form-level customization', async ({ page }) => {
   let awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
@@ -409,36 +373,80 @@ test('Role View: Form specific columns display if only one form is present (with
   await awaitInboxData;
   await expect(page.locator('#indexSites')).toContainText(siteMapname);
 
-  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'View as Admin' })).toBeVisible();
-  
-  awaitInboxData = page.waitForResponse(res => 
-    res.url().includes('includeStandardLEAF') && res.status() === 200
-  );
-  await page.getByRole('button', { name: 'Organize by Roles' }).click();
-  await awaitInboxData;
+  const dynTxt2 = 'Multiple person designated';
+  const dynRegex2 = new RegExp(`^${dynTxt2}.*`);
+  const formMenu = page.getByRole('button', { name: dynRegex2 });
+  const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
+  await formMenu.click();
+  await validateInboxTableColumns(formContainer.getByRole('table'), customForm_formViewColumns);
+});
 
-  awaitInboxData = page.waitForResponse(res => 
+test('LEAF Inbox (Role View): form-level customization displays if only one form is present', async ({ page }) => {
+  let awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
-  await page.getByRole('button', { name: 'View as Admin' }).click();
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox&adminView&organizeByRole');
   await awaitInboxData;
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
+  await expect(page.locator('#inbox').getByText(siteMapname)).toBeVisible();
 
   const dynTxt = 'Adan Wolf View ';
   const dynRegex = new RegExp(`^${dynTxt}.*`);
   const formMenu = page.getByRole('button', { name: dynRegex });
   const formContainer = page.locator('div.depContainer').filter({ has: formMenu });
   await formMenu.click();
-  await expect(page.getByRole('link', { name: requestId_oneForm, exact: true }).first()).toBeVisible();
-  await expect(page.getByRole('cell', { name: stapleName })).toBeVisible();
+  await expect(formContainer.getByRole('link', { name: requestId_oneForm, exact: true }).first()).toBeVisible();
+  await expect(formContainer.getByRole('link', { name: requestId_withStaple, exact: true }).first()).toBeVisible();
+  await expect(formContainer.getByRole('columnheader', { name: customField })).toBeVisible();
+
+  await expect(formContainer.locator(`[id$="_${requestId_oneForm}_14"]`)).toContainText('Adan Wolf');
+  await expect(formContainer.locator(`[id$="_${requestId_withStaple}_14"]`)).toContainText('Adan Wolf');
+  await expect(formContainer.locator(`[id$="_${requestId_withStaple}_type"]`)).toContainText(stapleType);
   await validateInboxTableColumns(formContainer.getByRole('table'), customForm_roleViewOneForm);
 });
+
+test('LEAF Inbox (Role View): site-level customization displays if multiple forms are present', async ({ page }) => {
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox');
+  await expect(page.locator('#indexSites')).toContainText(siteMapname);
+
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await expect(page.getByRole('button', { name: 'Organize by Roles' })).toBeVisible();
+  await page.getByRole('button', { name: 'Organize by Roles' }).click();
+  await awaitInboxData;
+
+  const dynTxt = 'Tester Tester View';
+  const dynRegex = new RegExp(`^${dynTxt}.*`);
+  const testerMenu = page.getByRole('button', { name: dynRegex});
+  const container = page.locator('div.depContainer').filter({ has: testerMenu });
+  await testerMenu.click();
+  await expect(container.getByRole('link', { name: requestId_multForms, exact: true }).first()).toBeVisible();
+  await expect(container.getByRole('columnheader', { name: customField })).not.toBeVisible();
+  await validateInboxTableColumns(container.getByRole('table'), customForm_roleViewMultiForms);
+});
+
+test('LEAF Inbox (Role View, Combined): site-level customization displays for combined view', async ({ page }) => {
+  let awaitInboxData = page.waitForResponse(res => 
+    res.url().includes('includeStandardLEAF') && res.status() === 200
+  );
+  await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Inbox&organizeByRole&adminView&combineIndividuals');
+  await awaitInboxData;
+
+  const combinedButton = page.getByRole('button', { name: '* Assigned to an individual *' });
+  const combinedContainer = page.locator('div.depContainer').filter({ has: combinedButton });
+  await combinedContainer.click();
+  await expect(combinedContainer.getByRole('columnheader', { name: customField })).not.toBeVisible();
+  await validateInboxTableColumns(combinedContainer.getByRole('table'), customForm_roleViewMultiForms);
+});
+
 
 test('Delete test requests and Site Card (cleanup)', async ({ page }) => {
   const testRequests = [ requestId_oneForm, requestId_multForms, requestId_withStaple ];
   for(let i = 0; i < testRequests.length; i++) {
-    await deleteTestRequestByRequestID(page, testRequests[i]);
-    console.log("deleted", testRequests[i]);
+    if(testRequests[i] !== '') {
+      await deleteTestRequestByRequestID(page, testRequests[i]);
+    }
   }
   
   const awaitSettings = page.waitForResponse(res =>
@@ -449,7 +457,12 @@ test('Delete test requests and Site Card (cleanup)', async ({ page }) => {
   await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
 
   await page.getByRole('heading', { name: siteMapname }).getByRole('link').click();
+  await expect(page.getByRole('button', { name: 'Delete Site' })).toBeVisible();
+  const awaitDelete = page.waitForResponse(res =>
+    res.url().includes('sitemap_json') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Delete Site' }).click();
+  await awaitDelete;
 });
 
 });
