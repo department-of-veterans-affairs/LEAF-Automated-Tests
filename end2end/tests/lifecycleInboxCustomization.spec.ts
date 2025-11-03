@@ -124,6 +124,7 @@ test('LEAF Inbox: Display of base Inbox customization, toggle, initial columns',
     const table = container.getByRole('table');
 
     await expandButton.click();
+    await expect(table.locator('tbody tr').first()).toBeVisible();
     const requestSpanText = await expandButton.locator('> span').last().innerText();
     const numRequests = +(requestSpanText.split(" ")?.[1] ?? 0);
     expect(requestSpanText).toBe(`View ${numRequests} requests`);
@@ -142,7 +143,7 @@ test('LEAF Inbox: Display of base Inbox customization, toggle, initial columns',
   await awaitInboxData;
   
   await expect(inboxCountainers.first()).toBeVisible();
-  containerCount =  await inboxCountainers.count();
+  containerCount = await inboxCountainers.count();
 
   await page.getByRole('button', { name: 'Toggle sections' }).click();
   await expect(page.locator('.depContainer table:visible')).toHaveCount(containerCount);
@@ -156,6 +157,7 @@ test('LEAF Inbox: Display of base Inbox customization, toggle, initial columns',
     const table = container.getByRole('table');
 
     await expandButton.click();
+    await expect(table.locator('tbody tr').first()).toBeVisible();
     const requestSpanText = await expandButton.locator('> span').last().innerText();
     const numRequests = +(requestSpanText.split(" ")?.[1] ?? 0);
     expect(requestSpanText).toBe(`View ${numRequests} requests`);
