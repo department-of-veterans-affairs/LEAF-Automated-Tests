@@ -1,19 +1,22 @@
 import { Page, Locator, expect } from '@playwright/test';
 
-export const LEAF_URLS = {
-  PORTAL_HOME: 'https://host.docker.internal/Test_Request_Portal/',
-  FORM_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/',
-  FORM_EDITOR_FORM: 'https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=',
-  INITIAL_FORM: 'https://host.docker.internal/Test_Request_Portal/?a=newform',
-  WORKFLOW_EDITOR: 'https://host.docker.internal/Test_Request_Portal/admin/?a=workflow',
-  WORKFLOW_EDITOR_WF: 'https://host.docker.internal/Test_Request_Portal/admin/?a=workflow&workflowID=',
-  REPORT_BUILDER: 'https://host.docker.internal/Test_Request_Portal/?a=reports&v=3',
-  MASS_ACTION: 'https://host.docker.internal/Test_Request_Portal/report.php?a=LEAF_mass_action',
-  PRINTVIEW_REQUEST: 'https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=',
-  EDITVIEW_REQUEST: 'https://host.docker.internal/Test_Request_Portal/index.php?a=view&recordID=',
-  ACCOUNT_UPDATER: 'https://host.docker.internal/Test_Request_Portal/admin/?a=mod_account_updater',
+const TEST_PORTAL_URL = 'https://host.docker.internal/Test_Request_Portal/';
+const TEST_NEXUS_URL = 'https://host.docker.internal/Test_Nexus/';
 
-  NEXUS_HOME: 'https://host.docker.internal/Test_Nexus/',
+export const LEAF_URLS = {
+  PORTAL_HOME: TEST_PORTAL_URL,
+  FORM_EDITOR: TEST_PORTAL_URL + 'admin/?a=form_vue#/',
+  FORM_EDITOR_FORM: TEST_PORTAL_URL + 'admin/?a=form_vue#/forms?formID=',
+  INITIAL_FORM: TEST_PORTAL_URL + '?a=newform',
+  WORKFLOW_EDITOR: TEST_PORTAL_URL + 'admin/?a=workflow',
+  WORKFLOW_EDITOR_WF: TEST_PORTAL_URL + 'admin/?a=workflow&workflowID=',
+  REPORT_BUILDER: TEST_PORTAL_URL + '?a=reports&v=3',
+  MASS_ACTION: TEST_PORTAL_URL + 'report.php?a=LEAF_mass_action',
+  PRINTVIEW_REQUEST: TEST_PORTAL_URL + 'index.php?a=printview&recordID=',
+  EDITVIEW_REQUEST: TEST_PORTAL_URL + 'index.php?a=view&recordID=',
+  ACCOUNT_UPDATER: TEST_PORTAL_URL + 'admin/?a=mod_account_updater',
+
+  NEXUS_HOME: TEST_NEXUS_URL,
 
   EMAIL_SERVER: 'http://host.docker.internal:5080/'
 }
