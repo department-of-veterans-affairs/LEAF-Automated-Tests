@@ -1,22 +1,22 @@
 import { Page, Locator, expect } from '@playwright/test';
 
-const baseTestPortal = 'https://host.docker.internal/Test_Request_Portal/';
-const baseTestNexus = 'https://host.docker.internal/Test_Nexus/';
+const TEST_PORTAL_URL = 'https://host.docker.internal/Test_Request_Portal/';
+const TEST_NEXUS_URL = 'https://host.docker.internal/Test_Nexus/';
 
 export const LEAF_URLS = {
-  PORTAL_HOME: baseTestPortal,
-  FORM_EDITOR: baseTestPortal + 'admin/?a=form_vue#/',
-  FORM_EDITOR_FORM: baseTestPortal + 'admin/?a=form_vue#/forms?formID=',
-  INITIAL_FORM: baseTestPortal + '?a=newform',
-  WORKFLOW_EDITOR: baseTestPortal + 'admin/?a=workflow',
-  WORKFLOW_EDITOR_WF: baseTestPortal + 'admin/?a=workflow&workflowID=',
-  REPORT_BUILDER: baseTestPortal + '?a=reports&v=3',
-  MASS_ACTION: baseTestPortal + 'report.php?a=LEAF_mass_action',
-  PRINTVIEW_REQUEST: baseTestPortal + 'index.php?a=printview&recordID=',
-  EDITVIEW_REQUEST: baseTestPortal + 'index.php?a=view&recordID=',
-  ACCOUNT_UPDATER: baseTestPortal + 'admin/?a=mod_account_updater',
+  PORTAL_HOME: TEST_PORTAL_URL,
+  FORM_EDITOR: TEST_PORTAL_URL + 'admin/?a=form_vue#/',
+  FORM_EDITOR_FORM: TEST_PORTAL_URL + 'admin/?a=form_vue#/forms?formID=',
+  INITIAL_FORM: TEST_PORTAL_URL + '?a=newform',
+  WORKFLOW_EDITOR: TEST_PORTAL_URL + 'admin/?a=workflow',
+  WORKFLOW_EDITOR_WF: TEST_PORTAL_URL + 'admin/?a=workflow&workflowID=',
+  REPORT_BUILDER: TEST_PORTAL_URL + '?a=reports&v=3',
+  MASS_ACTION: TEST_PORTAL_URL + 'report.php?a=LEAF_mass_action',
+  PRINTVIEW_REQUEST: TEST_PORTAL_URL + 'index.php?a=printview&recordID=',
+  EDITVIEW_REQUEST: TEST_PORTAL_URL + 'index.php?a=view&recordID=',
+  ACCOUNT_UPDATER: TEST_PORTAL_URL + 'admin/?a=mod_account_updater',
 
-  NEXUS_HOME: baseTestNexus,
+  NEXUS_HOME: TEST_NEXUS_URL,
 
   EMAIL_SERVER: 'http://host.docker.internal:5080/'
 }
