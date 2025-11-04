@@ -52,3 +52,20 @@ type FormCategoryResponseItem struct {
 	Format         string                                `json:"format"`
 	Child          map[int]FormCategoryResponseItemChild `json:"child"`
 }
+
+type FormIndicatorList []FormIndicator
+type FormIndicator struct {
+	ParentIndicatorID *int     `json:"parentIndicatorID,omitempty"`
+	IndicatorID       int      `json:"indicatorID"`
+	Name              string   `json:"name"`
+	Format            string   `json:"format"`
+	Conditions        *string  `json:"conditions,omitempty"`
+	Description       string   `json:"description"`
+	IsDisabled        int      `json:"isDisabled"`
+	CategoryName      string   `json:"categoryName"`
+	CategoryID        string   `json:"categoryID"`
+	IsSensitive       int      `json:"is_sensitive"`
+	TimeAdded         string   `json:"timeAdded"` // should be a UNIX timestamp
+	ParentCategoryID  string   `json:"parentCategoryID"`
+	ParentStaples     []string `json:"parentStaples,omitempty"`
+}
