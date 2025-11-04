@@ -512,3 +512,47 @@ test('Elements attached to a workflow cannot be deleted from form', async ({ pag
     }
     
 });
+
+/**
+ * Test for LEAF 5109 - Enable "Need to Know" by Default for All 
+ *  LEAF forms
+ */
+test('Verify Default Form Values are set', async ({ page }) => {
+
+  let formID = '';
+
+  try {
+
+  // Constants for dropdown values
+  const NO_WORKFLOW = '0';
+  const UNPUBLISHED = '-1';
+  const NEED_TO_KNOW_ON = '1';
+  const FORM_TYPE_STANDARD = '';
+
+  // Create a new form
+  formID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
+
+  // Check that the Select Workflow dropdown is set to 'No Workflow. Users cannot submit requests' 
+  const selectWorkflow = page.locator('#workflowID');
+  await expect(selectWorkflow).toHaveValue(NO_WORKFLOW);
+
+  // Check that Select Availability is set to 'Unpublished'
+  const selectAvailability = page.locator('#availability');
+  await expect(selectAvailability).toHaveValue(UNPUBLISHED);
+
+  // Check that Need to Know is set to 'On'
+  const needToKnow = page.locator('#needToKnow');
+  await expect(needToKnow).toHaveValue(NEED_TO_KNOW_ON);
+
+  // Check that Form Type is set to 'Standard'
+  const formType = page.locator('#formType');
+  await expect(formType).toHaveValue(FORM_TYPE_STANDARD);
+
+  } finally {
+
+    // If the form was created, delete it
+    if(formID != '')
+      await deleteTestFormByFormID(page, formID);
+
+  }
+});
