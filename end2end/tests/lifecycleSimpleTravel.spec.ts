@@ -270,7 +270,8 @@ test('navigate to the Report Builder, find the travel request, and check status'
   // After clicking Type, we should expect the dropdown containing "Resolved" to be replaced
   await expect(page.getByRole('cell', { name: 'Resolved' }).locator('a')).not.toBeVisible();
 
-  // Select "Complex Form" from the list
+  // Select "Travel Form" from the list
+  await expect(page.getByLabel('categories').first()).toBeAttached();
   await page.locator('td').nth(4).click();
 
   // The list might be very long, so search for it
