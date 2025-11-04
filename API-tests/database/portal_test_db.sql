@@ -1131,7 +1131,8 @@ CREATE TABLE `category_staples` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 INSERT INTO `category_staples` (`categoryID`, `stapledCategoryID`) VALUES
-('form_7664a',	'form_dac2a');
+('form_7664a',	'form_dac2a'),
+('form_2ca98',	'form_dac2a');
 
 DROP TABLE IF EXISTS `data`;
 CREATE TABLE `data` (
