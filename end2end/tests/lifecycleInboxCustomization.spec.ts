@@ -1,17 +1,21 @@
-import {test, expect, Locator} from '@playwright/test';
+import {test, expect, Page, Locator} from '@playwright/test';
 import {
   LEAF_URLS, getRandomId,
   createTestRequest, deleteTestRequestByRequestID
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
-//This test is designed to test LEAF
-test.describe.configure({ mode: 'default' });
+test.describe.configure({ mode: 'serial' });
 
+let siteMapname:string = '';
+let editorCardText:string = '';
+let siteMapDesc:string = '';
+
+test.beforeAll(() => {
+  siteMapname = getRandomId();
+  editorCardText = `☰ ${siteMapname}`;
+  siteMapDesc = `LEAF ${siteMapname}`;
+});
 //Global Variables
-const siteMapname = getRandomId();
-const editorCardText = `☰ ${siteMapname}`;
-const siteMapDesc = `LEAF ${siteMapname}`;
-
 const serviceRequest ='LEAF 4832 - Request';
 const serviceRequest2 ='LEAF 4832 - Request2';
 const stapledRequest = 'LEAF 4832 - Stapled Request';
@@ -69,6 +73,25 @@ test('Sitemap Editor: Creation of a new Sitemap Card', async ({ page }) => {
   await awaitSettings;
 
   await expect(page.getByRole('button', { name: '+ Add Site' })).toBeVisible();
+
+  //used only within this test to remove any potential test-related cards from reruns
+  const removeRerunCards = async (page:Page) => {
+    const rerunCount = await page.getByRole('link', { name: /^id_\d+/ }).count();
+    if (rerunCount > 0) {
+      const rerunID = await page.getByRole('link', { name: /^id_\d+/ }).first().textContent() ?? '';
+      const linkLoc = page.getByRole('heading', { name: rerunID }).getByRole('link');
+      await linkLoc.click();
+      await expect(page.getByRole('button', { name: 'Delete Site' })).toBeVisible();
+      const awaitDelete = page.waitForResponse(res =>
+        res.url().includes('sitemap_json') && res.status() === 200
+      );
+      await page.getByRole('button', { name: 'Delete Site' }).click();
+      await awaitDelete;
+      await expect(linkLoc).not.toBeVisible();
+      await removeRerunCards(page);
+    }
+  }
+  await removeRerunCards(page);
 
   //Style the Sitemap
   const siteMapColor = '#5d1adb';
