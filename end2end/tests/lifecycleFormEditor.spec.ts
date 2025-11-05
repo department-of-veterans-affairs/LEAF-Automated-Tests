@@ -1,7 +1,8 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 import {
   getRandomId,
+  LEAF_URLS,
   createTestForm,
   selectChosenDropdownOption,
   loadForm,
@@ -14,22 +15,25 @@ import {
 test.describe.configure({ mode: 'serial' });
 
 // Generate unique text to help ensure that fields are being filled correctly.
-const testId = getRandomId();
-let uniqueText = `New Form ${testId}`;
+let testId:string = '';
+let uniqueText:string = '';
+test.beforeAll(() => {
+  testId = getRandomId();
+  uniqueText = `New Form ${testId}`;
+});
 
-
+let newFormID = ''; //set in first test.  tests are serial (1 worker)
 
 /**
  *  Create a new form with name in the variable 'uniqueText'
  *  and verify it is displayed in the Form Browser list
  */
 test('Create New Form', async ({ page }) => {
-
-  // Create a new form
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  await page.goto(LEAF_URLS.FORM_EDITOR);
   await page.getByRole('button', { name: 'Create Form' }).click();
+  await expect(page.getByLabel('Form Name (up to 50')).toBeVisible();
+
   await page.getByLabel('Form Name (up to 50').fill(uniqueText);
-  await page.getByLabel('Form Name (up to 50').press('Tab');
   await page.getByLabel('Form Description (up to 255').fill(uniqueText + ' Description');
   await page.getByRole('button', { name: 'Save' }).click();
 
@@ -39,20 +43,28 @@ test('Create New Form', async ({ page }) => {
 
   // Confirm the new form is visible in the list of forms
   await page.getByRole('link', { name: 'Form Browser' }).click();
-  await expect(page.getByRole('link', { name: uniqueText })).toBeVisible(); 
+  await expect(page.getByRole('link', { name: uniqueText })).toBeVisible();
+  //nav is functional. Get id for direct nav for remaining tests.
+  await page.getByRole('link', { name: uniqueText }).click();
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
+  newFormID = await page.locator('#edit-properties-panel .form-id').innerText() ?? '';
 });
 
 /**
  *  Add a section to the form created in the previous test
  *  and verify it was added
  */
-test('Add Section to Form', async ({ page }) => {
+test('Add first Section to Form', async ({ page }) => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
-  // Add a new section to the form
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: uniqueText }).click();
+  //the only option for a new form should be Add Section
+  await expect(page.getByLabel('Add Section')).toBeVisible();
+  await expect(page.getByLabel('Add Question to Section')).not.toBeVisible();
+  await expect(page.getByLabel('add sub-question')).not.toBeVisible();
+
   await page.getByLabel('Add Section').click();
-  await page.getByLabel('Section Heading').click();
+  await expect(page.getByLabel('Section Heading')).toBeVisible();
   await page.getByLabel('Section Heading').fill(uniqueText + ' Section');
   await page.getByRole('button', { name: 'Save' }).click();
 
@@ -66,23 +78,20 @@ test('Add Section to Form', async ({ page }) => {
  *  Yes/No to the new section in the previous test
  */
 test('Add Question to Form', async ({ page }) => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
-  // Add a question to the form
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: uniqueText }).click({force:true});
-  await page.getByLabel('Add Question to Section').click({force:true});
-  await page.getByLabel('Field Name').click({force:true});
+  await expect(page.getByLabel('Add Question to Section')).toBeVisible();
+
+  await page.getByLabel('Add Question to Section').click();
+  await expect(page.getByLabel('Field Name')).toBeVisible();
   await page.getByLabel('Field Name').fill('Are you a VA Employee?');
-  await page.getByLabel('Short label for spreadsheet').click();
   await page.getByLabel('Short label for spreadsheet').fill('VA Employee?');
 
-  // Choose radio button for the input
+  // Choose radio button for the input. Make the choices Yes and No
   await page.getByLabel('Input Format').selectOption('radio');
-  await page.getByLabel('Options (One option per line)').click({force:true});
-
-  // Make the choices Yes and No
   await page.getByLabel('Options (One option per line)').fill('Yes\nNo');
-  await page.getByRole('button', { name: 'Save' }).click({force:true});
+  await page.getByRole('button', { name: 'Save' }).click();
 
   // Verify the question was added
   await expect(page.getByText('Are you a VA Employee?')).toBeVisible();
@@ -93,17 +102,19 @@ test('Add Question to Form', async ({ page }) => {
  *  'Supervisor' with a text input
  */
 test('Add Sub-Question to Form', async ({ page }) => {
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
-  // Add a sub-question to the form 
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.locator(`//a[normalize-space()='`+uniqueText+`']`).click();
-  await page.locator("button[title='add sub-question']").click();
-  await page.locator("#name").fill('Supervisor Name');
-  await page.locator('#description').fill('Supervisor');
+  await expect(page.getByLabel('add sub-question')).toBeVisible();
+
+  await page.getByLabel('add sub-question').click();
+  await expect(page.getByLabel('Field Name')).toBeVisible();
+  await page.getByLabel('Field Name').fill('Supervisor Name');
+  await page.getByLabel('Short label for spreadsheet').fill('Supervisor');
 
   // Choose the input format of 'Text'
   await page.getByLabel('Input Format').selectOption('text');
-  await page.locator("#button_save").click();
+  await page.getByRole('button', { name: 'Save' }).click();
 
   // Verify the sub-quesiton was added
   await expect(page.getByText('Supervisor Name')).toBeVisible();
@@ -115,8 +126,8 @@ test('Add Sub-Question to Form', async ({ page }) => {
  *  the sub-question "Supervisor" prefilled with the answer "Jane Doe"
  */
 test('Create Pre-Filled If/Then Question', async ({ page }) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: uniqueText }).click();
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
   // Modify the main question to only show the sub-question in certain conditions
   await page.getByText('Modify Logic').last().click();
@@ -153,8 +164,8 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
  *  it is visible to steps in the workflow
  */
 test('Add Internal Use Form', async ({ page }) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-  await page.getByRole('link', { name: uniqueText }).click();
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
   // Add a workflow to the form
   await page.getByLabel('Workflow: No Workflow. Users').selectOption('1');
@@ -185,11 +196,8 @@ test('Add Internal Use Form', async ({ page }) => {
  *  under the end2end directory
  */
 test('Export Form', async ({ page }) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-
-  // Choose the form and verify the correct form was selected
-  await page.getByRole('link', { name: uniqueText }).click();
-  await expect(page.getByText(uniqueText + ' Section')).toBeVisible();
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
   // Export the form to ./forms/
   const downloadPromise = page.waitForEvent('download');
@@ -202,12 +210,8 @@ test('Export Form', async ({ page }) => {
  *  Delete the new form
  */
 test('Delete Form', async ({ page }) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
-
-  // Select the form to delete and verify the Form Browser page is loaded
-  await page.getByRole('link', { name: uniqueText }).click();
-  await expect(page.getByRole('heading', { name: 'Admin  Form Browser  Form' })).toBeVisible();
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
+  await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
   // Delete the form
   await page.getByLabel('delete this form').click();
@@ -223,8 +227,7 @@ test('Delete Form', async ({ page }) => {
  *  delete it
  */
 test('Import Form', async ({ page }) => {
-
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/');
+  await page.goto(LEAF_URLS.FORM_EDITOR);
   await page.getByRole('button', { name: 'Import Form' }).click();
 
   // Get the form to import
@@ -391,9 +394,6 @@ test.describe('Tests for LEAF 4697', () => {
     const numberedFormattedCodeText = await formattedCodeInput.inputValue();
     expect(numberedFormattedCodeText).toContain('<ol><li>Numbered item 1</li><li>Numbered item 2</li></ol>');
 
-    // await page.getByRole('button', { name: 'Cancel' }).click();
-    // await expect(page.getByText('single line text')).toBeVisible();
-    
   });
 });
 

@@ -13,7 +13,10 @@ import {
 
 test.describe.configure({ mode: 'default' });
 
-const testId = getRandomId();
+let testId:string = '';
+test.beforeAll(() => {
+  testId = getRandomId();
+});
 
 test.describe('Update heading of a form then reset back to original heading', () => {
   const originalText = 'Section 1'
@@ -53,6 +56,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     const assignedPersonOne = `Tester, Tester Product Liaison`;
     const assignedPersonIndId = '8';
     const assignedGroupIndId = '9';
+    const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
 
     requestID_emailing = await createTestRequest(page, 'AS - Service', `LEAF-4891-${testId}`, 'General Form');
 
@@ -69,8 +73,8 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await expect(page.getByRole('cell', { name: assignedPersonOne })).toBeVisible();
     await page.getByRole('cell', { name: assignedPersonOne }).click();
     await expect(page.locator(`#empSel_${assignedPersonIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
+    await expect(loadingIndicators).toHaveCount(0);
     await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.waitForLoadState('networkidle'); //helps ensure required validation for an orgchart field is complete
     await page.locator('#nextQuestion2').click();
 
     //3. Assigned Group - not an approver for step one, but required to proceed
@@ -79,8 +83,8 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await expect(page.getByRole('cell', { name: groupText })).toBeVisible();
     await page.getByRole('cell', { name: groupText }).click();
     await expect(page.locator(`#grpSel_${assignedGroupIndId} img[id$="_iconBusy"]`)).not.toBeVisible();
+    await expect(loadingIndicators).toHaveCount(0);
     await expect(page.locator('#nextQuestion2')).toBeVisible();
-    await page.waitForLoadState('networkidle');
     await page.locator('#nextQuestion2').click();
 
     await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
@@ -132,7 +136,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     ).toBeVisible();
   });
 
-  test('email reminder is only sent to remaining dependency', { tag: ['@LEAF-4891'] }, async ({ page }) => {
+  test('email reminder is only sent to remaining dependency', async ({ page }) => {
     await page.goto(LEAF_URLS.EMAIL_SERVER);
     //approver 1 should be a recipient, but group A requirement has been met, so its member should not be
     const expectedSubject = `Reminder for General Form (#${requestID_emailing})`;

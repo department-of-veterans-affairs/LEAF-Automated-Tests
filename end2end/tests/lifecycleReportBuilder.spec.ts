@@ -113,10 +113,7 @@ test('Modify Search', async ({ page }) => {
   await page.getByRole('button', { name: 'Generate Report' }).click();
 
   // Verify that no results with "Available for test case" are shown
-  const results = await page.getByText('Available for test case').all();
-  for ( const result of results ) {
-   await expect( result ).not.toBeVisible();
-  }
+  await expect(page.getByText('Available for test case')).toHaveCount(0);
    
 });
 
@@ -134,6 +131,7 @@ test('Edit Labels', async ({ page }) => {
   // Select the columns "Assigned Group", "Assigned Person", and "Assigned Person 2"
   // from under "General Form"
   await page.getByText('General Form').click();
+  await expect(page.getByLabel('Title of Request')).toBeChecked();
   await page.getByTitle('indicatorID: 9\nAssigned Group').locator('span').click();
   await page.getByTitle('indicatorID: 8\nAssigned Person').locator('span').click();
   await page.getByTitle('indicatorID: 10\nAssigned Person').locator('span').click();

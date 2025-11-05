@@ -1,40 +1,39 @@
 import { test, expect } from '@playwright/test';
+import { getRandomId } from '../leaf_test_utils/leaf_util_methods.ts';
 
 test('Create group and add an employee', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
 
   // Generate a unique group name
-  let randNum = Math.floor(Math.random() * 10000);
-  let uniqueText = `New Test Group ${randNum}`;
+  const randNum = getRandomId();
+  const uniqueText = `Group ${randNum}`;
+  const saveButton = page.getByRole('button', { name: 'Save' });
+  const newGroup = page.getByRole('heading', { name: uniqueText });
 
   // Create a new group
-  const createGroupButton = page.getByRole('button', { name: '+ Create group' });
-  await createGroupButton.click();
-
-  const groupTitle = page.getByLabel('Group Title');
-  await groupTitle.fill(uniqueText);
-
-  const saveButton = page.getByRole('button', { name: 'Save' });
+  await page.getByRole('button', { name: '+ Create group' }).click();
+  await expect(saveButton).toBeVisible();
+  await page.getByLabel('Group Title').fill(uniqueText);
   await saveButton.click();
 
-  const newGroup = page.getByRole('heading', { name: uniqueText });
   await expect(newGroup).toBeVisible();
 
   // Open new group and add an employee
   await newGroup.click();
-
+  await expect(saveButton).toBeVisible();
   const searchInput = page.getByLabel('Search for user to add as');
+  await expect(searchInput).toBeVisible();
   await searchInput.fill('test');
-  const employeeToAdd = page.getByRole('cell', { name: 'Tester, Tester Product Liaison' });
-  await employeeToAdd.click();
-  const removeButton = page.getByRole('button', { name: 'Remove' });
-  await expect(removeButton).toBeVisible()
+  await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
+  await expect(page.getByRole('button', { name: 'Remove' })).toBeVisible()
+  let awaitSave = page.waitForResponse(res =>
+    res.url().includes('list_members') && res.status() === 200
+  );
   await saveButton.click();
+  await awaitSave;
 
-  // Reload the page to ensure the changes are reflected
-  await page.reload();
   await newGroup.click();
-
+  await expect(saveButton).toBeVisible();
   // Validate that the employee appears in the group’s employee table
   const employeeTable = page.locator('#employee_table');
   await expect(employeeTable).toBeVisible();
@@ -45,6 +44,7 @@ test('Import a group from another leaf site and delete it', async ({ page }) => 
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_groups');
 
   const importGroupButton = page.getByRole('button', { name: 'Import group' });
+  await expect(importGroupButton).toBeVisible();
   await importGroupButton.click();
 
   const importGroupDialog = page.locator('[aria-describedby="import_dialog"]');
