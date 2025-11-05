@@ -79,7 +79,7 @@ test('Request for a form using parallel processing can be submitted without aler
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
   await page.getByRole('searchbox', { name: 'Search for user to add as ' + questionOrgEmpLabel }).fill('t');
-  await page.getByRole('cell', { name: 'Bins, Terina Corkery. Dynamic' }).click();
+  await page.getByRole('cell', { name: 'Bins, Terina Corkery. Dynamic' }).click();
 
   await page.getByRole('searchbox', { name: 'Search for user to add as ' + questionOrgPosLabel }).fill('t');
   await page.getByRole('cell', { name: 'Accountability Officer (GS 14' }).click();
