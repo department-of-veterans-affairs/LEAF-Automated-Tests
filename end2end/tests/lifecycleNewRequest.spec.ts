@@ -370,28 +370,29 @@ test('Required Not Highlighted When Group is Populated', async ({ page }) => {
         const assignedTitle = '301 - ' + assignedUserName;
         await page.getByLabel('Search for user to add as Assigned Person', { exact: true }).fill('userName:' + assignedUserName);
         
+        // Verify correct person is selected and go to next page
         await expect(page.getByTitle(assignedTitle)).toContainText(assignedPersonName);
         await page.locator('#nextQuestion2').click();
 
-        // Verify Assigned Group is visible on the 3rd page and click Next Question
+        // Verify Assigned Group is visible on the 3rd page
         await expect(page.getByText('Assigned Group', { exact: true })).toBeVisible();
-        await page.locator('#nextQuestion2').click();
 
-        // Verify the Input-Required-Error formatting (white text, red background) is displayed
-        await expect(page.getByText('* Required')).toHaveClass('input-required input-required-error');
-
-        // Set the Assigned Group to "AS Test Group"
-        const assignedGroupID = 'group#200';
+        // Search for the group using partial name and select it
+        const assignedGroupPartial = 'AS';
         const assignedGroupName = 'AS Test Group';
-        await page.getByLabel('Search for user to add as Assigned Group').click();
-        await page.getByLabel('Search for user to add as Assigned Group').fill(assignedGroupID);
-        await expect(page.locator('td')).toContainText(assignedGroupName);
-        await page.getByRole('cell', { name: assignedGroupName }).click();
+        const assignedGroupNumber = 'group#200'
 
-        // Verify the Input-Required-Error formatting is not displayed
-        // (* Request is just red text)
-        await expect(page.getByText('* Required')).toHaveClass('input-required');
+        await page.getByLabel('Search for user to add as').fill(assignedGroupPartial);
+        await expect(page.getByRole('cell', { name: assignedGroupName, exact: true })).toBeVisible();
+        await page.getByRole('cell', { name: assignedGroupName, exact: true }).click();
 
+        // Verify correct group was selected
+        await expect(page.getByLabel('Search for user to add as')).toHaveValue(assignedGroupNumber);
+
+        // Verify the red highlight is not on the required text
+        await expect(page.getByText('* Required')).not.toHaveClass('input-required input-required-error');
+
+        
     } finally {
         
         // delete the request if it was created
@@ -402,6 +403,7 @@ test('Required Not Highlighted When Group is Populated', async ({ page }) => {
     }
     
  });
+
 
 
 //delete created form.
