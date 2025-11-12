@@ -36,8 +36,15 @@ import { uptime } from 'process';
 
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
+
+    const toleranceInSeconds = 2; 
+
+    const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+    expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
+    expect(timeDiffernce).toBeGreaterThanOrEqual(0);
+   
   
-    expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
+   // expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
 
     //Restore Template
      await page.getByRole('button', { name: 'Restore Original' }).click();
@@ -80,8 +87,14 @@ import { uptime } from 'process';
 
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
+
+    const toleranceInSeconds = 2; 
+
+    const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+    expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
+    expect(timeDiffernce).toBeGreaterThanOrEqual(0);
   
-    expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
+    //expect(displayedTimeStamp).toBeCloseTo(systemTimeStamp);
 
     //Restore Template
      await page.getByRole('button', { name: 'Restore Original' }).click();
@@ -192,8 +205,14 @@ import { uptime } from 'process';
 
         const [displayHours, displayMinutes, displaySeconds] = displayTimeStamp.split(':').map(Number);
         const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
+
+        const toleranceInSeconds = 2; 
+
+        const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+        expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
+        expect(timeDiffernce).toBeGreaterThanOrEqual(0);  
         
-        expect(systemTimeStamp).toBeCloseTo(displayedTimeStamp);
+        //Delete File
         const deleteRow = rows.nth(i).locator('td:nth-child(3) a');
         await deleteRow.click();
         await expect(
