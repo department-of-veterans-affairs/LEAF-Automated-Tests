@@ -378,9 +378,9 @@ test('Required Not Highlighted When Group is Populated', async ({ page }) => {
         await expect(page.getByText('Assigned Group', { exact: true })).toBeVisible();
 
         // Search for the group using partial name and select it
-        const assignedGroupPartial = 'AS';
-        const assignedGroupName = 'AS Test Group';
-        const assignedGroupNumber = 'group#200'
+        const assignedGroupPartial = 'BR';
+        const assignedGroupName = 'Bronze Computers';
+        const assignedGroupNumber = 'group#194'
 
         await page.getByLabel('Search for user to add as').fill(assignedGroupPartial);
         await expect(page.getByRole('cell', { name: assignedGroupName, exact: true })).toBeVisible();
