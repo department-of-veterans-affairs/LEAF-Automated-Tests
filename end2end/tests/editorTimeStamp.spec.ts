@@ -152,18 +152,16 @@ test ('Verify File Manager Timestamp',  async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Upload File' })).toBeVisible();
     await expect(page.getByRole('heading')).toContainText('File Manager');
     await page.getByRole('button', { name: 'Upload File' }).click();
-    await page.getByLabel('Select file to upload').setInputFiles(`./artifacts/LEAF-5005.txt`);
-
-    const nowDateStamp = new Date();
-    const currentDateStamp = nowDateStamp.toLocaleTimeString();
 
     const awaitFiles = page.waitForResponse(res =>
       res.url().includes('system/files') && res.status() === 200
     );
-    await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
+    await page.getByLabel('Select file to upload').setInputFiles(`./artifacts/LEAF-5005.txt`);
+    await expect(page.getByRole('heading')).toContainText('File Manager');
     await awaitFiles;
 
-    await expect(page.getByRole('heading')).toContainText('File Manager');
+    const nowDateStamp = new Date();
+    const currentDateStamp = nowDateStamp.toLocaleTimeString();
 
     const mainDiv = page.locator('#fileList >> div');
     const rows = mainDiv.locator('table tbody tr');
