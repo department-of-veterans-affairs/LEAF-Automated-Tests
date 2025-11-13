@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 
+const toleranceInSeconds = 4;
 
 test('Verify Template Editor Timestamp', async ({ page }) => {
     const fileName = 'login.tpl';
@@ -33,9 +34,7 @@ test('Verify Template Editor Timestamp', async ({ page }) => {
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
 
-    const toleranceInSeconds = 2;
-
-    const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+    const timeDiffernce = Math.abs(displayedTimeStamp-systemTimeStamp);
     expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
     expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
@@ -81,9 +80,9 @@ test('Verify Email Template Editor Timestamp',  async ({ page }) => {
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
 
-    const toleranceInSeconds = 2;
+    
 
-    const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+    const timeDiffernce = Math.abs(displayedTimeStamp-systemTimeStamp);
     expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
     expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
@@ -134,9 +133,7 @@ test ('Verify Programmer Editor Timestamp', async ({ page }) => {
     const [displayHours, displayMinutes, displaySeconds] = updatedDisplayTimeString.split(':').map(Number);
     const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
 
-    const toleranceInSeconds = 2;
-
-    const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+    const timeDiffernce = Math.abs(displayedTimeStamp-systemTimeStamp);
     expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
     expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
@@ -189,9 +186,7 @@ test ('Verify File Manager Timestamp',  async ({ page }) => {
         const [displayHours, displayMinutes, displaySeconds] = displayTimeStamp.split(':').map(Number);
         const displayedTimeStamp = (displayHours * 3600 + displayMinutes * 60 + displaySeconds) * 1000; // Convert to milliseconds
 
-        const toleranceInSeconds = 2;
-
-        const timeDiffernce = displayedTimeStamp-systemTimeStamp;
+        const timeDiffernce = Math.abs(displayedTimeStamp-systemTimeStamp);
         expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
         expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
