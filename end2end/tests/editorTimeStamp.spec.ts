@@ -166,6 +166,8 @@ test ('Verify File Manager Timestamp',  async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
     await awaitFiles;
 
+    await expect(page.getByRole('heading')).toContainText('File Manager');
+
     const mainDiv = page.locator('#fileList >> div');
     const rows = mainDiv.locator('table tbody tr');
     const rowCount = await rows.count();
