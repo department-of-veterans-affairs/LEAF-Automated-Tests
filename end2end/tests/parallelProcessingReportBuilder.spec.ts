@@ -1,7 +1,8 @@
 import { test, expect, Page } from '@playwright/test';
 import {
   createTestForm, addFormQuestion,
-  selectChosenDropdownOption, createTestRequest
+  selectChosenDropdownOption, createTestRequest, createBaseTestWorkflow,
+  LEAF_URLS
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
 
@@ -34,48 +35,21 @@ const parallelProcessingTestSetup = async (page:Page) => {
   await page.getByLabel('Status:').selectOption('1');
   await page.getByLabel('Form Type:').selectOption('parallel_processing');
 
-  //workflow
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=workflow');
-  await expect(page.getByRole('button', { name: 'New Workflow' })).toBeVisible();
+  //new wf and initial step
+  const [ newWorkflowID, initialStepID ] = await createBaseTestWorkflow(page, workflowTitle, newStepTitle)
 
-  await page.getByRole('button', { name: 'New Workflow' }).click();
-  await expect(page.getByText('Create new workflow')).toBeVisible();
-  await page.getByRole('textbox', { name: 'Workflow Title:' }).fill(workflowTitle);
-  await page.getByRole('button', { name: 'Save' }).click();
-
-  //Create New Step
-  await page.getByRole('button', { name: 'New Step' }).click();
-  await expect(page.getByText('Create new Step')).toBeVisible();
-  await page.getByRole('textbox', { name: 'Step Title:' }).fill(newStepTitle);
-  await page.getByRole('button', { name: 'Save' }).click();
-  const stepElement = page.getByLabel(`workflow step: ${newStepTitle}`, { exact: true });
-  await expect(stepElement).toBeInViewport();
-
-  // Hover over the new step and drag it to the desired position
-  await page.reload();
-  await stepElement.hover();
-  await page.mouse.down();
-  await page.mouse.move(300, 300);
-  await page.mouse.up();
-
-  // Locate connectors and drag them to connect steps
+  //specific wf config
   const stepConnector = page.locator('.jtk-endpoint').nth(0);
   const endConnector = page.locator('.jtk-endpoint').nth(2);
   await stepConnector.dragTo(endConnector);
-
   await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
   await expect(page.getByRole('button', { name: 'Save' })).toBeVisible(); 
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('.workflowAction', { hasText: 'Approve' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'workflow step: Requestor' }).click();
-  await page.getByLabel('View Step Actions').click();
-  const optionToSelect = await page.locator('select#create_route option', { hasText: newStepTitle }).textContent() ?? '';
-  await page.locator('select#create_route').selectOption({ label: optionToSelect });
-  await page.reload();
-
   await expect(page.getByRole('button', { name: newStepTitle })).toBeVisible();
   await page.getByRole('button', { name: newStepTitle }).click();
+  await expect(page.getByRole('heading', { name: `stepID: #${initialStepID}`})).toBeVisible();
 
   await expect(page.getByRole('button', { name: 'Add Requirement' })).toBeVisible();
   await page.getByRole('button', { name: 'Add Requirement' }).click();
@@ -91,14 +65,11 @@ const parallelProcessingTestSetup = async (page:Page) => {
   await page.getByRole('button', { name: 'Save' }).click();
 
   //set workflow
-  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=form_vue#/forms?formID=' + newFormID);
-  const workflowLocator = page.locator('select > option', { hasText: workflowTitle });
-  const workflowValue = await workflowLocator.getAttribute('value');
-  await expect(page.locator('#edit-properties-other-properties')).toBeVisible();
+  await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
   const awaitSave = page.waitForResponse(
     res => res.url().includes('formWorkflow') && res.status() === 200
   );
-  await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowValue);
+  await page.getByLabel('Workflow: No Workflow. Users').selectOption(newWorkflowID);
   await awaitSave;
 };
 
@@ -108,7 +79,7 @@ test('Request for a form using parallel processing can be submitted without aler
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
 
   await page.getByRole('searchbox', { name: 'Search for user to add as ' + questionOrgEmpLabel }).fill('t');
-  await page.getByRole('cell', { name: 'Bins, Terina Corkery. Dynamic' }).click();
+  await page.getByRole('cell', { name: 'Bins, Terina Corkery. Dynamic' }).click();
 
   await page.getByRole('searchbox', { name: 'Search for user to add as ' + questionOrgPosLabel }).fill('t');
   await page.getByRole('cell', { name: 'Accountability Officer (GS 14' }).click();

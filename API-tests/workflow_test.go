@@ -100,3 +100,22 @@ func TestWorkflow_Step_Actions(t *testing.T) {
 		t.Errorf("TestWorkflow_Step_Actions want = %v, got = %v", mockData, data)
 	}
 }
+
+func TestWorkflow_PreventModifyReservedRequirements(t *testing.T) {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	// -4 is a reserved requirement ID
+	// this should fail with a HTTP 400 error
+	res, _ := client.PostForm(RootURL+`api/workflow/dependency/-4`, postData)
+
+	if res.StatusCode != 400 {
+		t.Errorf("Expected status code 400, got %v", res.StatusCode)
+	}
+
+	res, _ = client.PostForm(RootURL+`api/workflow/dependency/-4/privileges`, postData)
+
+	if res.StatusCode != 400 {
+		t.Errorf("Expected status code 400, got %v", res.StatusCode)
+	}
+}

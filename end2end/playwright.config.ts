@@ -11,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1,
   
   // ✅ FIXED: Limit workers to prevent resource contention
-  workers: process.env.CI ? 1 : 3, // Max 3 workers locally
+  workers: process.env.CI ? 1 : 6, // Max 6 workers locally
   
   // ✅ FIXED: Increase global timeout for slower Docker environment
   timeout: 60000, // 60 seconds per test
