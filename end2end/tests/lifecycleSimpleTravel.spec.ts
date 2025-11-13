@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { selectChosenDropdownOption } from '../leaf_test_utils/leaf_util_methods';
 
 // This test simulates the whole lifecycle of a request which covers: implementation,
 // submission, approval, and reporting.
@@ -11,7 +12,7 @@ let uniqueText = `Travel ${randNum}`;
 test('navigate to Workflow Editor and create a travel workflow', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
 
-  await page.getByRole('button', { name: ' Workflow Editor Edit' }).click();
+  await page.getByRole('button', { name: 'Workflow Editor Edit' }).click();
 
   // wait for async request to finish loading the first workflow
   await expect(page.locator('#workflow_editor')).toBeInViewport();
@@ -94,7 +95,7 @@ test('navigate to Form Editor and create a travel form', async ({ page }, testIn
   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/');
 
   // Click on the Form Editor button
-  await page.getByRole('button', { name: ' Form Editor Create and' }).click();
+  await page.getByRole('button', { name: 'Form Editor Create and' }).click();
 
   // Click on the "Create Form" button
   await page.getByRole('button', { name: 'Create Form' }).click();
@@ -166,10 +167,7 @@ test('navigate to Homepage, create and submit a travel request', async ({ page }
 
   // Select a service option
   await expect(page.getByRole('cell', { name: 'Select an Option Service' }).locator('a')).toBeInViewport();
-  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-
-  
-  await page.getByRole('option', { name: 'Cotton Computers' }).click({force: true});
+  await selectChosenDropdownOption(page, '#service_chosen', 'Cotton Computers')
 
   // Fill in the request title
   await expect(page.getByLabel('Title of Request')).toBeVisible();
@@ -185,7 +183,7 @@ test('navigate to Homepage, create and submit a travel request', async ({ page }
   await expect(page.getByLabel('Search for user to add as')).toBeVisible();
   await page.getByLabel('Search for user to add as').click();
   await page.getByLabel('Search for user to add as').fill('a');
-  await page.getByRole('cell', { name: 'Altenwerth, Ernest Bernier.' }).click();
+  await page.getByRole('cell', { name: 'Altenwerth, Ernest Bernier.' }).click();
 
   // Wait for async loading to complete
   await expect(page.getByText('*** Loading... ***')).not.toBeVisible();
@@ -272,7 +270,8 @@ test('navigate to the Report Builder, find the travel request, and check status'
   // After clicking Type, we should expect the dropdown containing "Resolved" to be replaced
   await expect(page.getByRole('cell', { name: 'Resolved' }).locator('a')).not.toBeVisible();
 
-  // Select "Complex Form" from the list
+  // Select "Travel Form" from the list
+  await expect(page.getByLabel('categories').first()).toBeAttached();
   await page.locator('td').nth(4).click();
 
   // The list might be very long, so search for it

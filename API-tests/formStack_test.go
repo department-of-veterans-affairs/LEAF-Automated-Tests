@@ -37,6 +37,23 @@ func postNewForm() string {
 	return c
 }
 
+func postUpdateQuestion(indicator string, field string, format string) string {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set(field, format)
+
+	res, _ := client.PostForm(RootURL+`api/formEditor/`+indicator+`/`+field, postData)
+	bodyBytes, _ := io.ReadAll(res.Body)
+
+	var c string
+	err := json.Unmarshal(bodyBytes, &c)
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse: %v", string(c))
+	}
+
+	return c
+}
+
 func getFormStack(url string) FormStackResponse {
 	res, _ := client.Get(url)
 	b, _ := io.ReadAll(res.Body)
@@ -48,6 +65,27 @@ func getFormStack(url string) FormStackResponse {
 		log.Printf("JSON parsing error: %v", err.Error())
 	}
 	return m
+}
+
+func TestFormStack_UpdateFormat(t *testing.T) {
+	empUID := postUpdateQuestion("9", "format", "text")
+
+	got := empUID
+	want := "indicator used in workflow"
+
+	if !cmp.Equal(got, want) {
+		t.Errorf("Changing format return = %v, want = %v", got, want)
+	}
+
+	module := postUpdateQuestion("3", "disabled", "1")
+
+	got = module
+	want = "indicator used in workflow"
+
+	if !cmp.Equal(got, want) {
+		t.Errorf("Archive or Delete return = %v, want = %v", got, want)
+	}
+
 }
 
 func TestFormStack_NewFormProperties(t *testing.T) {
@@ -104,7 +142,7 @@ func TestFormStack_NewFormProperties(t *testing.T) {
 	}
 
 	got = strconv.Itoa(category.NeedToKnow)
-	want = "0"
+	want = "1"
 	if !cmp.Equal(got, want) {
 		t.Errorf("Need to Know = %v, want = %v", got, want)
 	}
