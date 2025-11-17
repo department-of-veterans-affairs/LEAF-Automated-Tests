@@ -399,6 +399,7 @@ test.describe('Tests for LEAF 4697', () => {
 
 /**
  * Test for LEAF 5038 - no form modification when indicitor is used on workflow
+ * and LEAF 5129 - indicate input format in message
  */
 test('Elements attached to a workflow cannot be deleted from form', async ({ page }) => {
 
@@ -460,12 +461,26 @@ test('Elements attached to a workflow cannot be deleted from form', async ({ pag
       await loadForm(page, formEditorFieldsFormID);
       await expect(page.getByText('Assigned Person')).toBeVisible();
       await page.getByTitle('edit indicator ' + personSectionID).click();
+
+      // Confirm that the Input Format dropdown is visible but disabled
+      await expect(page.getByText('Input Format')).toBeVisible();
+      await expect(page.getByTitle('Select a Format')).toBeDisabled();
+
+      // Verify the Archive and Delete options are not available
+      await expect(page.getByText('Archive', { exact: true })).not.toBeVisible();
+      await expect(page.getByText('Delete', { exact: true })).not.toBeVisible();
+
+      // Verify the user messages are displayed
       await expect(page.locator('#input-format')).toContainText('This field is used in a workflow and must be removed from there before you can change its format.');
       await expect(page.locator('#indicator-editing-attributes')).toContainText('This field is used in a workflow and must be removed from there before you can Archive or Delete it.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // Confirm the Archive and Delete are not available on the Single Line Text
       await page.getByTitle('edit indicator ' + textSectionID).click();
+      await expect(page.getByText('Archive', { exact: true })).not.toBeVisible();
+      await expect(page.getByText('Delete', { exact: true })).not.toBeVisible();
+
+      // Confirm the message is displayed to the user
       await expect(page.locator('#indicator-editing-attributes')).toContainText('This field is used in a workflow and must be removed from there before you can Archive or Delete it.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
