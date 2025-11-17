@@ -200,6 +200,10 @@ test('Add Internal Use Form', async ({ page }) => {
   
 });
 
+/**
+ * Verify the internal form added above is visible to steps in 
+ * a workflow
+ */
 test('Internal Form is Visible to Workflow', async ({ page }) => {
 
   // Check form is available to the workflow
@@ -212,22 +216,38 @@ test('Internal Form is Visible to Workflow', async ({ page }) => {
 
 });
 
+/**
+ * Test for LEAF 5054
+ * Verify that the internal form is visible when choosing columns for
+ * a quick review
+ */
 test("Internal Form is Visible in Quick Review", async ({ page }) => {
   
   let newRequestID = '';
   try{
+
+    // Create a new request using the form with the internal form
     const newRequestName = `New Request ${testId}`;
     newRequestID = await createTestRequest(page, 'Concrete Electronics', newRequestName, uniqueText);
     await page.locator('#nextQuestion2').click();
+
+    // Submit the request
     await page.getByRole('button', { name: 'Submit Request' }).click();
+
+    // Go to setup a Quick Review
     await page.getByRole('link', { name: 'Admin Panel' }).click();
     await page.getByRole('button', { name: 'Setup Quick Review Link' }).click();
     await page.getByLabel('Select a form type: Complex').selectOption('1');
     await page.getByLabel('Select a step: Group').selectOption('1');
     await page.getByRole('button', { name: 'Setup Quick Review' }).click();
+
+    // Verify in the list of field names the fields on the Internal Form
+    // are displayed
     await page.locator('#fieldNames').click();
     await page.getByText(internalFormName).isVisible();
   } finally {
+
+    // If a new request was created, cancel it
     if(newRequestID != '') {
       await deleteTestRequestByRequestID(page, newRequestID);
     }
@@ -235,24 +255,40 @@ test("Internal Form is Visible in Quick Review", async ({ page }) => {
 
 })
 
+/**
+ * Test for LEAF 5054
+ * Verify that the internal form is visible when choosing columns for
+ * propose actions
+ */
 test("Internal Form is Visible in Propose Actions", async ({ page }) => {
 
   let newRequestID = '';
 
   try{
+      
+      // Create a new request using the form with the internal form
       const newRequestName = `New Request ${testId}`;
       const newRequestID = await createTestRequest(page, 'Concrete Electronics', newRequestName, uniqueText);
       await page.locator('#nextQuestion2').click();
+
+      // Submit the request
       await page.getByRole('button', { name: 'Submit Request' }).click();
+
+      // Go to Admin Panel to create proposed actions
       await page.getByRole('link', { name: 'Admin Panel' }).click();
-      await page.getByRole('button', { name: ' Create Proposed Actions' }).click();
+      await page.getByRole('button', { name: 'Create Proposed Actions' }).click();
       await page.getByLabel('Select a form type: Complex').selectOption('1');
       await page.getByLabel('Select a step: Group').selectOption('1');
+
+      // Select the dropdown containing the field names and verify the  fields 
+      // for the internal form are visible
       await page.getByRole('button', { name: 'Setup Proposed Actions' }).click();
       await page.getByText(internalFormName).isVisible();
     } finally {
+
+      // if a new request was created, cancel it
       if(newRequestID != '') {
-      await deleteTestRequestByRequestID(page, newRequestID);
+        await deleteTestRequestByRequestID(page, newRequestID);
     }
   }
 })
