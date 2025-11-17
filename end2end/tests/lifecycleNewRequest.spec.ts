@@ -345,6 +345,67 @@ test('Closing pop up window does not cause workflow form fields to disappear', {
   ).toBeVisible();
 });
 
+
+/**
+ * Test for LEAF 5093 - Required question validation - trigger change events
+ */
+test('Required Not Highlighted When Group is Populated', async ({ page }) => {
+    
+    let requestID = '';
+
+    try{
+        
+        // Create a new request
+        const serviceName = 'Concrete Music';
+        const formName = 'General Form';
+        
+        requestID = await createTestRequest(page, serviceName, uniqueText, formName);
+
+        // Skip first page
+        await page.locator('#nextQuestion2').click();
+
+        // Set assigned person to Hank Healthcare Abbott
+        const assignedUserName = 'vtrjwvangel';
+        const assignedPersonName = 'Abbott, Hank Hessel.';
+        const assignedTitle = '301 - ' + assignedUserName;
+        await page.getByLabel('Search for user to add as Assigned Person', { exact: true }).fill('userName:' + assignedUserName);
+        
+        // Verify correct person is selected and go to next page
+        await expect(page.getByTitle(assignedTitle)).toContainText(assignedPersonName);
+        await page.locator('#nextQuestion2').click();
+
+        // Verify Assigned Group is visible on the 3rd page
+        await expect(page.getByText('Assigned Group', { exact: true })).toBeVisible();
+
+        // Search for the group using partial name and select it
+        const assignedGroupPartial = 'BR';
+        const assignedGroupName = 'Bronze Computers';
+        const assignedGroupNumber = 'group#194'
+
+        await page.getByLabel('Search for user to add as').fill(assignedGroupPartial);
+        await expect(page.getByRole('cell', { name: assignedGroupName, exact: true })).toBeVisible();
+        await page.getByRole('cell', { name: assignedGroupName, exact: true }).click();
+
+        // Verify correct group was selected
+        await expect(page.getByLabel('Search for user to add as')).toHaveValue(assignedGroupNumber);
+
+        // Verify the red highlight is not on the required text
+        await expect(page.getByText('* Required')).not.toHaveClass('input-required input-required-error');
+
+        
+    } finally {
+        
+        // delete the request if it was created
+        if(requestID != '') {
+            await page.getByRole('button', { name: 'Cancel Request' }).click();
+            await page.getByRole('button', { name: 'Yes' }).click();
+        }
+    }
+    
+ });
+
+
+
 //delete created form.
 test.afterAll(async () => {
   await deleteTestFormByFormID(page, formCategoryID);
