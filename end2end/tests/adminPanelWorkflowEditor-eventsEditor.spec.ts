@@ -39,8 +39,37 @@ const uniqueEventName2 = `Event2 ${randNum}`;
 const uniqueDescr2 = `Description2 ${randNum}`;
 const uniqueEventNameEdit = `Evt Edit ${randNum}`;
 const uniqueDescrEdit = `Descr Edit ${randNum}`;
+const uniqueEventName3 = `.$Test ${randNum}`;
 
-test('Create and add a new Event from a workflow action', async ({ page}) => {
+
+test('Validate EventID only alphanumerical', async ({ page}) => {
+  await loadWorkflow(page);
+  await expect(page.getByText('Return to Requestor')).toBeVisible();
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.getByText('Return to Requestor').click();
+  });
+
+  await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+  await awaitPromise(page, "events", async (p:Page) => {
+    await p.getByRole('button', { name: 'Add Event' }).click();
+  });
+
+  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+  await awaitPromise(page, "groups", async (p:Page) => {
+    await p.getByRole('button', { name: 'Create Event' }).click();
+  });
+
+  const uniqueEventName3Converted = `__Test_${randNum}`;
+  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName3);
+  expect(
+    await page.getByLabel('Event Name:').inputValue(),
+    'Only allows alphanumeric letters and underscores for safety'
+  ).toBe(uniqueEventName3Converted);
+
+  await page.getByRole('button', { name: 'Cancel' }).click();
+});
+
+test ('Create and add a new Event from a workflow action', async ({ page}) => {
   await loadWorkflow(page);
   await expect(page.getByText('Return to Requestor')).toBeVisible();
   await awaitPromise(page, "events", async (p:Page) => {
