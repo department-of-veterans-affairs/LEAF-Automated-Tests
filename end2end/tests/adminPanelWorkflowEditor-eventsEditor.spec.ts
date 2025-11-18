@@ -50,7 +50,7 @@ test.only('Verify Event Name only allow alphanumerical', async ({ page}) => {
     await expect(page.getByText('Return to Requestor')).toBeVisible();
     await awaitPromise(page, "events", async (p:Page) => {
       await p.getByText('Return to Requestor').click();
-    });
+    }); 
 
     await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
     await awaitPromise(page, "events", async (p:Page) => {
