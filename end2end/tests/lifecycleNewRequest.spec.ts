@@ -358,6 +358,7 @@ test('Required Not Highlighted When Group is Populated', async ({ page }) => {
         // Create a new request
         const serviceName = 'Concrete Music';
         const formName = 'General Form';
+        const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
         
         requestID = await createTestRequest(page, serviceName, uniqueText, formName);
 
@@ -372,6 +373,7 @@ test('Required Not Highlighted When Group is Populated', async ({ page }) => {
         
         // Verify correct person is selected and go to next page
         await expect(page.getByTitle(assignedTitle)).toContainText(assignedPersonName);
+        await expect(loadingIndicators).toHaveCount(0);
         await page.locator('#nextQuestion2').click();
 
         // Verify Assigned Group is visible on the 3rd page
@@ -388,6 +390,7 @@ test('Required Not Highlighted When Group is Populated', async ({ page }) => {
 
         // Verify correct group was selected
         await expect(page.getByLabel('Search for user to add as')).toHaveValue(assignedGroupNumber);
+        await expect(loadingIndicators).toHaveCount(0);
 
         // Verify the red highlight is not on the required text
         await expect(page.getByText('* Required')).not.toHaveClass('input-required input-required-error');

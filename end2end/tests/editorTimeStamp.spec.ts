@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const toleranceInSeconds = 4;
+const toleranceInSeconds = 300; //only want to confirm timestamps are local time - low precision to account for test time
 
 test('Verify Template Editor Timestamp', async ({ page }) => {
     const fileName = 'login.tpl';
@@ -91,10 +91,10 @@ test('Verify Email Template Editor Timestamp',  async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-test ('Verify Programmer Editor Timestamp', async ({ page }) => {
+test('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_reports&file=example');
 
-    const fileName = "custom_dev_LEAF2";
+    const fileName = "custom_dev_LEAF" + (Math.random() * 1000).toFixed(0);
     await expect(page.getByRole('button', { name: 'New File' })).toBeVisible();
     await page.getByRole('button', { name: 'New File' }).click();
     await page.getByRole('textbox', { name: 'Filename:' }).fill(fileName);
@@ -143,7 +143,7 @@ test ('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-test ('Verify File Manager Timestamp',  async ({ page }) => {
+test('Verify File Manager Timestamp',  async ({ page }) => {
 
     const fileLocationName = '../files/LEAF-5005.txt';
 

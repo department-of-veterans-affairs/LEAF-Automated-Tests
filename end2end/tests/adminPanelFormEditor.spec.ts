@@ -269,8 +269,8 @@ test('Verify Alert Dialog does not Appear', async ({ page }) => {
   await expect(page.getByText('Select a data field Assigned PersonAssigned Group Selected Employee(s):')).toBeVisible();
   await page.locator('#indicator_selector').selectOption('9');
   await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('tes');
-  await page.locator('#btn200').click();
-  await expect(page.getByText('RemoveAS Test Group')).toBeVisible();
+  await page.locator('#btn203').click();
+  await expect(page.getByText('RemoveAS Test Group 1')).toBeVisible();
 
   await page.getByRole('button', { name: 'Send Request to Selected' }).click();
   await expect(page.locator('#saveLinkContainer')).toContainText('Requests have been assigned to these people 1 recordsStop and show results');
