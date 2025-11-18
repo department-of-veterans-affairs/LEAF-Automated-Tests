@@ -40,6 +40,39 @@ const uniqueDescr2 = `Description2 ${randNum}`;
 const uniqueEventNameEdit = `Evt Edit ${randNum}`;
 const uniqueDescrEdit = `Descr Edit ${randNum}`;
 
+test.only('Verify Event Name only allow alphanumerical', async ({ page}) => {
+   let incorrectNameInput: string [] = [`%2BSELECT%2A%20FROM%20admin%20--`, `'; DROP TABLE users;`, `$../..etc/passwd`, `<script>alert('XSS')</script>`];
+   let expectedConvertedInput: string [] = [`_2BSELECT_2A_20FROM_20adm`, `___DROP_TABLE_users_`, `______etc_passwd`, `_script_alert__XSS____scr`];
+    
+  for(let i = 0; i < incorrectNameInput.length; i++) {
+
+    await loadWorkflow(page);
+    await expect(page.getByText('Return to Requestor')).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByText('Return to Requestor').click();
+    });
+
+    await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByRole('button', { name: 'Add Event' }).click();
+    });
+
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create Event' }).click();
+    });
+    await page.getByLabel('Event Name:').pressSequentially(incorrectNameInput[i]);
+    expect(
+      await page.getByLabel('Event Name:').inputValue(),
+      'Only allows alphanumeric letters and underscores for safety'
+    ).toBe(expectedConvertedInput[i]); 
+    
+  }
+
+  await page.getByRole('button', { name: 'Cancel' }).click();
+});
+
+
 test('Create and add a new Event from a workflow action', async ({ page}) => {
   await loadWorkflow(page);
   await expect(page.getByText('Return to Requestor')).toBeVisible();
