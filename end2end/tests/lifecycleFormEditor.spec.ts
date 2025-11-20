@@ -237,14 +237,22 @@ test("Internal Form is Visible in Quick Review", async ({ page }) => {
     // Go to setup a Quick Review
     await page.getByRole('link', { name: 'Admin Panel' }).click();
     await page.getByRole('button', { name: 'Setup Quick Review Link' }).click();
-    await page.getByLabel('Select a form type: Complex').selectOption('1');
-    await page.getByLabel('Select a step: Group').selectOption('1');
+    
+    // Select 'General Form'as the Form Type
+    const selectFormType = page.locator('#forms');
+    await selectFormType.selectOption({ label: 'General Form'})
+
+    // Select 'Step 1'
+    const selectStep = page.locator('#steps')
+    await selectStep.selectOption({ label: 'Step 1'});
+    
     await page.getByRole('button', { name: 'Setup Quick Review' }).click();
 
     // Verify in the list of field names the fields on the Internal Form
     // are displayed
     await page.locator('#fieldNames').click();
     await page.getByText(internalFormName).isVisible();
+    
   } finally {
 
     // If a new request was created, cancel it
@@ -268,7 +276,7 @@ test("Internal Form is Visible in Propose Actions", async ({ page }) => {
       
       // Create a new request using the form with the internal form
       const newRequestName = `New Request ${testId}`;
-      const newRequestID = await createTestRequest(page, 'Concrete Electronics', newRequestName, uniqueText);
+      newRequestID = await createTestRequest(page, 'Concrete Electronics', newRequestName, uniqueText);
       await page.locator('#nextQuestion2').click();
 
       // Submit the request
@@ -277,13 +285,20 @@ test("Internal Form is Visible in Propose Actions", async ({ page }) => {
       // Go to Admin Panel to create proposed actions
       await page.getByRole('link', { name: 'Admin Panel' }).click();
       await page.getByRole('button', { name: 'Create Proposed Actions' }).click();
-      await page.getByLabel('Select a form type: Complex').selectOption('1');
-      await page.getByLabel('Select a step: Group').selectOption('1');
+      
+      // Select 'General Form'as the Form Type
+      const selectFormType = page.locator('#forms');
+      await selectFormType.selectOption({ label: 'General Form'})
+
+      // Select 'Step 1'
+      const selectStep = page.locator('#steps')
+      await selectStep.selectOption({ label: 'Step 1'});
 
       // Select the dropdown containing the field names and verify the  fields 
       // for the internal form are visible
       await page.getByRole('button', { name: 'Setup Proposed Actions' }).click();
       await page.getByText(internalFormName).isVisible();
+
     } finally {
 
       // if a new request was created, cancel it
