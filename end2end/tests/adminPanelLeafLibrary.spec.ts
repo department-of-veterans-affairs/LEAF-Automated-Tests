@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { LEAF_URLS } from '../leaf_test_utils/leaf_util_methods.ts';
+import { LEAF_URLS, deleteTestFormByFormID } from '../leaf_test_utils/leaf_util_methods.ts';
 
 const testFormTdId = 'td[id$="_1_form"]';
 const testFormRequestTitle = 'LEAF Library Format Tests';
@@ -198,5 +198,11 @@ test('LEAF Form Library: form preview', async ({ page }) => {
     await previewModal.getByRole('button', { name: 'Get a copy!' }).click();
 
     await expect(page.getByLabel('Form Name')).toHaveValue(testFormName);
+    const formIDLoc = page.locator('#edit-properties-panel .form-id');
+    await expect(formIDLoc).toBeVisible();
 
+    //cleanup
+    let formID = await formIDLoc.textContent() ?? '';
+    formID = formID.trim();
+    await deleteTestFormByFormID(page, formID);
 });
