@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 import { LEAF_URLS } from '../leaf_test_utils/leaf_util_methods.ts';
 
 const testFormTdId = 'td[id$="_1_form"]';
-const testFormName = 'LEAF Library Format Tests';
+const testFormRequestTitle = 'LEAF Library Format Tests';
+const testFormName = 'LEAF Library Input Formats';
 const testFormAuthor = 'Tester Tester';
 
 test('LEAF Form Library: report table functionality', async ({ page }) => {
@@ -14,7 +15,7 @@ test('LEAF Form Library: report table functionality', async ({ page }) => {
         'Preview',
     ];
     const testFormColumnValues = [
-        testFormName,
+        testFormRequestTitle,
         'LEAF Library Field Format Testing',
         testFormAuthor,
         'Screenshot of workflow',
@@ -61,7 +62,7 @@ test('LEAF Form Library: report table functionality', async ({ page }) => {
                 //checking that the larger preview shows is simple enough to do here
                 await imgLocator.click();
                 await expect(
-                    page.getByText(`${testFormName} (example workflow)`),
+                    page.getByText(`${testFormRequestTitle} (example workflow)`),
                     'workflow preview to be displayed when the workflow screenshot is clicked'
                 ).toBeVisible();
                 const modalImg = page.locator('#simplexhr img');
@@ -70,7 +71,7 @@ test('LEAF Form Library: report table functionality', async ({ page }) => {
                 );
                 expect(modalImgLoadedProperly, 'modal image to load properly').toBe(true);
                 await page.getByRole('button', { name: 'Close', exact: true}).click();
-                await expect(page.getByText(`${testFormName} (example workflow)`)).not.toBeVisible();
+                await expect(page.getByText(`${testFormRequestTitle} (example workflow)`)).not.toBeVisible();
                 break;
             case 4: //preview button is visible. form preview has its own test
                 await expect(
@@ -116,7 +117,7 @@ test('LEAF Form Library: form query filter and search functionality', async ({ p
 
         await expect(tableFirstRow).toBeVisible();
         if(testFormReturned[i] === 1) {
-            await expect(tableTestFormRow, `Filter ${formFilters[i]} to return the test form`).toContainText(testFormName);
+            await expect(tableTestFormRow, `Filter ${formFilters[i]} to return the test form`).toContainText(testFormRequestTitle);
         } else {
             await expect(tableTestFormRow, `Filter ${formFilters[i]} not to return the test form`).not.toBeVisible();
         }
@@ -136,7 +137,7 @@ test('LEAF Form Library: form query filter and search functionality', async ({ p
         await expect(
             tableTestFormRow,
             'test form to be returned by case insensitive search of keyword, author or partial title'
-        ).toContainText(testFormName);
+        ).toContainText(testFormRequestTitle);
     }
     //negative search test
     const testFormSearchNotReturned = [ 'advanced', 'space request' ];
@@ -155,7 +156,7 @@ test('LEAF Form Library: form query filter and search functionality', async ({ p
 });
 
 test('LEAF Form Library: form preview', async ({ page }) => {
-    let awaitForms = page.waitForResponse(res =>
+    const awaitForms = page.waitForResponse(res =>
         res.url().includes('form/query?q') && res.status() === 200
     );
     await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=formLibrary');
@@ -168,9 +169,34 @@ test('LEAF Form Library: form preview', async ({ page }) => {
     await expect(tableTestFormRow).toBeVisible();
     await tableTestFormRow.getByRole('button', { name: 'Preview' }).click();
     await expect(previewModal, 'Form Preview modal to be visible').toBeVisible();
-    await expect(previewModal.getByText(testFormName), 'Test form name to be visible').toBeVisible();
+    await expect(previewModal.getByText(testFormRequestTitle), 'Test form name to be visible').toBeVisible();
     await expect(previewModal.getByText(`By ${testFormAuthor}`), 'Test form author to be visible').toBeVisible();
 
+    /*
+      The LEAF Library preview is only a basic preview and does not fully reflect the request display.
+      Until/unless that is updated this only tests the expected preview order.
+    */
+    const testFields = [
+        [ '33', '340', '35', '36', '37', '38', '39' ],
+        [ '40', '41', '42', '43', '44', '45', '46' ],
+        [ '47', '48', '49', '50', '53', '51', '52' ],
+    ];
+    for (let section = 0; section < testFields.length; section++) {
+        const card = page.locator('.card').nth(section);
+        await expect(card).toBeVisible();
+        const sectionIDs = testFields[section];
+        for(let idx = 0; idx < sectionIDs.length; idx++) {
+            const id = sectionIDs[idx];
+            await expect(
+                card.locator('[id^="leaf_library_preview_"]').nth(idx),
+                'field to be in expected location'
+            ).toHaveId(`leaf_library_preview_${id}`);
+        }
+    }
+
     await expect(previewModal.getByRole('button', { name: 'Get a copy!' }), 'Copy button to be visible').toBeVisible();
+    await previewModal.getByRole('button', { name: 'Get a copy!' }).click();
+
+    await expect(page.getByLabel('Form Name')).toHaveValue(testFormName);
 
 });
