@@ -1,14 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { LEAF_URLS } from '../leaf_test_utils/leaf_util_methods.ts';
 
-
-
+const testFormTdId = 'td[id$="_1_form"]';
 const testFormName = 'LEAF Library Format Tests';
+const testFormAuthor = 'Tester Tester';
 
-
-
-
-test('LEAF Form Library: table functionality', async ({ page }) => {
+test('LEAF Form Library: report table functionality', async ({ page }) => {
     const expectedTableHeaders = [
         'Form',
         'Description',
@@ -19,7 +16,7 @@ test('LEAF Form Library: table functionality', async ({ page }) => {
     const testFormColumnValues = [
         testFormName,
         'LEAF Library Field Format Testing',
-        'Tester Tester',
+        testFormAuthor,
         'Screenshot of workflow',
         'Preview',
     ];
@@ -30,20 +27,27 @@ test('LEAF Form Library: table functionality', async ({ page }) => {
     await awaitForms;
 
     const tableHeaderRow = page.locator('table[id^="LeafFormGrid"] thead tr').first();
-    const tableFirstRow = page.locator('table[id^="LeafFormGrid"] tbody tr').first();
+    const tableTestFormRow = page.locator('table[id^="LeafFormGrid"] tbody tr')
+        .filter({has: page.locator(testFormTdId)});
 
     await expect(tableHeaderRow).toBeVisible();
     for(let i = 0; i < expectedTableHeaders.length; i++) {
+        const th = tableHeaderRow.locator('th').nth(i);
         const expectedText = expectedTableHeaders[i];
         await expect(
-            tableHeaderRow.locator('th').nth(i),
-            `Table header at index ${i} to be ${expectedText}`
-        ).toContainText(expectedText)
+            th, `Table header at index ${i} to be ${expectedText}`
+        ).toContainText(expectedText);
+        if (i <= 2) {
+            const ariaLabel = await th.getAttribute('aria-label');
+            expect(ariaLabel, `Sortable header ${i} to have aria-label ${ariaLabel}`).toBe(`Sort by ${expectedText}`);
+            await th.click();
+            expect(th.locator('.sort_icon_span'), 'Sorting icon to be visible').toBeVisible();
+        }
     }
 
-    await expect(tableFirstRow).toBeVisible();
+    await expect(tableTestFormRow ).toBeVisible();
     for(let i = 0; i < testFormColumnValues.length; i++) {
-        const td = tableFirstRow.locator('td').nth(i);
+        const td = tableTestFormRow.locator('td').nth(i);
         const expectedText = testFormColumnValues[i];
         switch(i) {
             case 3: //workflow screenshot loads, has some appropriate alt text
@@ -69,7 +73,10 @@ test('LEAF Form Library: table functionality', async ({ page }) => {
                 await expect(page.getByText(`${testFormName} (example workflow)`)).not.toBeVisible();
                 break;
             case 4: //preview button is visible. form preview has its own test
-                await expect(td.getByRole('button', { name: expectedText})).toBeVisible();
+                await expect(
+                    td.getByRole('button', { name: expectedText}),
+                    'Preview button to be visible'
+                ).toBeVisible();
                 break;
             default:
                 await expect(td).toHaveText(expectedText);
@@ -78,7 +85,7 @@ test('LEAF Form Library: table functionality', async ({ page }) => {
     }
 });
 
-test('LEAF Form Library: form query filter functionality', async ({ page }) => {
+test('LEAF Form Library: form query filter and search functionality', async ({ page }) => {
     let awaitForms = page.waitForResponse(res =>
         res.url().includes('form/query?q') && res.status() === 200
     );
@@ -86,7 +93,9 @@ test('LEAF Form Library: form query filter functionality', async ({ page }) => {
     await awaitForms;
 
     const tableFirstRow = page.locator('table[id^="LeafFormGrid"] tbody tr').first();
-        const formFilters = [
+    const tableTestFormRow = page.locator('table[id^="LeafFormGrid"] tbody tr')
+        .filter({has: page.locator(testFormTdId)});
+    const formFilters = [
         'All Business Lines',
         'Administrative',
         'Human Resources',
@@ -107,16 +116,16 @@ test('LEAF Form Library: form query filter functionality', async ({ page }) => {
 
         await expect(tableFirstRow).toBeVisible();
         if(testFormReturned[i] === 1) {
-            await expect(tableFirstRow).toContainText(testFormName);
+            await expect(tableTestFormRow, `Filter ${formFilters[i]} to return the test form`).toContainText(testFormName);
         } else {
-            await expect(tableFirstRow).toHaveText('No Results');
+            await expect(tableTestFormRow, `Filter ${formFilters[i]} not to return the test form`).not.toBeVisible();
         }
     }
 
     await page.getByRole('button', { name: formFilters[0] }).click();
 
     //positive search test
-    const testFormSearchReturned = [ 'basic', 'teSTer', 'format' ];
+    const testFormSearchReturned = [ 'baSic', 'teSTer', 'fOrmat' ];
     for(let i = 0; i < testFormSearchReturned.length; i++) {
         awaitForms = page.waitForResponse(res =>
             res.url().includes('form/query?q') && res.status() === 200
@@ -125,8 +134,8 @@ test('LEAF Form Library: form query filter functionality', async ({ page }) => {
         await awaitForms;
 
         await expect(
-            tableFirstRow,
-            'test form to be returned by search of keyword, author or partial title'
+            tableTestFormRow,
+            'test form to be returned by case insensitive search of keyword, author or partial title'
         ).toContainText(testFormName);
     }
     //negative search test
@@ -139,8 +148,29 @@ test('LEAF Form Library: form query filter functionality', async ({ page }) => {
         await awaitForms;
 
         await expect(
-            tableFirstRow,
+            tableTestFormRow,
             'negative test of search to have no results'
-        ).toHaveText('No Results');
+        ).not.toBeVisible();
     }
+});
+
+test('LEAF Form Library: form preview', async ({ page }) => {
+    let awaitForms = page.waitForResponse(res =>
+        res.url().includes('form/query?q') && res.status() === 200
+    );
+    await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=formLibrary');
+    await awaitForms;
+
+    const previewModal = page.locator('#simplexhr');
+    const tableTestFormRow = page.locator('table[id^="LeafFormGrid"] tbody tr')
+        .filter({has: page.locator(testFormTdId)});
+
+    await expect(tableTestFormRow).toBeVisible();
+    await tableTestFormRow.getByRole('button', { name: 'Preview' }).click();
+    await expect(previewModal, 'Form Preview modal to be visible').toBeVisible();
+    await expect(previewModal.getByText(testFormName), 'Test form name to be visible').toBeVisible();
+    await expect(previewModal.getByText(`By ${testFormAuthor}`), 'Test form author to be visible').toBeVisible();
+
+    await expect(previewModal.getByRole('button', { name: 'Get a copy!' }), 'Copy button to be visible').toBeVisible();
+
 });
