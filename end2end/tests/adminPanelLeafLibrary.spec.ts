@@ -6,6 +6,35 @@ const testFormRequestTitle = 'LEAF Library Format Tests';
 const testFormName = 'LEAF Library Input Formats';
 const testFormAuthor = 'Tester Tester';
 
+test('LEAF Library: page navigation', async ({ page }) => {
+    await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=formLibrary');
+
+    const breadcrumbNav = page.getByRole('heading', { name: 'LEAF Library'});
+    await expect(breadcrumbNav).toBeVisible();
+
+    const breadcrumbs = breadcrumbNav.locator('> *');
+    const directCount = await breadcrumbs.count();
+    expect(directCount).toBe(2);
+    const el1 = breadcrumbs.nth(0);
+    const el2 = breadcrumbs.nth(1);
+    await expect(el1).toHaveText('Admin');
+    await expect(el2).toHaveClass('fas fa-caret-right leaf-crumb-caret');
+
+    const links = [
+        { link: 'Admin', newPageHeading: 'Get Help' },
+        { link: 'My Forms', newPageHeading: 'Form Browser' },
+        { link: 'Contribute my Form', newPageHeading: 'Step 1 - General Information' },
+    ];
+    for (let i = 0; i < links.length; i++) {
+        const link = page.getByRole('link', { name: links[i].link });
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page.getByRole('heading', { name: links[i].newPageHeading})).toBeVisible();
+
+        await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=formLibrary');
+    }
+});
+
 test('LEAF Form Library: report table functionality', async ({ page }) => {
     const expectedTableHeaders = [
         'Form',
@@ -155,7 +184,7 @@ test('LEAF Form Library: form query filter and search functionality', async ({ p
     }
 });
 
-test('LEAF Form Library: form preview', async ({ page }) => {
+test('LEAF Form Library: form preview and import', async ({ page }) => {
     const awaitForms = page.waitForResponse(res =>
         res.url().includes('form/query?q') && res.status() === 200
     );
