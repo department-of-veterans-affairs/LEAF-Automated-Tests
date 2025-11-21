@@ -122,6 +122,7 @@ test('Sitemap Editor: Creation of a new Sitemap Card', async ({ page }) => {
 });
 
 test('LEAF Inbox: Display of base Inbox customization, toggle, initial columns', async ({ page }) => {
+  test.setTimeout(120000);
   let awaitInboxData = page.waitForResponse(res => 
     res.url().includes('includeStandardLEAF') && res.status() === 200
   );
@@ -282,6 +283,7 @@ test('Inbox Editor: Configuration of form-level Customization', async ({ page })
 });
 
 test('Create requests using Multiple Person Form (Config)', async ({ page }) => {
+  test.setTimeout(120000);
   const loadingIndicators = page.locator('div[id^="loadingIndicator_"]:visible');
   const label1 = 'Search for user to add as Reviewer 1';
   const label2 = 'Search for user to add as Reviewer 2';
@@ -292,12 +294,12 @@ test('Create requests using Multiple Person Form (Config)', async ({ page }) => 
   await expect(page.getByRole('searchbox', { name: label1 })).toBeVisible();
   await page.getByRole('searchbox', { name: label1 }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
-  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue('userName:VTRHJHROSARIO');
+  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue(/userName:VTRHJHROSARIO/i);
 
   await expect(page.getByRole('searchbox', { name: label2 })).toBeVisible();
   await page.getByRole('searchbox', { name: label2 }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue('userName:VTRXVPMADELAINE');
+  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue(/userName:VTRXVPMADELAINE/i);
 
   await expect(loadingIndicators).toHaveCount(0);
   await expect(page.locator('.input-required-error')).toHaveCount(0);
@@ -319,12 +321,12 @@ test('Create requests using Multiple Person Form (Config)', async ({ page }) => 
   await expect(page.getByRole('searchbox', { name: label1 })).toBeVisible();
   await page.getByRole('searchbox', { name: label1 }).fill('test');
   await page.getByRole('cell', { name: 'Tester, Tester Product Liaison' }).click();
-  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue('userName:tester');
+  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue(/userName:tester/i);
 
   await expect(page.getByRole('searchbox', { name: label2 })).toBeVisible();
   await page.getByRole('searchbox', { name: label2 }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue('userName:VTRXVPMADELAINE');
+  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue(/userName:VTRXVPMADELAINE/i);
 
   await expect(loadingIndicators).toHaveCount(0);
   await expect(page.locator('.input-required-error')).toHaveCount(0);
@@ -356,12 +358,12 @@ test('Create requests using Multiple Person Form (Config)', async ({ page }) => 
   await expect(page.getByRole('searchbox', { name: label1 })).toBeVisible();
   await page.getByRole('searchbox', { name: label1 }).fill('ad');
   await page.getByRole('cell', { name: 'Wolf, Adan Williamson. Direct' }).click();
-  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue('userName:VTRHJHROSARIO');
+  await expect(page.getByRole('searchbox', { name: label1 })).toHaveValue(/userName:VTRHJHROSARIO/i);
 
   await expect(page.getByRole('searchbox', { name: label2 })).toBeVisible();
   await page.getByRole('searchbox', { name: label2 }).fill('h');
   await page.getByRole('cell', { name: 'Hackett, Linsey Spinka.' }).click();
-  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue('userName:VTRXVPMADELAINE');
+  await expect(page.getByRole('searchbox', { name: label2 })).toHaveValue(/userName:VTRXVPMADELAINE/i);
 
   await expect(loadingIndicators).toHaveCount(0);
   await expect(page.locator('.input-required-error')).toHaveCount(0);

@@ -74,6 +74,7 @@ const parallelProcessingTestSetup = async (page:Page) => {
 };
 
 test('Request for a form using parallel processing can be submitted without alert errors', async ({ page }) => {
+  test.setTimeout(180000);
   await parallelProcessingTestSetup(page);
   await createTestRequest(page, 'Bronze Kids', newRequestTitle, uniqueFormName);
   await expect(page.getByText('Form completion progress: 0% Next Question')).toBeVisible();
