@@ -14,7 +14,7 @@ test.describe('editing of email template content', () => {
     await page.getByRole('heading', { name: 'Email Template Editor' }).scrollIntoViewIfNeeded();
     await expect(page.getByRole('button', { name: 'Restore Original' })).toBeVisible();
     const awaitRestore = page.waitForResponse(res =>
-      res.url().includes('') && res.status() === 200 && res.request().method() === 'DELETE'
+      res.status() === 200 && res.request().method() === 'DELETE'
     );
     await page.getByRole('button', { name: 'Restore Original' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
@@ -31,7 +31,7 @@ test.describe('editing of email template content', () => {
     await expect(page.locator('#codeContainer')).toContainText('{{$formType}}');
     await expect(page.getByRole('button', { name: 'Restore Original' })).toBeVisible();
     const awaitRestore = page.waitForResponse(res =>
-      res.url().includes('') && res.status() === 200 && res.request().method() === 'DELETE'
+      res.status() === 200 && res.request().method() === 'DELETE'
     );
     await page.getByRole('button', { name: 'Restore Original' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
@@ -48,7 +48,7 @@ test.describe('editing of email template content', () => {
     await expect(page.getByText('Potential Variable errors in Body: {{formType}} Example: {{$variable}}')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Restore Original' })).toBeVisible();
     const awaitRestore = page.waitForResponse(res =>
-      res.url().includes('') && res.status() === 200 && res.request().method() === 'DELETE'
+      res.status() === 200 && res.request().method() === 'DELETE'
     );
     await page.getByRole('button', { name: 'Restore Original' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
