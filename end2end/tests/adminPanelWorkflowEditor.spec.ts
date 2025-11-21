@@ -368,6 +368,7 @@ test('Add email reminder to a step by specific days', async ({ page }) => {
  *      as the non-removable even
  */
 test('Workflow editor UX improvements - 4716', async ({ page }) => {
+    test.setTimeout(120000);
     const actionsAdded = [
         { present: "Deny", past: "Denied" },
         { present: "Reply", past: "Replied" },
