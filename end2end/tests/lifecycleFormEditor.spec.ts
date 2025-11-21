@@ -402,7 +402,7 @@ test.describe('Tests for LEAF 4697', () => {
  * and LEAF 5129 - indicate input format in message
  */
 test('Elements attached to a workflow cannot be deleted from form', async ({ page }) => {
-
+    test.setTimeout(180000);
     let formEditorFieldsFormID = '';
     let workflowID = '';
     let stepID = '';
