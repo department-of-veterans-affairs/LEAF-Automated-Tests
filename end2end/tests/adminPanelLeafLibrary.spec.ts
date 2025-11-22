@@ -3,7 +3,6 @@ import { LEAF_URLS, deleteTestFormByFormID } from '../leaf_test_utils/leaf_util_
 
 const testFormTdId = 'td[id$="_1_form"]';
 const testFormRequestTitle = 'LEAF Library Format Tests';
-const testFormName = 'LEAF Library Input Formats';
 const testFormAuthor = 'Tester Tester';
 
 test('LEAF Library: page navigation', async ({ page }) => {
@@ -202,36 +201,84 @@ test('LEAF Form Library: form preview and import', async ({ page }) => {
     await expect(previewModal.getByText(`By ${testFormAuthor}`), 'Test form author to be visible').toBeVisible();
 
     /*
-      The LEAF Library preview is only a basic preview and does not fully reflect the request display.
-      Until/unless that is updated this only tests the expected preview order.
+      The LEAF Library preview is only a basic preview and does not fully reflect the request.
+      Until/unless that is updated this only tests the expected preview order and basic input display.
+      Test form is from the packet at LEAF_library_test_uploads/1_1_1
     */
+    const testFormName = 'LEAF Library Input Formats';
+    const testFormDescription = 'For testing display and import of forms in the LEAF Library';
     const testFields = [
-        [ '33', '340', '35', '36', '37', '38', '39' ],
-        [ '40', '41', '42', '43', '44', '45', '46' ],
-        [ '47', '48', '49', '50', '53', '51', '52' ],
+        [
+            { label: 'Basic input types', format: '', id: '33' },
+            { label: 'single line text', format: 'text', id:'340'},
+            { label: 'multi-line text', format: 'textarea', id:'35' },
+            { label: 'numeric', format: 'number', id:'36' },
+            { label: 'currency', format: 'currency', id:'37' },
+            { label: 'file attachment', format: 'fileupload', id:'38' },
+            { label: 'image attachment', format: 'image', id: '39' },
+        ],
+        [
+            { label: 'Plugin and style-modified input types', format: '', id:'40' },
+            { label: 'date (jQuery date picker)', format: 'date', id:'41' },
+            { label: 'dropdown (jQuery Chosen)', format: 'dropdown', id:'42' },
+            { label: 'multi-select dropdown (JavaScript Choices-JS)', format: 'multiselect', id:'43' },
+            { label: 'checkbox (LEAF-check with custom label)', format: 'checkbox', id:'44' },
+            { label: 'checkboxes (LEAF-check)', format: 'checkboxes', id:'45' },
+            { label: 'radio (LEAF-check)', format: 'radio', id:'46' },
+        ],
+        [
+            { label: 'LEAF-specific input types (LEAF types involving more than simple styling)', format: '', id:'47' },
+            { label: 'grid (LEAF-table)', format: 'grid', id:'48' },
+            { label: 'orgchart employee (LEAF-orgchart, employee)', format: 'orgchart_employee', id:'49' },
+            { label: 'orgchart group (LEAF-orgchart, group)', format: 'orgchart_group', id:'50' },
+            { label: 'orgchart position (LEAF-orgchart, position)', format: 'orgchart_position', id:'51' },
+            { label: 'custom widget (LEAF-raw data)', format: 'raw_data', id:'52' },
+        ],
     ];
-    for (let section = 0; section < testFields.length; section++) {
-        const card = page.locator('.card').nth(section);
+    for (let sectionIdx = 0; sectionIdx < testFields.length; sectionIdx++) {
+        const card = page.locator('.card').nth(sectionIdx);
+        const heading = card.locator('xpath=./preceding-sibling::*[1]');
+
         await expect(card).toBeVisible();
-        const sectionIDs = testFields[section];
-        for(let idx = 0; idx < sectionIDs.length; idx++) {
-            const id = sectionIDs[idx];
+        await expect(heading).toHaveText(`Section ${sectionIdx + 1}`);
+        const sectionFields = testFields[sectionIdx];
+        for(let idx = 0; idx < sectionFields.length; idx++) {
+            const label = sectionFields[idx].label;
+            const format = sectionFields[idx].format;
             await expect(
                 card.locator('[id^="leaf_library_preview_"]').nth(idx),
                 'field to be in expected location'
-            ).toHaveId(`leaf_library_preview_${id}`);
+            ).toHaveText(label);
+            if(format !== '') {
+                await expect(card.getByLabel(label).first()).toBeVisible();
+            } else {
+                await expect(card.getByLabel(label).first()).not.toBeVisible();
+            }
         }
     }
 
+    //import the form with the 'Get a Copy' button and confirm the expected order
     await expect(previewModal.getByRole('button', { name: 'Get a copy!' }), 'Copy button to be visible').toBeVisible();
     await previewModal.getByRole('button', { name: 'Get a copy!' }).click();
 
-    await expect(page.getByLabel('Form Name')).toHaveValue(testFormName);
+    await expect(page.getByLabel('Form name')).toHaveValue(testFormName);
+    await expect(page.getByLabel('Form description')).toHaveValue(testFormDescription);
     const formIDLoc = page.locator('#edit-properties-panel .form-id');
     await expect(formIDLoc).toBeVisible();
+    const formID = (await formIDLoc.textContent() ?? '').trim();
+
+    const form = page.locator(`#base_drop_area_${formID}`);
+    for (let sectionIdx = 0; sectionIdx < testFields.length; sectionIdx++) {
+        const section = form.locator('> li').nth(sectionIdx);
+        const sectionFields = testFields[sectionIdx];
+        for(let idx = 0; idx < sectionFields.length; idx++) {
+            await expect(
+                section.locator('.indicator-name-preview .name').nth(idx),
+                'imported field to be in expected location'
+            ).toHaveText(sectionFields[idx].label);
+        }
+    }
 
     //cleanup
-    let formID = await formIDLoc.textContent() ?? '';
-    formID = formID.trim();
     await deleteTestFormByFormID(page, formID);
 });
