@@ -66,7 +66,7 @@ test('LEAF Form Library: report table functionality', async ({ page }) => {
         await expect(
             th, `Table header at index ${i} to be ${expectedText}`
         ).toContainText(expectedText);
-        if (i <= 2) {
+        if (i <= 2) { //the first 3 columns are sortable
             const ariaLabel = await th.getAttribute('aria-label');
             expect(ariaLabel, `Sortable header ${i} to have aria-label ${ariaLabel}`).toBe(`Sort by ${expectedText}`);
             await th.click();
@@ -247,12 +247,18 @@ test('LEAF Form Library: form preview and import', async ({ page }) => {
             const format = sectionFields[idx].format;
             await expect(
                 card.locator('[id^="leaf_library_preview_"]').nth(idx),
-                'field to be in expected location'
+                `field to be in expected location (index ${idx})`
             ).toHaveText(label);
-            if(format !== '') {
-                await expect(card.getByLabel(label).first()).toBeVisible();
+            if(format !== '' && format !== 'raw_data') {
+                await expect(
+                    card.getByLabel(label).first(),
+                    `${format} to have an input preview`
+                ).toBeVisible();
             } else {
-                await expect(card.getByLabel(label).first()).not.toBeVisible();
+                await expect(
+                    card.getByLabel(label).first(),
+                    `${format} not to have an input preview`
+                ).not.toBeVisible();
             }
         }
     }
