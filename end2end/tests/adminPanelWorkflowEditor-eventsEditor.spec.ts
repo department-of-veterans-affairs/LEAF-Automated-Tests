@@ -40,7 +40,7 @@ const uniqueDescr2 = `Description2 ${randNum}`;
 const uniqueEventNameEdit = `Evt Edit ${randNum}`;
 const uniqueDescrEdit = `Descr Edit ${randNum}`;
 
-test.only('Verify Event Name only allow alphanumerical', async ({ page}) => {
+test('Verify Event Name only allow alphanumerical', async ({ page}) => {
    let incorrectNameInput: string [] = [`%2BSELECT%2A%20FROM%20admin%20--`, `'; DROP TABLE users;`, `$../..etc/passwd`, `<script>alert('XSS')</script>`];
    let expectedConvertedInput: string [] = [`_2BSELECT_2A_20FROM_20adm`, `___DROP_TABLE_users_`, `______etc_passwd`, `_script_alert__XSS____scr`];
     
