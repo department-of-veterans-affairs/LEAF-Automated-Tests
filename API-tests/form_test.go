@@ -161,7 +161,7 @@ func TestForm_NonadminCannotCancelOwnSubmittedRecord(t *testing.T) {
 	recordID, err := strconv.Atoi(string(response))
 
 	if err != nil {
-		t.Errorf("Could not create record for TestForm_NonadminCannotCancelOwnSubmittedRecord: " + err.Error())
+		t.Error("Could not create record for TestForm_NonadminCannotCancelOwnSubmittedRecord: " + err.Error())
 	}
 
 	postData = url.Values{}
