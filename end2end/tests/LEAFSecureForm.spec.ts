@@ -79,18 +79,26 @@ import { test, expect, Page } from '@playwright/test';
 
   });
 
-   test('Validate Sensitive Form Preview Mode', { tag: ['@LEAF-5016'] }, async ({ page }) => {
+test ('Validate Sensitive Form Preview Mode', { tag: ['@LEAF-5016'] }, async ({ page }) => {
 
     const requestId = '5'; ////LEAF Secure Form ID
     
     await page.goto(`https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=${requestId}`);
-    await page.waitForLoadState('load');   
+    await page.waitForLoadState('load'); 
 
+    await expect(page.getByText('Justification for collection')).toBeVisible();
+
+    
     const btnNameTxt = 'Preview Form';
     const previewFormId = "#ui-id-3";  
-    const tableLocator = page.locator(".leaf_grid").first();
-    const rows = tableLocator.locator('tbody tr');
+    const tableSecureLocator =page.locator('.leaf_grid').first();
+    const tablelocatorId = await tableSecureLocator.getAttribute('id');
+   
+    //Locate the Table and get the total number of rows
+    const secureTable = page.locator(`#${tablelocatorId}`);
+    const rows = secureTable.locator('tbody tr');
     const rowCount = await rows.count();
+    
 
    //interate through each row to find and click the button with the specified name 
   for (let i = 0; i < rowCount; i++) {
@@ -102,12 +110,14 @@ import { test, expect, Page } from '@playwright/test';
     if (btnName === btnNameTxt) {
         await rows.locator('button').nth(i).click();
         await page.waitForLoadState('load');
+       
 
         //Seperate the Button Name from Form Name
         const displayedFormName = formName.split("\n", 2);
         
         //Verify the Form Name in Preview Mode is the same as in the Table
         await expect(page.locator(previewFormId)).toContainText(displayedFormName[0]); 
+        
        }
   
      await page.getByRole('button', { name: 'Close' }).click();
