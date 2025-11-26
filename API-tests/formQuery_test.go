@@ -549,7 +549,7 @@ func TestFormQuery_Special_Characters(t *testing.T) {
 	recordID, err := strconv.Atoi(string(response))
 
 	if err != nil {
-		t.Errorf("Could not create record for TestFormQuery_Special_Characters: " + err.Error())
+		t.Error("Could not create record for TestFormQuery_Special_Characters: " + err.Error())
 	}
 
 	res, _ := getFormQuery(RootURL + fmt.Sprintf(`api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"%d","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["3"]}&x-filterData=recordID,title`, recordID))
