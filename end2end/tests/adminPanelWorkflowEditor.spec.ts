@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-    LEAF_URLS, getRandomId,
+    LEAF_URLS, getRandomId, loadWorkflow,
     createBaseTestWorkflow, selectChosenDropdownOption
 } from '../leaf_test_utils/leaf_util_methods';
 
@@ -107,7 +107,7 @@ test('create a requestor to end workflow, copy it, then delete the copy', async 
     const originalWorkflowTitle = `New_Workflow_${testID}`;
     const copiedWorkflowTitle = `Copy_of_${originalWorkflowTitle}`;
 
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    await loadWorkflow(page); //ensures all workflow related updates have loaded
 
     await page.locator('#btn_newWorkflow').click();
 

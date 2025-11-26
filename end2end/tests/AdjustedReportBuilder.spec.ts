@@ -24,6 +24,7 @@ test('Comment approval functionality and comment visibility on record page', asy
   await awaitSubmit;
 
   await page.goto(LEAF_URLS.REPORT_BUILDER);
+  await expect(page.getByRole('button', { name: 'Next Step' })).toBeVisible();
   const selectLocator = page.locator('table[id$="_searchTerms"] tr td select').first();
   const selectID = await selectLocator.getAttribute('id') ?? "";
   const chosenID = `#${selectID}_chosen`;
@@ -89,7 +90,7 @@ test('column order is maintained after modifying the search filter', async ({ pa
 
   const selectDataColumns = page.locator('#step_2');
   await selectDataColumns.waitFor();
-
+  await expect(page.getByLabel('Title of Request')).toBeChecked();
   await page.getByRole('button', { name: 'Generate Report' }).click();
   await expect(page.locator('table[id^="LeafFormGrid"] tbody tr').first()).toBeVisible();
   await expect(page.getByText("Building report")).toHaveCount(0);

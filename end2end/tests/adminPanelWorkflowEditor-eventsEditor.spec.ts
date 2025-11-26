@@ -3,7 +3,7 @@ import {
   awaitPromise, loadWorkflow, deleteWorkflowEvent, confirmEmailRecipients
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
-test.describe.configure({ mode: 'default' });
+test.describe.configure({ mode: 'serial' });
 
 /**
  * Use the printview admin menu to change the step of a request
