@@ -286,7 +286,12 @@ export const createBaseTestWorkflow = async (
   workflowName:string,
   intialStepName:string
 ):Promise<string[]> => {
+  const awaitRoutes = page.waitForResponse(res =>
+    res.url().includes('/route') && res.status() === 200
+  );
   await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+  await awaitRoutes;
+
   await expect(page.getByRole('button', { name: 'New Workflow' })).toBeVisible();
   await page.getByRole('button', { name: 'New Workflow' }).click();
   await expect(page.getByText('Create new workflow')).toBeVisible();
