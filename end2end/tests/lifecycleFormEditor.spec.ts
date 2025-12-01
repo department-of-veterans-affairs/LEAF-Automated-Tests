@@ -216,15 +216,13 @@ test('Internal Form is Visible to Workflow', async ({ page }) => {
 
 });
 
+let newRequestID = '';
 /**
  * Test for LEAF 5054
  * Verify that the internal form is visible when choosing columns for
  * a quick review
  */
 test("Internal Form is Visible in Quick Review", async ({ page }) => {
-  
-  let newRequestID = '';
-  try{
 
     // Create a new request using the form with the internal form
     const newRequestName = `New Request ${testId}`;
@@ -238,9 +236,9 @@ test("Internal Form is Visible in Quick Review", async ({ page }) => {
     await page.getByRole('link', { name: 'Admin Panel' }).click();
     await page.getByRole('button', { name: 'Setup Quick Review Link' }).click();
     
-    // Select 'General Form'as the Form Type
+    // Select the created form as the Form Type
     const selectFormType = page.locator('#forms');
-    await selectFormType.selectOption({ label: 'General Form'})
+    await selectFormType.selectOption({ label: uniqueText})
 
     // Select 'Step 1'
     const selectStep = page.locator('#steps')
@@ -252,14 +250,6 @@ test("Internal Form is Visible in Quick Review", async ({ page }) => {
     // are displayed
     await page.locator('#fieldNames').click();
     await page.getByText(internalFormName).isVisible();
-    
-  } finally {
-
-    // If a new request was created, cancel it
-    if(newRequestID != '') {
-      await deleteTestRequestByRequestID(page, newRequestID);
-    }
-  }
 
 })
 
@@ -270,25 +260,14 @@ test("Internal Form is Visible in Quick Review", async ({ page }) => {
  */
 test("Internal Form is Visible in Propose Actions", async ({ page }) => {
 
-  let newRequestID = '';
-
   try{
       
-      // Create a new request using the form with the internal form
-      const newRequestName = `New Request ${testId}`;
-      newRequestID = await createTestRequest(page, 'Concrete Electronics', newRequestName, uniqueText);
-      await page.locator('#nextQuestion2').click();
-
-      // Submit the request
-      await page.getByRole('button', { name: 'Submit Request' }).click();
-
-      // Go to Admin Panel to create proposed actions
-      await page.getByRole('link', { name: 'Admin Panel' }).click();
-      await page.getByRole('button', { name: 'Create Proposed Actions' }).click();
+      // Go to the Create Proposed Actions Page
+      await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Propose_Actions');
       
-      // Select 'General Form'as the Form Type
+      // Select the form created by the above tests as the Form Type
       const selectFormType = page.locator('#forms');
-      await selectFormType.selectOption({ label: 'General Form'})
+      await selectFormType.selectOption({ label: uniqueText})
 
       // Select 'Step 1'
       const selectStep = page.locator('#steps')
@@ -307,6 +286,7 @@ test("Internal Form is Visible in Propose Actions", async ({ page }) => {
     }
   }
 })
+
 /**
  *  Export the created form to a new forms folder
  *  under the end2end directory
