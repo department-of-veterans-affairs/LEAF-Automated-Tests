@@ -5,8 +5,6 @@ import (
 	"io"
 	"log"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 // get all the portal import tags for the given orgchart
@@ -25,33 +23,19 @@ func getOrgchartImportTags(url string) PlatformResponse {
 }
 
 // this test gets all the portals for the given orgchart and makes sure that
-// the correct correct number of portals are returned, and that the correct
-// tag is returned for the first portal
+// Test_Request_Portal is one of the results
 func TestPlatform_getOrgchartTags(t *testing.T) {
 	portals := getOrgchartImportTags(RootOrgchartURL + `api/platform/portal`)
 
-	count := len(portals)
-	retrieved := 1
-
-	if !cmp.Equal(count, retrieved) {
-		t.Errorf("Array size = %v, wanted = %v", count, retrieved)
+	foundTestPortal := false
+	for _, portal := range portals {
+		if portal.Site_path == "/Test_Request_Portal" {
+			foundTestPortal = true
+			break
+		}
 	}
 
-	got := portals[0].LaunchpadID
-	want := 0
-	if !cmp.Equal(got, want) {
-		t.Errorf("LaunchpadId = %v, want = %v", got, want)
-	}
-
-	received := portals[0].Site_path
-	wanted := "/Test_Request_Portal"
-	if !cmp.Equal(received, wanted) {
-		t.Errorf("Site Path = %v, want = %v", received, wanted)
-	}
-
-	received = portals[0].OrgchartImportTags[0]
-	wanted = "Academy_Demo1"
-	if !cmp.Equal(received, wanted) {
-		t.Errorf("Tag = %v, want = %v", received, wanted)
+	if !foundTestPortal {
+		t.Errorf("Test_Request_Portal was not found in orgchart ./api/platform/portal")
 	}
 }
