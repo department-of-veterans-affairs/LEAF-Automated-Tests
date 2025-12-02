@@ -66,10 +66,15 @@ test('Add first Section to Form', async ({ page }) => {
   await page.getByLabel('Add Section').click();
   await expect(page.getByLabel('Section Heading')).toBeVisible();
   await page.getByLabel('Section Heading').fill(uniqueText + ' Section');
+  const awaitNewIndicator = page.waitForResponse(res =>
+    res.url().includes('formEditor/newIndicator') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Save' }).click();
+  const newIndicatorRes = await awaitNewIndicator;
+  const indId = (await newIndicatorRes.text()).replaceAll('"', '');
 
   // Verify the section is added
-  await expect(page.getByLabel('Section Heading')).toHaveText(uniqueText + ' Section');
+  await expect(page.locator(`#format_label_${indId} .name`)).toHaveText(uniqueText + ' Section');
 });
 
 
@@ -78,6 +83,7 @@ test('Add first Section to Form', async ({ page }) => {
  *  Yes/No to the new section in the previous test
  */
 test('Add Question to Form', async ({ page }) => {
+  const fieldNameValue = 'Are you a VA Employee?';
   await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
   await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
@@ -85,16 +91,20 @@ test('Add Question to Form', async ({ page }) => {
 
   await page.getByLabel('Add Question to Section').click();
   await expect(page.getByLabel('Field Name')).toBeVisible();
-  await page.getByLabel('Field Name').fill('Are you a VA Employee?');
-  await page.getByLabel('Short label for spreadsheet').fill('VA Employee?');
+  await page.getByLabel('Field Name').fill(fieldNameValue);
 
   // Choose radio button for the input. Make the choices Yes and No
   await page.getByLabel('Input Format').selectOption('radio');
   await page.getByLabel('Options (One option per line)').fill('Yes\nNo');
+  const awaitNewIndicator = page.waitForResponse(res =>
+    res.url().includes('formEditor/newIndicator') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Save' }).click();
+  const newIndicatorRes = await awaitNewIndicator;
+  const indId = (await newIndicatorRes.text()).replaceAll('"', '');
 
   // Verify the question was added
-  await expect(page.getByText('Are you a VA Employee?')).toBeVisible();
+  await expect(page.locator(`#format_label_${indId} .name`)).toHaveText(fieldNameValue);
 });
 
 /**
@@ -110,14 +120,18 @@ test('Add Sub-Question to Form', async ({ page }) => {
   await page.getByLabel('add sub-question').click();
   await expect(page.getByLabel('Field Name')).toBeVisible();
   await page.getByLabel('Field Name').fill('Supervisor Name');
-  await page.getByLabel('Short label for spreadsheet').fill('Supervisor');
 
   // Choose the input format of 'Text'
   await page.getByLabel('Input Format').selectOption('text');
+  const awaitNewIndicator = page.waitForResponse(res =>
+    res.url().includes('formEditor/newIndicator') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Save' }).click();
+  const newIndicatorRes = await awaitNewIndicator;
+  const indId = (await newIndicatorRes.text()).replaceAll('"', '');
 
   // Verify the sub-quesiton was added
-  await expect(page.getByText('Supervisor Name')).toBeVisible();
+  await expect(page.locator(`#format_label_${indId} .name`)).toHaveText('Supervisor Name');
 });
 
 /**
