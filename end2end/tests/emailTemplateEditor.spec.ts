@@ -15,7 +15,7 @@ test.describe('editing of email template content', () => {
     let changesSaved = false
 
     try {
-      await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email&file=CustomEvent_event_valid_edited_body.tpl&name=test+edited+event+description&subjectFile=CustomEvent_event_valid_edited_subject.tpl&emailToFile=CustomEvent_event_valid_edited_emailTo.tpl&emailCcFile=CustomEvent_event_valid_edited_emailCc.tpl');
+      await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_templates_email');
       await page.locator('.trumbowyg-editor').fill('');
       await expect(page.getByRole('button', { name: 'Restore Original' })).not.toBeVisible();
       await page.locator('.trumbowyg-editor').click();
@@ -43,7 +43,7 @@ test.describe('editing of email template content', () => {
     let variableChanged = false;
 
     try {
-      await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email&file=CustomEvent_event_valid_edited_body.tpl&name=test+edited+event+description&subjectFile=CustomEvent_event_valid_edited_subject.tpl&emailToFile=CustomEvent_event_valid_edited_emailTo.tpl&emailCcFile=CustomEvent_event_valid_edited_emailCc.tpl');
+      await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_templates_email');
       await page.locator('.trumbowyg-editor').fill('');
       await page.getByRole('button', { name: 'Variables' }).click();
       await page.getByRole('button', { name: 'formType' }).click();
@@ -69,7 +69,7 @@ test.describe('editing of email template content', () => {
     let bodyChanged = false;
 
     try{
-      await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates_email&file=CustomEvent_event_valid_edited_body.tpl&name=test+edited+event+description&subjectFile=CustomEvent_event_valid_edited_subject.tpl&emailToFile=CustomEvent_event_valid_edited_emailTo.tpl&emailCcFile=CustomEvent_event_valid_edited_emailCc.tpl');
+      await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_templates_email');
       await page.locator('.trumbowyg-editor').fill('');
       await page.locator('.trumbowyg-editor').click();
       await page.locator('.trumbowyg-editor').fill('{{formType}}');
