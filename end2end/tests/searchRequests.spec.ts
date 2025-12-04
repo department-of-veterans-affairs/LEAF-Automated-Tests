@@ -42,6 +42,7 @@ test.describe('URL can be searched for using basic and advanced search inputs', 
   test('Advanced search for URL in title is functional', async ({ page }) => {
     await page.goto(LEAF_URLS.PORTAL_HOME);
     await page.getByRole('button', { name: 'Advanced Options' }).click();
+    await expect(page.getByRole('button', { name: 'Close advanced search' })).toBeVisible();
     const selectLocator = page.locator('table[id$="_searchTerms"] tr td select').first();
     const selectID = await selectLocator.getAttribute('id') ?? "";
     const chosenID = `#${selectID}_chosen`;

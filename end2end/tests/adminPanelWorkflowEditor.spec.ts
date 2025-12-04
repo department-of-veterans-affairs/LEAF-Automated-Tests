@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-    LEAF_URLS, getRandomId,
+    LEAF_URLS, getRandomId, loadWorkflow,
     createBaseTestWorkflow, selectChosenDropdownOption
 } from '../leaf_test_utils/leaf_util_methods';
 
@@ -107,7 +107,7 @@ test('create a requestor to end workflow, copy it, then delete the copy', async 
     const originalWorkflowTitle = `New_Workflow_${testID}`;
     const copiedWorkflowTitle = `Copy_of_${originalWorkflowTitle}`;
 
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    await loadWorkflow(page); //ensures all workflow related updates have loaded
 
     await page.locator('#btn_newWorkflow').click();
 
@@ -378,6 +378,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     const testID = getRandomId();
     const workflowTitle = `ux_wf_${testID}`;
     const initialStep = `ux_step_${testID}`;
+    const saveBtnLocator = page.getByRole('button', { name: 'Save' });
 
     // Go to the Workflow Builder and create a new workflow
     await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
@@ -392,7 +393,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Action *Required').press('Tab');
     await page.getByLabel('Action Past Tense *Required').fill('Denied');
     await page.getByLabel('Does this action represent').selectOption('-1');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
     await awaitActionSave;
 
     awaitActionSave = page.waitForResponse(res => res.url().includes('system/action') && res.status() === 200);
@@ -402,7 +403,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Action *Required').fill('Reply');
     await page.getByLabel('Action *Required').press('Tab');
     await page.getByLabel('Action Past Tense *Required').fill('Replied');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
     await awaitActionSave;
 
     awaitActionSave = page.waitForResponse(res => res.url().includes('system/action') && res.status() === 200);
@@ -411,7 +412,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     await page.getByLabel('Action *Required').fill('Backlog');
     await page.getByLabel('Action *Required').press('Tab');
     await page.getByLabel('Action Past Tense *Required').fill('Backlogged');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
     await awaitActionSave;
 
     // Verify new actions appear
@@ -445,7 +446,7 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     // add a second step
     await page.getByRole('button', { name: 'New Step' }).click();
     await page.getByLabel('Step Title:').fill('Step 2');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
 
     const step2 = page.getByLabel('workflow step: Step 2');
     await expect(step2).toBeVisible();
@@ -476,27 +477,27 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     // Connect Step 1 to Step 2 and give it the custom action "Reply"
     await step1Connector.dragTo(step2Connector);
     await selectChosenDropdownOption(page, '#actionType_chosen', 'Reply');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await saveBtnLocator.click();
     await expect(page.getByText('Reply')).toBeVisible();
 
     // Add another connector from Step 1 to Step 2 and give it the 
     // action "Backlog"
     await step1Connector.dragTo(step2Connector);
     await selectChosenDropdownOption(page, '#actionType_chosen', 'Backlog');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
     await expect(page.getByText('Backlog')).toBeVisible();
 
     // Connect Step 2 to Step 1 and add the custom action "Deny"
     await step2Connector.dragTo(step1Connector);
     await selectChosenDropdownOption(page, '#actionType_chosen', 'Deny');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
     await expect(page.getByText('Deny')).toBeVisible();
 
     // Connect Step 2 to the End and verify the "Approve"
     // action is added
     await step2Connector.dragTo(endConnector);
     await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
-    await page.getByRole('button', { name: 'Save' }).click({ force: true });
+    await saveBtnLocator.click({ force: true });
     await expect(page.getByText('Approve')).toBeVisible();
 
     // Click on Step 1 and verify the modal is displayed
@@ -525,4 +526,19 @@ test('Workflow editor UX improvements - 4716', async ({ page }) => {
     // Delete the workflow
     await page.getByRole('button', { name: 'Delete Workflow' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
+
+    //set state of the created actions to cancelled
+    await page.getByRole('button', { name: 'Edit Actions' }).click();
+    for (let i = 0; i < actionsAdded.length; i++) {
+        const actionPresent = actionsAdded[i].present;
+        const editCell = table.locator(`#editor_${actionPresent}`);
+        await expect(editCell).toBeVisible();
+        await editCell.getByRole('button', { name: 'Delete' }).click();
+        await expect(page.getByText('Are you sure you want to delete this action?')).toBeVisible();
+        const awaitDel = page.waitForResponse(res =>
+            res.url().includes(`action/_${actionPresent}`) && res.status() === 200 && res.request().method() === 'DELETE'
+        );
+        await page.getByRole('button', { name: 'Yes' }).click();
+        await awaitDel;
+    }
 });

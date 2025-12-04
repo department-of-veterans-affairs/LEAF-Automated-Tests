@@ -4,10 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -549,7 +553,7 @@ func TestFormQuery_Special_Characters(t *testing.T) {
 	recordID, err := strconv.Atoi(string(response))
 
 	if err != nil {
-		t.Errorf("Could not create record for TestFormQuery_Special_Characters: " + err.Error())
+		t.Error("Could not create record for TestFormQuery_Special_Characters: " + err.Error())
 	}
 
 	res, _ := getFormQuery(RootURL + fmt.Sprintf(`api/form/query/?q={"terms":[{"id":"recordID","operator":"=","match":"%d","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{},"getData":["3"]}&x-filterData=recordID,title`, recordID))
@@ -770,8 +774,7 @@ func TestLargeFormQuery_LargeQuery_Indi_10_Limit1001(t *testing.T) {
 
 }
 
-/* TODO: use different site
-func TestForm_QueryActionableAgent(t *testing.T) {
+func TestValidAuthorizationToken(t *testing.T) {
 	cookieJar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Transport: tr,
@@ -779,25 +782,44 @@ func TestForm_QueryActionableAgent(t *testing.T) {
 		Jar:       cookieJar,
 	}
 
-	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}&masquerade=nonAdmin`, nil)
-
+	// Retrieve all unresolved requests as the LEAF agent
+	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}`, nil)
 	// Login as the agent
 	req.Header.Set("Authorization", os.Getenv("AGENT_TOKEN"))
 	res, err := client.Do(req)
 	if err != nil {
 		t.Error(err)
 	}
-
 	b, _ := io.ReadAll(res.Body)
-
 	var formRes FormQueryResponse
 	err = json.Unmarshal(b, &formRes)
+	if err != nil {
+		t.Error(err, string(b))
+	}
+
+	if len(formRes) == 0 {
+		t.Errorf("client with valid token should be able to see public records")
+	}
+}
+
+func TestInvalidAuthorizationToken(t *testing.T) {
+	cookieJar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   time.Second * 5,
+		Jar:       cookieJar,
+	}
+
+	// Retrieve all unresolved requests as the LEAF agent with an invalid token
+	req, _ := http.NewRequest("GET", RootURL+`api/form/query/?q={"terms":[{"id":"stepID","operator":"!=","match":"resolved","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":[],"sort":{}}`, nil)
+	// Login as the agent
+	req.Header.Set("Authorization", "INVALID TOKEN")
+	res, err := client.Do(req)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if _, exists := formRes[16]; !exists {
-		t.Errorf("Record 16 should be actionable by the LEAF Agent")
+	if res.StatusCode != 401 {
+		t.Errorf("client with an invalid token should be denied access. got status code: %v, want: 401", res.StatusCode)
 	}
 }
-*/

@@ -7,66 +7,82 @@ import { test, expect } from '@playwright/test';
   */
   test('Add customization to print_subindicators templates', async ({ page }) => {
 
-    // Confirm customization has not been added
-    await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=966');
-    await expect(page.locator('#xhrIndicator_20_1')).toHaveText('test');
+    let psChanged = false;
+    let psaChanged = false;
 
-    // Go to Template Editor
-    await page.getByRole('link', { name: 'Home'}).click();
-    await page.getByRole('link', { name: 'Admin Panel' }).click();
-    await page.getByRole('button', { name: ' Template Editor Edit HTML' }).click();
+    try {
+      // Confirm customization has not been added
+      await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=966');
+      await expect(page.locator('#xhrIndicator_20_1')).toHaveText('test');
 
-    
-    // Add 'AAAAA' to the beginning of the print_subindicators template
-    await page.getByRole('link', { name: 'print_subindicators', exact: true }).click();
-    await expect(page.locator('#filename')).toHaveText('print_subindicators');
-    await page.reload();
-    await expect(page.getByText('<!--{strip}-->')).toBeVisible();
-    await page.getByText('<!--{strip}-->').click();
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowUp');
-    await page.getByLabel('Template Editor coding area.').fill('AAAAA');
-    await page.getByRole('button', { name: 'Save Changes' }).click();
+      // Go to Template Editor
+      await page.getByRole('link', { name: 'Home'}).click();
+      await page.getByRole('link', { name: 'Admin Panel' }).click();
+      await page.getByRole('button', { name: ' Template Editor Edit HTML' }).click();
+      
+      // Add 'AAAAA' to the beginning of the print_subindicators template
+      await page.getByRole('link', { name: 'print_subindicators', exact: true }).click();
+      await expect(page.locator('#filename')).toHaveText('print_subindicators');
+      await page.reload();
+      await expect(page.getByText('<!--{strip}-->')).toBeVisible();
+      await page.getByText('<!--{strip}-->').click();
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowUp');
+      await page.getByLabel('Template Editor coding area.').fill('AAAAA');
+      await page.getByRole('button', { name: 'Save Changes' }).click();
+      psChanged = true;
 
-    // Add 'BBBBB' to the beginning of the print_subindicators_ajax template
-    await page.getByRole('link', { name: 'print_subindicators_ajax', exact: true }).click();
-    await expect(page.locator('#filename')).toHaveText('print_subindicators_ajax');
-    await expect(page.getByText('<!--{**}-->')).toBeVisible();
-    await page.getByText('<!--{**}-->').click();
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
-    await page.getByLabel('Template Editor coding area.').press('ArrowUp');
-    await page.getByLabel('Template Editor coding area.').fill('BBBBB');
-    await page.getByRole('button', { name: 'Save Changes' }).click();
+      // Add 'BBBBB' to the beginning of the print_subindicators_ajax template
+      await page.getByRole('link', { name: 'print_subindicators_ajax', exact: true }).click();
+      await expect(page.locator('#filename')).toHaveText('print_subindicators_ajax');
+      await expect(page.getByText('<!--{**}-->')).toBeVisible();
+      await page.getByText('<!--{**}-->').click();
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowLeft');
+      await page.getByLabel('Template Editor coding area.').press('ArrowUp');
+      await page.getByLabel('Template Editor coding area.').fill('BBBBB');
+      await page.getByRole('button', { name: 'Save Changes' }).click();
+      psaChanged = true;
 
-    // Confirm the 'AAAAA' and 'BBBBB' are visible on the request
-    await page.getByRole('link', { name: 'Home', exact: true }).click();
-    await page.getByRole('link', { name: 'TestForm_GetProgressChecking' }).click();
-    await expect(page.locator('#xhrIndicator_20_1')).toContainText('BBBBB test AAAAA');
+      // Confirm the 'AAAAA' and 'BBBBB' are visible on the request
+      await page.getByRole('link', { name: 'Home', exact: true }).click();
+      await page.getByRole('link', { name: 'TestForm_GetProgressChecking' }).click();
+      await expect(page.locator('#xhrIndicator_20_1')).toContainText('BBBBB test AAAAA');
+    } finally {
+      
+      // Restore the templates back to their original states if either one was changed
+      if(psChanged || psaChanged) {
 
-    // Restore the templates back to their original states
-    await page.getByRole('link', { name: 'Admin Panel' }).click();
-    await page.getByRole('button', { name: ' Template Editor Edit HTML' }).click();
-    await page.getByRole('link', { name: 'print_subindicators', exact: true }).click();
-    await page.getByRole('button', { name: 'Restore Original' }).click();
-    await page.getByRole('button', { name: 'Yes' }).click();
-    await page.getByRole('link', { name: 'print_subindicators_ajax', exact: true }).click();
-    await page.getByRole('button', { name: 'Restore Original' }).click();
-    await page.getByRole('button', { name: 'Yes' }).click();
+        await page.getByRole('link', { name: 'Admin Panel' }).click();
+        await page.getByRole('button', { name: ' Template Editor Edit HTML' }).click();
 
-    // Confirm the customization has been removed
-    await page.getByRole('link', { name: 'Home', exact: true  }).click();
-    await page.getByRole('link', { name: 'TestForm_GetProgressChecking' }).click();
-    await expect(page.locator('#xhrIndicator_20_1')).toContainText('test');
+        if(psChanged) {
+          await page.getByRole('link', { name: 'print_subindicators', exact: true }).click();
+          await page.getByRole('button', { name: 'Restore Original' }).click();
+          await page.getByRole('button', { name: 'Yes' }).click();
+        }
+
+        if(psaChanged) {
+          await page.getByRole('link', { name: 'print_subindicators_ajax', exact: true }).click();
+          await page.getByRole('button', { name: 'Restore Original' }).click();
+          await page.getByRole('button', { name: 'Yes' }).click();
+        }
+      
+        // Confirm the customization has been removed
+        await page.getByRole('link', { name: 'Home', exact: true  }).click();
+        await page.getByRole('link', { name: 'TestForm_GetProgressChecking' }).click();
+        await expect(page.locator('#xhrIndicator_20_1')).toContainText('test');
+      }
+    }
   });
 
   /**
