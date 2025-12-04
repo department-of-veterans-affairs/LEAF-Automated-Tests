@@ -82,7 +82,7 @@ func setupTestDB() {
 
 	// Load test DBs
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -161,7 +161,7 @@ func setupTestDB() {
 
 func updateTestDBSchema() {
 	wg := sync.WaitGroup{}
-	wg.Add(5)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
