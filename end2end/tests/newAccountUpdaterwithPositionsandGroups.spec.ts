@@ -35,19 +35,25 @@ let toUser:UserInfo = {
  * @param toUser to account info
  */
 const fillAndPreview = async (page:Page, fromUser:UserInfo, toUser:UserInfo) => {
-    await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
-    await page.getByRole('cell', { name: fromUser.userDisplay }).click();
+  await page.locator('#employeeSelector').getByLabel('search input').fill(fromUser.username);
+  await page.getByRole('cell', { name: fromUser.userDisplay }).click();
 
-    await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
-    await page.getByRole('cell', { name: toUser.userDisplay }).click();
+  await page.locator('#newEmployeeSelector').getByLabel('search input').fill(toUser.username);
+  await page.getByRole('cell', { name: toUser.userDisplay }).click();
 
-    await expect(page.getByText('New Account Search results')).toBeVisible();
-    await page.getByRole('button', {name: 'Preview Changes'}).click();
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByText("Building report")).toHaveCount(0);
+  await expect(page.getByText('New Account Search results')).toBeVisible();
+  await page.getByRole('button', {name: 'Preview Changes'}).click();
+  await expect(page.locator('#section2')).toBeVisible();
+  await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('button', { name: 'Update Records' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Start Over' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Update Records' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start Over' })).toBeVisible();
+  await expect(page.getByText("Building report")).toHaveCount(0);
+
+  expect(await page.locator('#grid_initiator').textContent() ?? '').not.toBe('');
+  expect(await page.locator('#grid_orgchart_employee').textContent() ?? '').not.toBe('');
+  expect(await page.locator('#grid_groups_info').textContent() ?? '').not.toBe('');
+  expect(await page.locator('#grid_positions_info').textContent() ?? '').not.toBe('');
 }
 
 /**
@@ -116,6 +122,7 @@ test.describe('Account Updater functionalities', () => {
       const gridLoc = page.locator(gridContainerIDs[i]);
       await expect(gridLoc.getByRole('button', { name: 'Export' })).toBeVisible();
       await expect(gridLoc.locator('table tbody tr').first()).toBeVisible();
+      await expect(gridLoc.getByText("Building report")).toHaveCount(0);
     }
 
     //Accept changes - swap everything for this first test
@@ -145,20 +152,19 @@ test.describe('Account Updater functionalities', () => {
     await fillAndPreview(page, fromUser, toUser);
 
     /*
-    Where possible (Requestor swap is not optional), use checkboxes to swap orig values.
+    Where possible (Requestor swap is not optional), use checkboxes to swap only the orig values.
     */
     for (let i = 0; i < gridContainerIDs.length; i++) {
       const gridLoc = page.locator(gridContainerIDs[i]);
       await expect(gridLoc.getByRole('button', { name: 'Export' })).toBeVisible();
       await expect(gridLoc.locator('table tbody tr').first()).toBeVisible();
+      await expect(gridLoc.getByText("Building report")).toHaveCount(0);
       if (i === 0) { //there is no checkbox for requestor swap table
         await expect(gridLoc.locator('th input')).not.toBeVisible();
       } else {
         //uncheck all requests
         await expect(gridLoc.locator('th input')).toBeVisible();
-        await gridLoc.locator('th input').click();
-        await expect(gridLoc.locator('th input')).not.toBeChecked();
-        //confirm all checkboxes are unchecked before updating specific requests;
+        await gridLoc.locator('th input').setChecked(false);
         const gridRows = await gridLoc.getByRole('row').all();
         for (let i = 0; i < gridRows.length; i++) {
           await expect(gridRows[i].getByRole('checkbox')).not.toBeChecked();
@@ -168,21 +174,21 @@ test.describe('Account Updater functionalities', () => {
           case 1: //employee swaps
             for (let e = 0; e < originalRequestsEmployee.length; e++) {
               const row = gridLoc.locator(`tr:has(td[id$="_${originalRequestsEmployee[e]}_uid"])`);
-              await row.getByRole('checkbox').click();
+              await row.getByRole('checkbox').setChecked(true);
             }
             break;
           case 2: //groups
             for (let g = 0; g < originalGroups.length; g++) {
               const hasCell = page.locator('td', { hasText: originalGroups[g] });
               const row = gridLoc.locator('tr').filter({ has: hasCell });
-              await row.getByRole('checkbox').click();
+              await row.getByRole('checkbox').setChecked(true);
             }
             break;
           case 3: //positions
             for (let p = 0; p < originalPositions.length; p++) {
               const hasCell = page.locator('td', { hasText: originalPositions[p] });
               const row = gridLoc.locator('tr').filter({ has: hasCell });
-              await row.getByRole('checkbox').click();
+              await row.getByRole('checkbox').setChecked(true);
             }
           default:
           break;
@@ -209,12 +215,13 @@ test.describe('Account Updater functionalities', () => {
 
     await fillAndPreview(page, fromUser, toUser);
 
-    //do not move employee fields
+    //do not move these employee fields
+    await expect(page.locator(`#grid_orgchart_employee`).getByRole('button', { name: 'Export' })).toBeVisible();
     const gridEmployee = page.locator('#grid_orgchart_employee th input');
     await expect(gridEmployee).toBeVisible();
-    await gridEmployee.click();
-    await expect(gridEmployee).not.toBeChecked();
+    await gridEmployee.setChecked(false);
     const gridRows = await page.locator('#grid_orgchart_employee').getByRole('row').all();
+
     for (let i = 0; i < gridRows.length; i++) {
       await expect(gridRows[i].getByRole('checkbox')).not.toBeChecked();
     }

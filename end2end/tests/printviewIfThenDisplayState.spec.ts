@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 /* The form and request used for this test are defined in the dev boilerplate. Record and indicator IDs are known and constant.
 Modals execute the same code as the form (edit) view, so this tests both edit and print view. */
@@ -42,7 +42,7 @@ test('Conditional Question Display State', async ({ page }) => {
     const requiredErrorSelector: string = '.input-required-error';
     const saveChange = async (
         dialog: any,
-        page: any,
+        page: Page,
         unfilledVisible: Array<string>
     ) => {
         await dialog.getByRole('button', { name: 'Save Change' }).click();
