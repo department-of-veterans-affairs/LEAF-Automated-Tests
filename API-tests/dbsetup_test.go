@@ -161,7 +161,7 @@ func setupTestDB() {
 
 func updateTestDBSchema() {
 	wg := sync.WaitGroup{}
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -191,15 +191,18 @@ func updateTestDBSchema() {
 		if strings.Contains(res, `Db Update failed`) {
 			log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
 		}
+		fmt.Println("Updated DB Schema: National Nexus (Orgchart)... OK")
+	}()
 
-		fmt.Println("OK")
+	go func() {
+		defer wg.Done()
+
 		//LEAF_Request_Portal dir maps to LEAF_Request_Portal, Test_Request_Portal and LEAF/library Docker volumes
-		fmt.Print("Updating DB Schema: LEAF Library ... ")
-		res, _ = httpGet(LibraryURL + `scripts/updateDatabase.php`)
+		res, _ := httpGet(LibraryURL + `scripts/updateDatabase.php`)
 		if strings.Contains(res, `Db Update failed`) {
 			log.Fatal(`Could not update LEAF Library schema: ` + res)
 		}
-		fmt.Println("Updated DB Schema: National Nexus (Orgchart)... OK")
+		fmt.Println("Updated DB Schema: LEAF Library ... OK")
 	}()
 
 	go func() {
