@@ -18,6 +18,7 @@ var HostURL = "https://" + os.Getenv("APP_HTTP_HOST")
 var RootURL = HostURL + "/Test_Request_Portal/"
 var NationalOrgchartURL = HostURL + "/LEAF_NationalNexus/"
 var RootOrgchartURL = HostURL + "/Test_Nexus/"
+var LibraryURL = HostURL + "/LEAF/library/"
 
 var dbHost = os.Getenv("MYSQL_HOST")
 var dbUsername = os.Getenv("MYSQL_USER")
