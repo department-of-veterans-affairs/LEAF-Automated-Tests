@@ -246,11 +246,11 @@ test("Internal Form is Visible in Quick Review", async ({ page }) => {
     
     await page.getByRole('button', { name: 'Setup Quick Review' }).click();
 
-    // Verify in the list of field names the fields on the Internal Form
-    // are displayed
-    await page.locator('#fieldNames').click();
-    await page.getByText(internalFormName).isVisible();
-
+    // Verify the Internal Form is included in the Field Names dropdown
+    const fieldNameDropDown = page.locator('#fieldNames');
+    await fieldNameDropDown.click();
+    await expect(fieldNameDropDown.getByRole('option', {name: internalFormName})).toHaveCount(1);
+    
 })
 
 /**
@@ -273,10 +273,12 @@ test("Internal Form is Visible in Propose Actions", async ({ page }) => {
       const selectStep = page.locator('#steps')
       await selectStep.selectOption({ label: 'Step 1'});
 
-      // Select the dropdown containing the field names and verify the  fields 
-      // for the internal form are visible
       await page.getByRole('button', { name: 'Setup Proposed Actions' }).click();
-      await page.getByText(internalFormName).isVisible();
+
+      // Verify the Internal Form is included in the Field Names dropdown
+      const fieldNameDropDown = page.locator('#fieldNames');
+      await fieldNameDropDown.click();
+      await expect(fieldNameDropDown.getByRole('option', {name: internalFormName})).toHaveCount(1);
 
     } finally {
 
