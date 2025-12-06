@@ -325,14 +325,24 @@ test.describe('Custom Email Event, custom template and emailing verification', (
   const subjectText = `${groupDisplayName} email ${uniqueEventName}`;
   const directEmailTo = 'test4892.to@fake.com';
   const directEmailCC = 'test4892.cc@fake.com';
-  const emailTo = '{{$field.50}}\n' + directEmailTo;
-  const emailCC = '{{$field.53}}\n' + directEmailCC;
-  const bodyContent = 
-    '<p>request fields</p>\n' +
-    '<div id="format_grid">{{$field.48}} checking</div>';
+  const emailTo = '{{$field.49}}\n{{$field.50}}\n' + directEmailTo; //ind49(emp), ind50(grp)
+  const emailCC = '{{$field.53}}\n' + directEmailCC; //ind54(emp), ind53(grp)
+
+  let bodyContent = '<p>request fields</p><br>';
+  const expectedEmailContent = [
+    { id: 34, format: 'text', content: '53778' },
+    { id: 35, format: 'textarea', content: 'test<br />\r\ntextarea' },
+    { id: 36, format: 'numeric', content: '93817' },
+    { id: 37, format: 'currency', content: '42.00' },
+    { id: 48, format: 'grid', content: '' },
+  ];
+  expectedEmailContent.forEach(entry => {
+    bodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
+  });
 
   const expectedToFieldEmailRecipients = [
-    'Roman.Abbott@fake-email.com', //direct groupId 202 members
+    'Boyd.Schaden@fake-email.com', //org emp field 49
+    'Roman.Abbott@fake-email.com', //org grp field 50 - direct groupId 202 members
     'Morton.Anderson@fake-email.com',
     'Loyd.Cartwright10@fake-email.com',
     'Booker.Feeney@fake-email.com',
@@ -424,7 +434,7 @@ test.describe('Custom Email Event, custom template and emailing verification', (
 
     const msgframe = page.frameLocator('.htmlview')
     await expect(
-    msgframe.locator('#format_grid table'),
+    msgframe.locator('#format_test_48 table'),
       'grid question to be presented in table format'
     ).toBeVisible();
 
