@@ -5,22 +5,6 @@ import {
 
 test.describe.configure({ mode: 'serial' });
 
-// Global Variables
-const requestId = '123'; //test case request
-const requestURL = LEAF_URLS.PRINTVIEW_REQUEST + requestId;
-const requestTitle = 'Test Email Events';
-const randNum = Date.now(); //timestamp. unique but shorter than random - name is limited to 25 chars
-const tempTestRequestTitle = requestTitle + randNum;
-const eventGroupID = '206';
-
-const uniqueEventName = `Event ${randNum}`;
-const uniqueDescr = `Description ${randNum}`;
-const uniqueEventName2 = `Event2 ${randNum}`;
-const uniqueDescr2 = `Description2 ${randNum}`;
-const uniqueEventNameEdit = `Evt Edit ${randNum}`;
-const uniqueDescrEdit = `Descr Edit ${randNum}`;
-let serialEventCreated = false;
-
 /**
  * Use the printview admin menu to change the step of a request
  * @param page Page instance from test
@@ -28,15 +12,8 @@ let serialEventCreated = false;
  * @param newStep new step, in format 'form name: step name'
  */
 const printAdminMenuChangeStep = async (page:Page, requestID:string, newStep:string) => {
-  const currentURL = page.url();
-  const newURL = LEAF_URLS.PRINTVIEW_REQUEST + requestID;
   const awaitPage = page.waitForResponse(res => res.url().includes('lastActionSummary') && res.status() === 200);
-  if (currentURL !== newURL) {
-    await page.goto(newURL);
-  } else {
-    await page.waitForLoadState('load');
-    await page.reload();
-  }
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + requestID);
   await awaitPage;
 
   const awaitSteps = page.waitForResponse(res => res.url().includes('steps') && res.status() === 200);
@@ -50,250 +27,161 @@ const printAdminMenuChangeStep = async (page:Page, requestID:string, newStep:str
   await dialog.getByRole('button', { name: 'Save Change' }).click();
 }
 
-test('Verify Event Name only allow alphanumerical', async ({ page}) => {
-   let incorrectNameInput: string [] = [`%2BSELECT%2A%20FROM%20admin%20--`, `'; DROP TABLE users;`, `$../..etc/passwd`, `<script>alert('XSS')</script>`];
-   let expectedConvertedInput: string [] = [`_2BSELECT_2A_20FROM_20adm`, `___DROP_TABLE_users_`, `______etc_passwd`, `_script_alert__XSS____scr`];
-    
-  for(let i = 0; i < incorrectNameInput.length; i++) {
 
+test.describe('Events can be created from side menu, names and descriptions are unique, editing and deletion', () => {
+  const randNum = Date.now(); //timestamp. unique but shorter than random - event name is limited to 25 chars
+  const uniqueEventName2 = `Event2 ${randNum}`;
+  const uniqueDescr2 = `Description2 ${randNum}`;
+
+  test('Create a new Event from the page Side Menu', async ({ page }) => {
     await loadWorkflow(page);
-    await expect(page.getByText('Return to Requestor')).toBeVisible();
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.getByText('Return to Requestor').click();
-    }); 
-
-    await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.getByRole('button', { name: 'Add Event' }).click();
-    });
-
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-    await awaitPromise(page, "groups", async (p:Page) => {
-      await p.getByRole('button', { name: 'Create Event' }).click();
-    });
-    await page.getByLabel('Event Name:').pressSequentially(incorrectNameInput[i]);
-    expect(
-      await page.getByLabel('Event Name:').inputValue(),
-      'Only allows alphanumeric letters and underscores for safety'
-    ).toBe(expectedConvertedInput[i]); 
-    
-  }
-
-  await page.getByRole('button', { name: 'Cancel' }).click();
-});
-
-
-test('Create and add a new Event from a workflow action', async ({ page}) => {
-  await loadWorkflow(page);
-  await expect(page.getByText('Return to Requestor')).toBeVisible();
-  await awaitPromise(page, "events", async (p:Page) => {
-    await p.getByText('Return to Requestor').click();
-  });
-
-  await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
-  await awaitPromise(page, "events", async (p:Page) => {
-    await p.getByRole('button', { name: 'Add Event' }).click();
-  });
-
-  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-  await awaitPromise(page, "groups", async (p:Page) => {
-    await p.getByRole('button', { name: 'Create Event' }).click();
-  });
-
-  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
-  expect(
-    await page.getByLabel('Event Name:').inputValue(),
-    'chars other than A-Z, 0-9 to be replaced with underscores'
-  ).toBe(uniqueEventName.replace(/[^a-z0-9]/gi, '_'));
-
-  await page.getByLabel('Short Description:').fill(uniqueDescr);
-  await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-  await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
-  await page.getByLabel('Notify Group:', { exact: true }).selectOption(eventGroupID);
-
-  await awaitPromise(page, "events", async (p:Page) => {
-    await p.getByRole('button', { name: 'Save' }).click();
-  });
-
-  await expect(
-    page.getByText(`Email - ${uniqueDescr}`),
-    'event created through the workflow action to be present and in the viewport'
-  ).toBeInViewport();
-  serialEventCreated = true;
-});
-
-test('Create a new Event from page Side Menu', async ({ page }) => {
-  await loadWorkflow(page);
-  await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
-  await awaitPromise(page, "customEvents", async (p:Page) => {
-    await p.getByRole('button', { name: 'Edit Events' }).click();
-  });
-
-  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
-  await awaitPromise(page, "groups", async (p:Page) => {
-    await p.getByRole('button', { name: 'Create a new Event' }).click();
-  });
-
-  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName2);
-  const expectedInputValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
-  expect(
-    await page.getByLabel('Event Name:').inputValue(), 'chars other than A-Z, 0-9 to be replaced with underscores'
-  ).toBe(expectedInputValue);
-
-  await page.getByLabel('Short Description:').fill(uniqueDescr2);
-  await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-  await page.getByLabel('Notify Next Approver Email:', { exact: true }).check();
-  await page.getByLabel('Notify Group:', { exact: true }).selectOption(eventGroupID);
-  await awaitPromise(page, "customEvents", async (p:Page) => {
-    await p.getByRole('button', { name: 'Save' }).click();
-  });
-
-  await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
-  const table = page.locator("#events");
-  await expect(table).toBeVisible();
-
-  const eventDisplayName = expectedInputValue.replace(/_+/g, " ");
-  await expect(
-    table.getByText(eventDisplayName, { exact: true }),
-    'new event name, with underscores replaced with spaces, to be present once in Event List'
-  ).toHaveCount(1);
-  await expect(
-    table.getByText(uniqueDescr2, { exact: true }),
-    'new event desription to be present once in Event List'
-  ).toHaveCount(1);
-});
-
-test.describe('Existing events can be added and removed from workflows', () => {
-  const eventTitle = `Email - ${uniqueDescr}`;
-
-  test(`An existing event can be added to a Workflow Action`, async ({ page }) => {
-    await loadWorkflow(page);
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.locator('#jsPlumb_1_51').click();
-    });
-    await awaitPromise(page, "workflow/events", async (p:Page) => {
-      await p.getByRole('button', { name: 'Add Event' }).click();
-    });
-
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-
-    await page.getByLabel('Add Event').locator('a').click();
-    await page.getByRole('option', { name: eventTitle }).click();
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.getByRole('button', { name: 'Save' }).click();
-    });
-
-    await expect(
-      page.getByText(eventTitle),
-      'selected event to have been added and to be in the viewport'
-    ).toBeInViewport();
-  });
-
-  test('An event can be removed from a Workflow Action', async ({ page }) => {
-    await loadWorkflow(page);
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.locator('#jsPlumb_1_51').click();
-    });
-
-    const eventsLi = page.locator('#stepInfo_2 li').filter({ hasText: eventTitle });
-    await expect(eventsLi, 'to be present once in the list of triggered events').toHaveCount(1);
-
-    await eventsLi.getByRole('button', { name: 'Remove Event' }).click();
-    await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-    await awaitPromise(page, `events`, async (p:Page) => {
-      await p.getByRole('button', { name: 'Yes' }).click();
-    }, 'DELETE');
-
-    await loadWorkflow(page);
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.locator('#jsPlumb_1_51').click();
-    });
-
-    await expect(
-      page.locator('#stepInfo_3 li').filter({ hasText: eventTitle }),
-      'not to be in the list of triggered events'
-    ).toHaveCount(0);
-  });
-});
-
-
-test('A duplicate Event Name is not allowed', async ({ page }) => {
-  await loadWorkflow(page);
-  await awaitPromise(page, "customEvents", async (p:Page) => {
-    await p.getByRole('button', { name: 'Edit Events' }).click();
-  });
-  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
- 
-  await awaitPromise(page, "groups", async (p:Page) => {
-    await p.getByRole('button', { name: 'Create a new Event' }).click();
-  });
-
-  await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
-  await page.getByLabel('Short Description: Notify').fill('test ' + uniqueDescr);
-
-  const expectedAlertMsg = `Event name already exists.`
-  page.on('dialog', async (dialog) => {
-    expect(dialog.type(), 'dialog type to be alert').toBe('alert');
-    expect(
-      dialog.message(), `alert content to be: ${expectedAlertMsg}`
-    ).toBe(expectedAlertMsg);
-    await dialog.accept();
-  });
-
-  const alertPromise = page.waitForEvent('dialog');
-  await page.getByRole('button', { name: 'Save' }).click();
-  await alertPromise;
-});
-
-test('A Duplicate Event Description is not allowed', async ({ page }) => {
-  await loadWorkflow(page);
-  await awaitPromise(page, "customEvents", async (p:Page) => {
-    await p.getByRole('button', { name: 'Edit Events' }).click();
-  });
-  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
-
-  await awaitPromise(page, "groups", async (p:Page) => {
-    await p.getByRole('button', { name: 'Create a new Event' }).click();
-  });
-
-  await page.getByLabel('Event Name:').pressSequentially('test ' + uniqueEventName);
-  await page.getByLabel('Short Description:').fill(uniqueDescr);
-
-  const expectedAlertMsg = `This description has already been used, please use another one.`;
-  page.on('dialog', async (dialog) => {
-    expect(dialog.type(), 'dialog type to be alert').toBe('alert');
-    expect(
-      dialog.message(), `alert content to be: ${expectedAlertMsg}`
-    ).toBe(expectedAlertMsg);
-    await dialog.accept();
-  });
-
-  const alertPromise = page.waitForEvent('dialog');
-  await page.getByRole('button', { name: 'Save' }).click();
-  await alertPromise;
-});
-
-
-//edit and then deletes uniqueEventName2
-test.describe('Events can be edited and deleted', () => {
-  const initialExpectedValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
-
-  const expectedEditedInputValue = uniqueEventNameEdit.replace(/[^a-z0-9]/gi, '_');
-  const expectedEventDisplayName = expectedEditedInputValue.replace(/_+/g, " ");
-
-  test('Workflow Event can be edited', async ({ page }) => {
-    await loadWorkflow(page);
+    await expect(page.getByRole('button', { name: 'Edit Events' })).toBeVisible();
     await awaitPromise(page, "customEvents", async (p:Page) => {
       await p.getByRole('button', { name: 'Edit Events' }).click();
     });
 
+    await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create a new Event' }).click();
+    });
+
+    await page.getByLabel('Event Name:').pressSequentially(uniqueEventName2);
+    const expectedInputValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
+    expect(
+      await page.getByLabel('Event Name:').inputValue(), 'chars other than A-Z, 0-9 to be replaced with underscores'
+    ).toBe(expectedInputValue);
+
+    await page.getByLabel('Short Description:').fill(uniqueDescr2);
+    await awaitPromise(page, "customEvents", async (p:Page) => {
+      await p.getByRole('button', { name: 'Save' }).click();
+    });
+
+    await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+    const table = page.locator("#events");
+    await expect(table).toBeVisible();
+
+    const eventDisplayName = expectedInputValue.replace(/_+/g, " ");
+    await expect(
+      table.getByText(eventDisplayName, { exact: true }),
+      'new event name, with underscores replaced with spaces, to be present once in Event List'
+    ).toHaveCount(1);
+    await expect(
+      table.getByText(uniqueDescr2, { exact: true }),
+      'new event desription to be present once in Event List'
+    ).toHaveCount(1);
+  });
+
+  test('Verify Event Name only allow alphanumerical', async ({ page}) => {
+    let incorrectNameInput: string [] = [`%2BSELECT%2A%20FROM%20admin%20--`, `'; DROP TABLE users;`, `$../..etc/passwd`, `<script>alert('XSS')</script>`];
+    let expectedConvertedInput: string [] = [`_2BSELECT_2A_20FROM_20adm`, `___DROP_TABLE_users_`, `______etc_passwd`, `_script_alert__XSS____scr`];
+      
+    for(let i = 0; i < incorrectNameInput.length; i++) {
+
+      await loadWorkflow(page);
+      await expect(page.getByText('Return to Requestor')).toBeVisible();
+      await awaitPromise(page, "events", async (p:Page) => {
+        await p.getByText('Return to Requestor').click();
+      }); 
+
+      await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+      await awaitPromise(page, "events", async (p:Page) => {
+        await p.getByRole('button', { name: 'Add Event' }).click();
+      });
+
+      await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+      await awaitPromise(page, "groups", async (p:Page) => {
+        await p.getByRole('button', { name: 'Create Event' }).click();
+      });
+      await page.getByLabel('Event Name:').pressSequentially(incorrectNameInput[i]);
+      expect(
+        await page.getByLabel('Event Name:').inputValue(),
+        'Only allows alphanumeric letters and underscores for safety'
+      ).toBe(expectedConvertedInput[i]); 
+      
+    }
+
+    await page.getByRole('button', { name: 'Cancel' }).click();
+  });
+
+  test('A duplicate Event Name is not allowed', async ({ page }) => {
+    await loadWorkflow(page);
+    await awaitPromise(page, "customEvents", async (p:Page) => {
+      await p.getByRole('button', { name: 'Edit Events' }).click();
+    });
+    await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create a new Event' }).click();
+    });
+
+    await page.getByLabel('Event Name:').pressSequentially(uniqueEventName2);
+    await page.getByLabel('Short Description: Notify').fill('test ' + uniqueDescr2);
+
+    const expectedAlertMsg = `Event name already exists.`
+    page.on('dialog', async (dialog) => {
+      expect(dialog.type(), 'dialog type to be alert').toBe('alert');
+      expect(
+        dialog.message(), `alert content to be: ${expectedAlertMsg}`
+      ).toBe(expectedAlertMsg);
+      await dialog.accept();
+    });
+
+    const alertPromise = page.waitForEvent('dialog');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await alertPromise;
+  });
+
+  test('A Duplicate Event Description is not allowed', async ({ page }) => {
+    await loadWorkflow(page);
+    await awaitPromise(page, "customEvents", async (p:Page) => {
+      await p.getByRole('button', { name: 'Edit Events' }).click();
+    });
+    await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create a new Event' }).click();
+    });
+
+    await page.getByLabel('Event Name:').pressSequentially('test ' + uniqueEventName2);
+    await page.getByLabel('Short Description:').fill(uniqueDescr2);
+
+    const expectedAlertMsg = `This description has already been used, please use another one.`;
+    page.on('dialog', async (dialog) => {
+      expect(dialog.type(), 'dialog type to be alert').toBe('alert');
+      expect(
+        dialog.message(), `alert content to be: ${expectedAlertMsg}`
+      ).toBe(expectedAlertMsg);
+      await dialog.accept();
+    });
+
+    const alertPromise = page.waitForEvent('dialog');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await alertPromise;
+  });
+
+  const uniqueEventNameEdit = `Evt Edit ${randNum}`;
+  const uniqueDescrEdit = `Descr Edit ${randNum}`;
+  const customEventNotifyGroupID = '111';
+  const initialExpectedValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
+  const expectedEditedInputValue = uniqueEventNameEdit.replace(/[^a-z0-9]/gi, '_');
+  const expectedEventDisplayName = expectedEditedInputValue.replace(/_+/g, " ");
+  test('Workflow Event can be edited', async ({ page }) => {
+    await loadWorkflow(page);
+    let awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`customEvents`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Edit Events' }).click();
+    await awaitResponse;
+
     await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
 
-    await awaitPromise(page, `_CustomEvent_${initialExpectedValue}`, async (p:Page) => {
-      await p
-        .locator(`#editor_CustomEvent_${initialExpectedValue}`)
-        .getByRole(`button`, { name:`Edit` }).click();
-    });
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`_CustomEvent_${initialExpectedValue}`) && res.status() === 200
+    );
+    await page
+      .locator(`#editor_CustomEvent_${initialExpectedValue}`)
+      .getByRole(`button`, { name:`Edit` }).click();
+    await awaitResponse;
 
     await page.getByLabel('Event Name:').fill('');
     await page.getByLabel('Event Name:').pressSequentially(uniqueEventNameEdit);
@@ -305,11 +193,12 @@ test.describe('Events can be edited and deleted', () => {
     await page.getByLabel('Short Description:').fill(uniqueDescrEdit);
     await page.getByLabel('Notify Requestor Email:').check();
     await page.getByLabel('Notify Next Approver Email:').check();
-    await page.getByLabel('Notify Group:').selectOption(eventGroupID);
-
-    await awaitPromise(page, "workflow/customEvents", async (p:Page) => {
-      await p.getByRole('button', { name: 'Save' }).click();
-    });
+    await page.getByLabel('Notify Group:').selectOption(customEventNotifyGroupID);
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`workflow/customEvents`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    await awaitResponse;
 
     await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
     const table = page.locator("#events");
@@ -322,6 +211,20 @@ test.describe('Events can be edited and deleted', () => {
       table.getByText(uniqueDescrEdit, { exact: true }),
       'edited event desription to be present once in Event List'
     ).toHaveCount(1);
+
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`_CustomEvent_${expectedEditedInputValue}`) && res.status() === 200
+    );
+    await page
+      .locator(`#editor_CustomEvent_${expectedEditedInputValue}`)
+      .getByRole(`button`, { name:`Edit` }).click();
+    await awaitResponse;
+
+    await expect(page.locator('.ui-dialog-title:visible')).toHaveText(`Edit Event ${expectedEventDisplayName}`);
+    await expect(page.getByLabel('Short Description:')).toHaveValue(uniqueDescrEdit);
+    await expect(page.getByLabel('Notify Requestor Email:')).toBeChecked();
+    await expect(page.getByLabel('Notify Next Approver Email:')).toBeChecked();
+    await expect(page.getByLabel('Notify Group:')).toHaveValue(customEventNotifyGroupID);
   });
 
   test('Workflow Event can be deleted', async ({ page }) => {
@@ -331,36 +234,93 @@ test.describe('Events can be edited and deleted', () => {
 });
 
 /*
-Email event recipients and formatting of request fields
-Uses uniqueEventName/uniqueDescr, still on return to requestor, to test To/Cc, subject, body customization
-Uses the Cancel Notification to test To/Cc, body customization */
-test.describe('Custom Event and Cancel Notification: template customization and request field formatting', () => {
-  const testFileName = 'test.txt';
-  const testImageName = 'test.png';
-  const groupDisplayName = '2911 TEST Group';
-  const customEventEmailSubject = `${groupDisplayName} email ${uniqueEventName}`;
-  const sendBackEventEmailSubject = `RETURNED: ${tempTestRequestTitle} (#${requestId}) to`;
+Uses a Custom Event added to return to requestor to test To/Cc, subject, body request field formatting.
+This Return to Requestor action also triggers the Send Back event to confirm requestor notification.
+Adds Builtin Notify Next to a Submit action to test notify next recipients (and to populate a prior recipient address).
+Uses a customized template for the Cancel Notification to test custom To/Cc and request field formatting.
+-
+Formatted fields can be processed through either FormWorkflow (custom email and scripts)
+or through Email (generic events like Cancel). Custom Event and Cancel are used to test both paths */
+test.describe('Test Email Template customization and request field formatting', () => {
+  const requestId = '123'; //test case request
+  const requestURL = LEAF_URLS.PRINTVIEW_REQUEST + requestId;
+  const testCaseRequestTitle = 'Test Email Events';
+  const randNum = Date.now(); //timestamp. unique but shorter than random - event name is limited to 25 chars
+  const tempTestRequestTitle = testCaseRequestTitle + randNum;
+  const customEventNotifyGroupID = '111';
+  const uniqueEventName = `Event ${randNum}`;
+  const uniqueDescr = `Description ${randNum}`;
+  let customEventAddedToWorkflow = false;
+  test('Create and add a new Custom Event from a workflow action', async ({ page}) => {
+    await loadWorkflow(page);
+    await expect(page.getByText('Return to Requestor')).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByText('Return to Requestor').click();
+    });
+
+    await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByRole('button', { name: 'Add Event' }).click();
+    });
+
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create Event' }).click();
+    });
+
+    await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
+    expect(
+      await page.getByLabel('Event Name:').inputValue(),
+      'chars other than A-Z, 0-9 to be replaced with underscores'
+    ).toBe(uniqueEventName.replace(/[^a-z0-9]/gi, '_'));
+
+    await page.getByLabel('Short Description:').fill(uniqueDescr);
+    await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
+    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID);
+
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByRole('button', { name: 'Save' }).click();
+    });
+
+    await expect(
+      page.getByText(`Email - ${uniqueDescr}`),
+      'event created through the workflow action to be present and in the viewport'
+    ).toBeInViewport();
+    customEventAddedToWorkflow = true;
+  });
+
+  const notifyNextLabel = 'Email - Notify the next approver';
+
+  const customEventEmailSubject = `Custom Event ${uniqueEventName}`;
+  const sendBackEventEmailSubject = `RETURNED: ${tempTestRequestTitle} (#${requestId})`;
+  const notifyNextEventEmailSubject = `Action needed: ${tempTestRequestTitle} (#${requestId})`;
   const cancelEventEmailSubject = `The request for ${tempTestRequestTitle} (#${requestId}) has been canceled.`;
+
+
   const directEmailTo = 'test4892.to@fake.com';
   const directEmailCC = 'test4892.cc@fake.com';
-  const emailTo = '{{$field.49}}\n{{$field.50}}\n' + directEmailTo; //ind49(emp), ind50(grp)
-  const emailCC = '{{$field.54}}\n{{$field.53}}\n' + directEmailCC; //ind54(emp), ind53(grp)
+  const customEventEmailTo = '{{$field.49}}\n{{$field.50}}\n' + directEmailTo; //ind49(emp), ind50(grp)
+  const customEventEmailCC = '{{$field.54}}\n{{$field.53}}\n' + directEmailCC; //ind54(emp), ind53(grp)
+  //flip to/cc to distinguish cancel notice recipients from prior recipients - email server will show to/cc fields
+  const cancelEventEmailTo = customEventEmailCC;
+  const cancelEventEmailCC = customEventEmailTo;
 
+  //Data used to test field formatting is from a standard database test case record with constant IDs */
   let bodyContent = '<p>request fields</p><br>';
   const expectedEmailContent = [
     { id: 34, format: 'text', content: '53778' },
     { id: 35, format: 'textarea', content: 'test textarea' },
     { id: 36, format: 'number', content: '93817' },
     { id: 37, format: 'currency', content: '42.00' },
-    { id: 38, format: 'fileupload', content: `<a href="${LEAF_URLS.PORTAL_HOME}file.php?form=${requestId}&amp;id=38&amp;series=1&amp;file=0">${testFileName}</a>` },
-    { id: 39, format: 'image', content: `<a href="${LEAF_URLS.PORTAL_HOME}file.php?form=${requestId}&amp;id=39&amp;series=1&amp;file=0">${testImageName}</a>` },
+    { id: 38, format: 'fileupload', content: `<a href="${LEAF_URLS.PORTAL_HOME}file.php?form=${requestId}&amp;id=38&amp;series=1&amp;file=0">test.txt</a>` },
+    { id: 39, format: 'image', content: `<a href="${LEAF_URLS.PORTAL_HOME}file.php?form=${requestId}&amp;id=39&amp;series=1&amp;file=0">test.png</a>` },
     { id: 41, format: 'date', content: '12/05/2025' },
     { id: 42, format: 'dropdown', content: '3 &amp; 4' },
     { id: 43, format: 'multiselect', content: '<ul><li>c &amp; d</li></ul>' },
     { id: 44, format: 'checkbox', content: 'custom label' },
     { id: 45, format: 'checkboxes', content: '<ul><li>6</li><li>7 &amp; 8</li></ul>' },
     { id: 46, format: 'radio', content: 'G &amp; H' },
-    { id: 48, format: 'grid', content: null }, //more specific assessment of html table
+    { id: 48, format: 'grid', content: null }, //grid will be handled separately
     { id: 49, format: 'orgchart_employee', content: 'Boyd Schaden' },
     { id: 50, format: 'orgchart_group', content: '2911 TEST Group' },
     { id: 51, format: 'orgchart_position', content: 'All things wonderful' },
@@ -385,10 +345,25 @@ test.describe('Custom Event and Cancel Notification: template customization and 
     'Cecille.Maggio@fake-email.com',
     directEmailCC
   ];
-  const expectedEventEmailRecipients = [
-    'Donte.Glover@fake-email.com', //notify group 206 is on the event itself
-    'tester.tester@fake-email.com' //notify requetor is on the event itself
+
+  const expectedCustomEventEmailRecipients = [
+    'Cierra.Feil@fake-email.com',  //notify group custom event config (group 111)
+    'tester.tester@fake-email.com' //notify requestor custom event config
   ];
+
+  const expectedSendBackEmailRecipients = [
+    'tester.tester@fake-email.com',
+  ];
+  const expectedNotifyNextEmailRecipients = [
+    'Donte.Glover@fake-email.com',
+  ];
+  const expectedCancelEmailRecipients = [ //all prior notified
+    ...expectedToFieldEmailRecipients,
+    ...expectedCcFieldEmailRecipients,
+    ...expectedCustomEventEmailRecipients,
+    'Donte.Glover@fake-email.com',
+  ];
+  const cancelEventExpectedCcRecipients = expectedToFieldEmailRecipients;
 
   const confirmFieldFormatting = async (page:Page) => {
     const msgframe = page.frameLocator('.htmlview');
@@ -444,8 +419,7 @@ test.describe('Custom Event and Cancel Notification: template customization and 
     }
   }
 
-  test('Customize Email Template content and trigger event', async({page}) => {
-    //navigation through Workflow Editor
+  test('Custom Email Event: Navigation from Workflow Editor modal and Template Customization ', async({page}) => {
     await loadWorkflow(page);
     await awaitPromise(page, "customEvents", async (p:Page) => {
       await p.getByRole('button', { name: 'Edit Events' }).click();
@@ -476,8 +450,8 @@ test.describe('Custom Event and Cancel Notification: template customization and 
 
     //Add custom content to To, Cc, Subject and Body of the custom event
     await expect(editorPage.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
-    await editorPage.getByRole('textbox', { name: 'Email To:' }).fill(emailTo);
-    await editorPage.getByRole('textbox', { name: 'Email CC:' }).fill(emailCC);
+    await editorPage.getByRole('textbox', { name: 'Email To:' }).fill(customEventEmailTo);
+    await editorPage.getByRole('textbox', { name: 'Email CC:' }).fill(customEventEmailCC);
 
     let subjectArea = editorPage
       .locator('#divSubject')
@@ -495,7 +469,10 @@ test.describe('Custom Event and Cancel Notification: template customization and 
     await bodyArea.fill(bodyContent); 
 
     await editorPage.getByRole('button', { name: 'Save Changes' }).click();
+    await expect(editorPage.getByRole('button', { name: 'Restore Original'})).toBeVisible();
+  });
 
+  test('Custom Email Event: confirm email recipients (To/Cc/notify) and email field content', async({page}) => {
     //Trigger the custom event with Return to Requestor workflow action
     await page.goto(requestURL);
     await page.waitForLoadState('load');
@@ -508,14 +485,15 @@ test.describe('Custom Event and Cancel Notification: template customization and 
 
     await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
-  });
 
-  test('Custom Email Event: email recipients (To/Cc/notify) and email field content', async({page}) => {
     await page.goto('http://host.docker.internal:5080/');
     await page.waitForLoadState('load');
+    //custom event email config
     await confirmEmailRecipients(page, customEventEmailSubject, expectedToFieldEmailRecipients);
-    await confirmEmailRecipients(page, customEventEmailSubject, expectedCcFieldEmailRecipients);
-    await confirmEmailRecipients(page, customEventEmailSubject, expectedEventEmailRecipients);
+    await confirmEmailRecipients(page, customEventEmailSubject, expectedCcFieldEmailRecipients, true);
+    await confirmEmailRecipients(page, customEventEmailSubject, expectedCustomEventEmailRecipients);
+    //send back email config
+    await confirmEmailRecipients(page, sendBackEventEmailSubject, expectedSendBackEmailRecipients);
 
     await page.getByText(customEventEmailSubject).first().click();
 
@@ -525,44 +503,110 @@ test.describe('Custom Event and Cancel Notification: template customization and 
     if(dangerBtnCount > 0) {
       await dangerBtn.click();
     }
+    //test body content for form-workflow mediated Custom Event
     await confirmFieldFormatting(page);
 
+    //delete the emails
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(customEventEmailSubject)).toHaveCount(0);
 
     await page.getByText(sendBackEventEmailSubject).first().click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(sendBackEventEmailSubject)).toHaveCount(0);
+  });
 
-    //resubmit request and move it back to 'Requestor Followup' step
+  test(`An existing event can be added to a Workflow Action (Notify Next on Submit)`, async ({ page }) => {
+    await loadWorkflow(page, "1");
+    let awaitResponse = page.waitForResponse(res =>
+      res.url().includes('events') && res.status() === 200
+    );
+    await page.locator('#jsPlumb_1_50').click();
+    await awaitResponse;
+
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes('workflow/events') && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Add Event' }).click();
+    await awaitResponse;
+
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await page.getByLabel('Add Event').locator('a').click();
+    await page.getByRole('option', { name: notifyNextLabel }).click();
+
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes('events') && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    await awaitResponse;
+
+    await expect(
+      page.getByText(notifyNextLabel),
+      'Notify Next event to have been added and to be in the viewport'
+    ).toBeInViewport();
+  });
+
+  test('Built-In Notify Next Approver: event sends to expected recipients', async({page}) => {
     await page.goto(requestURL);
     await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();
     await awaitPromise(page, 'lastActionSummary', async (p:Page) => {
       await p.getByRole('button', { name: 'Re-Submit Request' }).click();
     });
     await printAdminMenuChangeStep(page, requestId, 'General Workflow: Requestor Followup');
+
+    await page.goto('http://host.docker.internal:5080/');
+    await page.waitForLoadState('load');
+    //built in notify next config
+    await confirmEmailRecipients(page, notifyNextEventEmailSubject, expectedNotifyNextEmailRecipients);
   });
 
-  test('Cancel Notification: email recipients (custom To/Cc) and email field content', async({page}) => {
+  test('An event can be removed from a Workflow Action', async ({ page }) => {
+    await loadWorkflow(page, "1");
+    let awaitResponse = page.waitForResponse(res =>
+      res.url().includes('events') && res.status() === 200
+    );
+    await page.locator('#jsPlumb_1_50').click();
+    await awaitResponse;
+
+    const eventsLi = page.locator('#stepInfo_-1 li').filter({ hasText: notifyNextLabel });
+    await expect(eventsLi, 'to be present once in the list of triggered events').toHaveCount(1);
+
+    await eventsLi.getByRole('button', { name: 'Remove Event' }).click();
+    await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+    await awaitPromise(page, `events`, async (p:Page) => {
+      await p.getByRole('button', { name: 'Yes' }).click();
+    }, 'DELETE');
+
+    await loadWorkflow(page);
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.locator('#jsPlumb_1_50').click();
+    });
+
+    await expect(
+      page.locator('#stepInfo_-1 li').filter({ hasText: notifyNextLabel }),
+      'not to be in the list of triggered events'
+    ).toHaveCount(0);
+  });
+
+  test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', async({page}) => {
     let requestIsCancelled = false;
     let emailFound = false;
 
     try {
-      let awaitPromise = page.waitForResponse(res =>
+      let awaitResponse = page.waitForResponse(res =>
         res.url().includes('emailTemplates/custom') && res.status() === 200
       );
       await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_templates_email');
-      await awaitPromise;
+      await awaitResponse;
 
-      awaitPromise = page.waitForResponse(res =>
+      awaitResponse = page.waitForResponse(res =>
         res.url().includes('emailTemplates/_LEAF_cancel_notification_body') && res.status() === 200
       );
       await page.getByRole('button', { name: 'Cancel Notification', exact: true }).click();
-      await awaitPromise;
+      await awaitResponse;
 
       await expect(page.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
-      await page.getByRole('textbox', { name: 'Email To:' }).fill(emailTo);
-      await page.getByRole('textbox', { name: 'Email CC:' }).fill(emailCC);
+      await page.getByRole('textbox', { name: 'Email To:' }).fill(cancelEventEmailTo);
+      await page.getByRole('textbox', { name: 'Email CC:' }).fill(cancelEventEmailCC);
       await page.getByRole('button', { name: 'Use Code Editor' }).click();
 
       const bodyArea = page
@@ -571,11 +615,11 @@ test.describe('Custom Event and Cancel Notification: template customization and 
       await bodyArea.press('Backspace');
       await bodyArea.fill(bodyContent); 
 
-      awaitPromise = page.waitForResponse(res => 
+      awaitResponse = page.waitForResponse(res =>
         res.url().includes('emailTemplates/_LEAF_cancel_notification_body') && res.status() === 200
       );
       await page.getByRole('button', { name: 'Save Changes' }).click();
-      await awaitPromise;
+      await awaitResponse;
 
       //trigger the Cancel Notice
       await deleteTestRequestByRequestID(page, requestId);
@@ -584,9 +628,9 @@ test.describe('Custom Event and Cancel Notification: template customization and 
       //Confirm recipients set in To/Cc and field formatting
       await page.goto('http://host.docker.internal:5080/');
       await page.waitForLoadState('load');
-      await confirmEmailRecipients(page, cancelEventEmailSubject, expectedToFieldEmailRecipients);
-      await confirmEmailRecipients(page, cancelEventEmailSubject, expectedCcFieldEmailRecipients);
-      await confirmEmailRecipients(page, cancelEventEmailSubject, expectedEventEmailRecipients);
+      await confirmEmailRecipients(page, cancelEventEmailSubject, expectedCancelEmailRecipients);
+      await confirmEmailRecipients(page, cancelEventEmailSubject, cancelEventExpectedCcRecipients, true);
+
 
       await expect(page.getByText(cancelEventEmailSubject).first()).toBeVisible();
       await page.getByText(cancelEventEmailSubject).first().click();
@@ -596,25 +640,25 @@ test.describe('Custom Event and Cancel Notification: template customization and 
       if(dangerBtnCount > 0) {
         await dangerBtn.click();
       }
-
+      //test body content for Email class mediated Custom Event
       await confirmFieldFormatting(page);
 
     } finally {
       /* POST RUN CLEANUP */
       //if the Cancel Notification template was customizated, restore it
-      let awaitPromise = page.waitForResponse(res => 
+      let awaitResponse = page.waitForResponse(res =>
         res.url().includes('emailTemplates/custom') && res.status() === 200
       );
       await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_templates_email');
-      const customTemplatesRes = await awaitPromise;
+      const customTemplatesRes = await awaitResponse;
       const customTemplates:Array<string> = await customTemplatesRes.json() ?? [];
       const hasCustomCancel = customTemplates.some(t => t.includes('LEAF_cancel_notification'));
       if(hasCustomCancel === true) {
-        awaitPromise = page.waitForResponse(res =>
+        awaitResponse = page.waitForResponse(res =>
           res.url().includes('emailTemplates/_LEAF_cancel_notification_body') && res.status() === 200
         );
         await page.getByRole('button', { name: 'Cancel Notification', exact: true }).click();
-        await awaitPromise;
+        await awaitResponse;
 
         await page.getByRole('button', { name: 'Restore Original' }).click();
         await page.getByRole('button', { name: 'Yes' }).click();
@@ -633,15 +677,15 @@ test.describe('Custom Event and Cancel Notification: template customization and 
       if(requestIsCancelled === true) {
         await printAdminMenuChangeStep(page, requestId, 'General Workflow - Requestor Followup');
         await expect(page.locator('span.buttonNorm', { hasText: 'Restore Request' })).toBeVisible();
-        awaitPromise = page.waitForResponse(res => 
+        awaitResponse = page.waitForResponse(res =>
           res.url().includes('ajaxIndex.php?a=restore') && res.status() === 200
         );
         await page.locator('span.buttonNorm', { hasText: 'Restore Request' }).click();
-        await awaitPromise;
+        await awaitResponse;
       }
 
       //delete the custom event
-      if(serialEventCreated === true) {
+      if(customEventAddedToWorkflow === true) {
         await page.goto(LEAF_URLS.WORKFLOW_EDITOR_WF + "1");
         await deleteWorkflowEvent(page, uniqueEventName.replace(/[^a-z0-9]/gi, '_'), uniqueDescr);
       }
@@ -649,7 +693,7 @@ test.describe('Custom Event and Cancel Notification: template customization and 
       page.goto(requestURL);
       await page.getByRole('button', { name: 'Edit Title'}).click();
       await expect(page.locator('#title')).toBeVisible();
-      await page.locator('#title').fill(requestTitle);
+      await page.locator('#title').fill(testCaseRequestTitle);
       await page.getByRole('button', { name: 'Save Change' }).click();
       await expect(page.locator('#requestTitle')).not.toHaveText(tempTestRequestTitle);
     }
