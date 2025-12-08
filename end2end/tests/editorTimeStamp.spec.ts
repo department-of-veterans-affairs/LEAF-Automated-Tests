@@ -165,11 +165,18 @@ test('Verify File Manager Timestamp',  async ({ page }) => {
 
     const mainDiv = page.locator('#fileList >> div');
     const rows = mainDiv.locator('table tbody tr');
+
+    //Verify Size Column is present
+    await expect(
+      page.getByRole('columnheader', { name: 'Sort by Size' }),
+      'Size Column Header is present'
+    ).toBeVisible();
+
     const rowCount = await rows.count();
   for (let i = 0; i < rowCount; i++) {
     const anchorText = await rows.locator('a').nth(i).innerText();
     if(anchorText?.includes(fileLocationName)) {
-        //Verify Date this test does not include Time
+       
         const cellTime = await rows.nth(i).locator('td:nth-child(2)').innerText();
 
         const displayedTimeSplit = cellTime.split(" ", 2 );
@@ -189,7 +196,7 @@ test('Verify File Manager Timestamp',  async ({ page }) => {
         expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
         //Delete File
-        const deleteRow = rows.nth(i).locator('td:nth-child(3) a');
+        const deleteRow = rows.nth(i).locator('td:nth-child(4) a');
         await deleteRow.click();
         await expect(
           page.getByRole('button', { name: 'Yes' }),
