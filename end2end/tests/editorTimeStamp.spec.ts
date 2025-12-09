@@ -143,9 +143,10 @@ test('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-test('Verify File Manager Timestamp',  async ({ page }) => {
+test.only('Verify File Manager Timestamp',  async ({ page }) => {
 
     const fileLocationName = '../files/LEAF-5005.txt';
+    const fileSize = '9 B';
 
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
 
@@ -195,6 +196,10 @@ test('Verify File Manager Timestamp',  async ({ page }) => {
         expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
         expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
+        //Verify the Size Column value
+        const cellSize = await rows.nth(i).locator('td:nth-child(3)').innerText();
+        expect(cellSize).toBe(fileSize);
+       
         //Delete File
         const deleteRow = rows.nth(i).locator('td:nth-child(4) a');
         await deleteRow.click();
