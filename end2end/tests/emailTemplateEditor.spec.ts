@@ -151,6 +151,7 @@ test.describe('editing of email template content', () => {
       await page.getByRole('button', { name: 'Save Changes' }).click();
       subjectSaved = true;
   
+      await page.reload();
       await expect(page.locator('li').filter({ hasText: selectedTemplate + ' (custom)'}).locator('span')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Restore Original' })).toBeVisible();
   
