@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+
+/**
+ * Test for LEAF 5182
+ */
 test('Files With Prefix LEAF_ Are Not Allowed', async ({ page }) => {
   await page.goto('https://host.docker.internal/Test_Nexus/admin/?a=mod_templates_reports');
 
