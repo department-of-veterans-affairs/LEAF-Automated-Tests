@@ -143,7 +143,7 @@ test('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-test.only('Verify File Manager Timestamp',  async ({ page }) => {
+test('Verify File Manager Timestamp',  async ({ page }) => {
 
     const fileLocationName = '../files/LEAF-5005.txt';
     const fileSize = '9 B';
