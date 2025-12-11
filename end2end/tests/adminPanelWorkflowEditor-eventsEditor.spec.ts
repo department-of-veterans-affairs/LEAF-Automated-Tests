@@ -484,7 +484,11 @@ test.describe('Test Email Template customization and request field formatting', 
     await expect(page.locator('#requestTitle')).toHaveText(tempTestRequestTitle);
 
     await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
+    const awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`Workflow/${requestId}/apply`) && res.status() === 200
+    );
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
+    await awaitResponse;
 
     await page.goto('http://host.docker.internal:5080/');
     await page.waitForLoadState('load');
