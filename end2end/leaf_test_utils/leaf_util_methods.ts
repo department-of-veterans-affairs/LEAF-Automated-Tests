@@ -247,15 +247,17 @@ export const deleteTestRequestByRequestID = async (page:Page, requestID:string) 
 /**
  * Confirm an email with the given subject is present once and confirm recipients
  * @param page Page instance from test
- * @param emailSubjectText the text in the email's subject field, used to find the email
+ * @param emailSubjectText text in the email's subject field, used to find the email
  * @param expectedEmailRecipients array of email addresses that should be found as recipients
+ * @param testCcFields boolean - whether addresses should be specifically in the Cc field
  */
 export const confirmEmailRecipients = async (
   page:Page,
   emailSubjectText:string,
-  expectedEmailRecipients:Array<string>
+  expectedEmailRecipients:Array<string>,
+  testCcFields:boolean = false
 ) => {
-  const row = page.locator(`tr:has-text("${emailSubjectText}")`);
+  const row = page.locator(`.messagelist tr:has-text("${emailSubjectText}")`);
   await expect(
     row, `one email with subject ${emailSubjectText} to be found`
   ).toHaveCount(1);
@@ -266,6 +268,25 @@ export const confirmEmailRecipients = async (
       recipientEls.filter({ hasText: expectedEmailRecipients[i] }),
       `email recipient ${expectedEmailRecipients[i]} to be present once`
     ).toHaveCount(1);
+  }
+  //if cc, also check the headers to confirm they are in the cc field
+  if (testCcFields === true) {
+    await row.click();
+    await page.getByRole('tab', { name: 'Headers' }).click();
+
+    const headersTableBody = page.locator('#pane-headers table.el-table__body tbody');
+    await expect(headersTableBody).toBeVisible();
+    const ccCell = page.getByText(/^Cc$/);
+    const ccRow = headersTableBody.locator('tr').filter({ has: ccCell });
+    const content = await ccRow.locator('td').last().textContent() ?? '';
+    const ccAddresses = content.split(',').map(address => address.trim());
+
+    for (let i = 0; i < expectedEmailRecipients.length; i++) {
+      const isCC = ccAddresses.some(addr => addr === expectedEmailRecipients[i]);
+      expect(isCC).toBe(true);
+    }
+    //swap back to View
+    await page.getByRole('tab', { name: 'View' }).click();
   }
 }
 
