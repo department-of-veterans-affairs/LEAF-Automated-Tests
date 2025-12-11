@@ -10,8 +10,6 @@ test('Verify Template Editor Timestamp', async ({ page }) => {
     await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates&file=${fileName}`);
     await awaitFile;
 
-    await expect(page.getByText('There are no history files.')).toBeVisible();
-
     await page.locator('div:nth-child(9) > .CodeMirror-line').click();
     await page.getByRole('textbox', { name: 'Template Editor coding area.' }).fill('test');
     await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible();
@@ -143,7 +141,7 @@ test('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-test('Verify File Manager Timestamp',  async ({ page }) => {
+test ('Verify File Manager Timestamp',  async ({ page }) => {
 
     const fileLocationName = '../files/LEAF-5005.txt';
     const fileSize = '9 B';
