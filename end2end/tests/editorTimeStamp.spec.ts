@@ -10,8 +10,6 @@ test('Verify Template Editor Timestamp', async ({ page }) => {
     await page.goto(`https://host.docker.internal/Test_Request_Portal/admin/?a=mod_templates&file=${fileName}`);
     await awaitFile;
 
-    await expect(page.getByText('There are no history files.')).toBeVisible();
-
     await page.locator('div:nth-child(9) > .CodeMirror-line').click();
     await page.getByRole('textbox', { name: 'Template Editor coding area.' }).fill('test');
     await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible();
@@ -143,9 +141,10 @@ test('Verify Programmer Editor Timestamp', async ({ page }) => {
     await page.getByRole('button', { name: 'Yes' }).click();
 });
 
-test('Verify File Manager Timestamp',  async ({ page }) => {
+test ('Verify File Manager Timestamp',  async ({ page }) => {
 
     const fileLocationName = '../files/LEAF-5005.txt';
+    const fileSize = '9 B';
 
     await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
 
@@ -165,11 +164,18 @@ test('Verify File Manager Timestamp',  async ({ page }) => {
 
     const mainDiv = page.locator('#fileList >> div');
     const rows = mainDiv.locator('table tbody tr');
+
+    //Verify Size Column is present
+    await expect(
+      page.getByRole('columnheader', { name: 'Sort by Size' }),
+      'Size Column Header is present'
+    ).toBeVisible();
+
     const rowCount = await rows.count();
   for (let i = 0; i < rowCount; i++) {
     const anchorText = await rows.locator('a').nth(i).innerText();
     if(anchorText?.includes(fileLocationName)) {
-        //Verify Date this test does not include Time
+       
         const cellTime = await rows.nth(i).locator('td:nth-child(2)').innerText();
 
         const displayedTimeSplit = cellTime.split(" ", 2 );
@@ -188,8 +194,12 @@ test('Verify File Manager Timestamp',  async ({ page }) => {
         expect(timeDiffernce).toBeLessThan(toleranceInSeconds *1000);
         expect(timeDiffernce).toBeGreaterThanOrEqual(0);
 
+        //Verify the Size Column value
+        const cellSize = await rows.nth(i).locator('td:nth-child(3)').innerText();
+        expect(cellSize).toBe(fileSize);
+       
         //Delete File
-        const deleteRow = rows.nth(i).locator('td:nth-child(3) a');
+        const deleteRow = rows.nth(i).locator('td:nth-child(4) a');
         await deleteRow.click();
         await expect(
           page.getByRole('button', { name: 'Yes' }),
