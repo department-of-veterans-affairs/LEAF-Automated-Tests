@@ -117,7 +117,7 @@ test ('Validate Sensitive Form Preview Mode', { tag: ['@LEAF-5016'] }, async ({ 
     await expect(page.locator('#leafsFormPreview')).toContainText(fieldNameText);
 
     // Add for testing LEAF 5168
-    await expect(page.getByText('Sensitive', { exact: true })).toHaveClass('sensitiveIndicator');
+    await expect(page.getByText('Sensitive🔒', { exact: true })).toHaveClass('sensitiveIndicator');
          
     await page.getByRole('button', { name: 'Close' }).click();
 
