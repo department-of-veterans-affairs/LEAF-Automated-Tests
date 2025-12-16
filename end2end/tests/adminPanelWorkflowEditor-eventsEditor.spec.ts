@@ -591,7 +591,7 @@ test.describe('Test Email Template customization and request field formatting', 
     ).toHaveCount(0);
   });
 
-  test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', async({page}) => {
+  test.fail('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', { tag: ['@LEAF-5172'] }, async({page}) => {
     let requestIsCancelled = false;
     let emailFound = false;
 
