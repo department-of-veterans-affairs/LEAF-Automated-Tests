@@ -437,3 +437,49 @@ test('Hashtag/Pound/number sign in query', async ({ page }) => {
   await page.getByRole('button', { name: 'Generate Report' }).click();
   await expect(page.locator('#reportStats')).toContainText('0 records');
 });
+
+/**
+ * Test for LEAF-5137
+ * Verifies once report is built that shortened URL 
+ * and shared URL works correctly 
+ */
+test('Shortened URL Redirect', async ({ page }) => {
+  //Login and build report
+  await page.goto(LEAF_URLS.PORTAL_HOME);
+  await page.getByText('Report Builder Create custom').click();
+  await page.getByRole('button', { name: 'Next Step' }).click();
+  await page.locator('#indicatorList').getByText('Type Of Request').click();
+  await page.locator('#indicatorList').getByText('Current Status').click();
+  await page.locator('#indicatorList').getByText('Action Button').click();
+  await page.locator('#indicatorList').getByText('Days Since Last Action').click();
+  await page.getByRole('button', { name: 'Generate Report' }).click();
+
+  //Get shareable link and navigate to shared link
+  await page.getByRole('button', { name: 'Share Report' }).click();
+  await page.getByText('https://host.docker.internal/').click();
+  await page.getByText('https://host.docker.internal/').press('ControlOrMeta+a');
+  await page.getByText('https://host.docker.internal/').press('ControlOrMeta+c');
+
+  // Read the copied URL from the clipboard and navigate to it
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  const copiedUrl = await page.evaluate(() => navigator.clipboard.readText());
+  if (!copiedUrl || !copiedUrl.startsWith('http')) {
+    throw new Error(`Clipboard does not contain a valid URL: "${copiedUrl}"`);
+  }
+  await page.goto(copiedUrl, { waitUntil: 'networkidle' });
+
+  //Validate redirected page
+  await expect(page.getByText('Report Builder')).toBeVisible();
+
+  //Create and verify shortened JSON link
+  await page.getByRole('button', { name: 'JSON' }).click();
+  await page.getByRole('button', { name: 'Shorten Link' }).click();
+  await page.getByRole('button', { name: 'Copy to Clipboard' }).click();
+  const copiedShortUrl = await page.evaluate(() => navigator.clipboard.readText());
+  if (!copiedShortUrl || !copiedShortUrl.startsWith('http')) {
+    throw new Error(`Clipboard does not contain a valid URL: "${copiedShortUrl}"`);
+  }
+  await page.goto(copiedShortUrl, { waitUntil: 'networkidle' });
+  await page.locator('div').click();
+  await expect(page.locator('body')).toContainText('{');
+});
