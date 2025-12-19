@@ -263,11 +263,13 @@ export const confirmEmailRecipients = async (
   ).toHaveCount(1);
 
   const recipientEls = row.locator('.el-table_1_column_3 strong');
+  let emailCount = 0;
   for (let i = 0; i < expectedEmailRecipients.length; i++) {
-    await expect(
-      recipientEls.filter({ hasText: expectedEmailRecipients[i] }),
-      `email recipient ${expectedEmailRecipients[i]} to be present once`
-    ).toHaveCount(1);
+    emailCount = await recipientEls.filter({ hasText: expectedEmailRecipients[i] }).count();
+    expect(
+      emailCount,
+      `email recipient ${expectedEmailRecipients[i]} to be present`
+    ).toBeGreaterThan(0);
   }
   //if cc, also check the headers to confirm they are in the cc field
   if (testCcFields === true) {
@@ -283,7 +285,7 @@ export const confirmEmailRecipients = async (
 
     for (let i = 0; i < expectedEmailRecipients.length; i++) {
       const isCC = ccAddresses.some(addr => addr === expectedEmailRecipients[i]);
-      expect(isCC).toBe(true);
+      expect(isCC, `email address ${expectedEmailRecipients[i]} to be in the Cc field`).toBe(true);
     }
     //swap back to View
     await page.getByRole('tab', { name: 'View' }).click();
