@@ -1,9 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 import {
-  awaitPromise, loadWorkflow, deleteWorkflowEvent, confirmEmailRecipients, LEAF_URLS, deleteTestRequestByRequestID
+  awaitPromise, loadWorkflow, deleteWorkflowEvent,
+  confirmEmailRecipients, LEAF_URLS, deleteTestRequestByRequestID, getRandomId
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
-test.describe.configure({ mode: 'serial' });
 
 /**
  * Use the printview admin menu to change the step of a request
@@ -27,8 +27,38 @@ const printAdminMenuChangeStep = async (page:Page, requestID:string, newStep:str
   await dialog.getByRole('button', { name: 'Save Change' }).click();
 }
 
+test('Verify Event Name only allow alphanumerical', async ({ page}) => {
+  let incorrectNameInput: string [] = [`%2BSELECT%2A%20FROM%20admin%20--`, `'; DROP TABLE users;`, `$../..etc/passwd`, `<script>alert('XSS')</script>`];
+  let expectedConvertedInput: string [] = [`_2BSELECT_2A_20FROM_20adm`, `___DROP_TABLE_users_`, `______etc_passwd`, `_script_alert__XSS____scr`];
+
+  for(let i = 0; i < incorrectNameInput.length; i++) {
+    await loadWorkflow(page);
+    await expect(page.getByText('Return to Requestor')).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByText('Return to Requestor').click();
+    });
+
+    await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByRole('button', { name: 'Add Event' }).click();
+    });
+
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create Event' }).click();
+    });
+    await page.getByLabel('Event Name:').pressSequentially(incorrectNameInput[i]);
+    expect(
+      await page.getByLabel('Event Name:').inputValue(),
+      'Only allows alphanumeric letters and underscores for safety'
+    ).toBe(expectedConvertedInput[i]);
+  }
+  await page.getByRole('button', { name: 'Cancel' }).click();
+});
+
 
 test.describe('Events can be created from side menu, names and descriptions are unique, editing and deletion', () => {
+  test.describe.configure({ mode: 'serial' });
   const randNum = Date.now(); //timestamp. unique but shorter than random - event name is limited to 25 chars
   const uniqueEventName2 = `Event2 ${randNum}`;
   const uniqueDescr2 = `Description2 ${randNum}`;
@@ -69,38 +99,6 @@ test.describe('Events can be created from side menu, names and descriptions are 
       table.getByText(uniqueDescr2, { exact: true }),
       'new event desription to be present once in Event List'
     ).toHaveCount(1);
-  });
-
-  test('Verify Event Name only allow alphanumerical', async ({ page}) => {
-    let incorrectNameInput: string [] = [`%2BSELECT%2A%20FROM%20admin%20--`, `'; DROP TABLE users;`, `$../..etc/passwd`, `<script>alert('XSS')</script>`];
-    let expectedConvertedInput: string [] = [`_2BSELECT_2A_20FROM_20adm`, `___DROP_TABLE_users_`, `______etc_passwd`, `_script_alert__XSS____scr`];
-      
-    for(let i = 0; i < incorrectNameInput.length; i++) {
-
-      await loadWorkflow(page);
-      await expect(page.getByText('Return to Requestor')).toBeVisible();
-      await awaitPromise(page, "events", async (p:Page) => {
-        await p.getByText('Return to Requestor').click();
-      }); 
-
-      await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
-      await awaitPromise(page, "events", async (p:Page) => {
-        await p.getByRole('button', { name: 'Add Event' }).click();
-      });
-
-      await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-      await awaitPromise(page, "groups", async (p:Page) => {
-        await p.getByRole('button', { name: 'Create Event' }).click();
-      });
-      await page.getByLabel('Event Name:').pressSequentially(incorrectNameInput[i]);
-      expect(
-        await page.getByLabel('Event Name:').inputValue(),
-        'Only allows alphanumeric letters and underscores for safety'
-      ).toBe(expectedConvertedInput[i]); 
-      
-    }
-
-    await page.getByRole('button', { name: 'Cancel' }).click();
   });
 
   test('A duplicate Event Name is not allowed', async ({ page }) => {
@@ -233,6 +231,7 @@ test.describe('Events can be created from side menu, names and descriptions are 
   });
 });
 
+
 /*
 Uses a Custom Event added to return to requestor to test To/Cc, subject, body request field formatting.
 This Return to Requestor action also triggers the Send Back event to confirm requestor notification.
@@ -242,6 +241,7 @@ Uses a customized template for the Cancel Notification to test custom To/Cc and 
 Formatted fields can be processed through either FormWorkflow (custom email and scripts)
 or through Email (generic events like Cancel). Custom Event and Cancel are used to test both paths */
 test.describe('Test Email Template customization and request field formatting', () => {
+  test.describe.configure({ mode: 'serial' });
   const requestId = '123'; //test case request
   const requestURL = LEAF_URLS.PRINTVIEW_REQUEST + requestId;
   const testCaseRequestTitle = 'Test Email Events';
@@ -320,7 +320,16 @@ test.describe('Test Email Template customization and request field formatting', 
     { id: 44, format: 'checkbox', content: 'custom label' },
     { id: 45, format: 'checkboxes', content: '<ul><li>6</li><li>7 &amp; 8</li></ul>' },
     { id: 46, format: 'radio', content: 'G &amp; H' },
-    { id: 48, format: 'grid', content: null }, //grid will be handled separately
+    {
+      id: 48,
+      format: 'grid',
+      content: null, //grid will be handled separately
+      headers: [ 'single line cell',	'multi-line cell',	'date cell',	'dropdown cell' ],
+      rows:  [
+        [ 'test single line', 'test multi line', '09/17/2025', '1' ],
+        [ 'test single line 2', 'test multi line 2', '12/05/2025', '2' ],
+      ],
+    },
     { id: 49, format: 'orgchart_employee', content: 'Boyd Schaden' },
     { id: 50, format: 'orgchart_group', content: '2911 TEST Group' },
     { id: 51, format: 'orgchart_position', content: 'All things wonderful' },
@@ -365,7 +374,17 @@ test.describe('Test Email Template customization and request field formatting', 
   ];
   const cancelEventExpectedCcRecipients = expectedToFieldEmailRecipients;
 
-  const confirmFieldFormatting = async (page:Page) => {
+  /**
+  * helper unique to this file that facilitates testing of request fields in email template content
+  * */
+  const confirmFieldFormatting = async (page:Page, expectedEmailContent:Array<any>) => {
+    //danger btn might be visible on some browsers and needs to be clicked to allow the html to display
+    const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
+    const dangerBtnCount = await dangerBtn.count();
+    if(dangerBtnCount > 0) {
+      await dangerBtn.click();
+    }
+
     const msgframe = page.frameLocator('.htmlview');
     for(let i = 0; i < expectedEmailContent.length; i++) {
       const id = expectedEmailContent[i].id;
@@ -375,11 +394,8 @@ test.describe('Test Email Template customization and request field formatting', 
       await expect(testField).toBeVisible();
 
       if (f === 'grid') {
-        const headers = [ 'single line cell',	'multi-line cell',	'date cell',	'dropdown cell' ];
-        const rows = [
-          [ 'test single line',	'test multi line',	'09/17/2025',	'1' ],
-          [ 'test single line 2',	'test multi line 2',	'12/05/2025',	'2' ],
-        ];
+        const headers = expectedEmailContent[i].headers;
+        const rows = expectedEmailContent[i].rows;
 
         const table = testField.locator(`table`);
         await expect(
@@ -472,7 +488,7 @@ test.describe('Test Email Template customization and request field formatting', 
     await expect(editorPage.getByRole('button', { name: 'Restore Original'})).toBeVisible();
   });
 
-  test('Custom Email Event: confirm email recipients (To/Cc/notify) and email field content', async({page}) => {
+  test('Custom Email Event: email recipients (To/Cc/notify), email field content for all formats', async({page}) => {
     //Trigger the custom event with Return to Requestor workflow action
     await page.goto(requestURL);
     await page.waitForLoadState('load');
@@ -501,14 +517,8 @@ test.describe('Test Email Template customization and request field formatting', 
 
     await page.getByText(customEventEmailSubject).first().click();
 
-    //this might be visible on some browsers, in which case it needs to be clicked to allow the html to display
-    const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
-    const dangerBtnCount = await dangerBtn.count();
-    if(dangerBtnCount > 0) {
-      await dangerBtn.click();
-    }
     //test body content for form-workflow mediated Custom Event
-    await confirmFieldFormatting(page);
+    await confirmFieldFormatting(page, expectedEmailContent);
 
     //delete the emails
     await page.getByRole('button', { name: 'Delete' }).click();
@@ -645,7 +655,7 @@ test.describe('Test Email Template customization and request field formatting', 
         await dangerBtn.click();
       }
       //test body content for Email class mediated Custom Event
-      await confirmFieldFormatting(page);
+      await confirmFieldFormatting(page, expectedEmailContent);
 
     } finally {
       /* POST RUN CLEANUP */
