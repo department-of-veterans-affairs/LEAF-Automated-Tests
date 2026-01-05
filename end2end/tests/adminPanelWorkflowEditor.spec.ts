@@ -132,6 +132,7 @@ test('Changing Form Field appears in Workflow History', async ({ page }) => {
 
         // View History and verify that the form field change is listed
         await page.getByRole('button', { name: 'View History' }).click();
+        await expect(page.locator('#historyName')).toContainText(workflowName);
         const historyText = `Tester Tester changed form field to ${textSectionID} in workflow step: ${stepID}`;
         await expect(page.locator('tbody')).toContainText(historyText);
         await page.getByRole('button', { name: 'Close' }).click();
