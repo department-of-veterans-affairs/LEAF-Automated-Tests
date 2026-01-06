@@ -21,8 +21,12 @@ test.beforeEach( async ({ page }) => {
 
   console.log(`There are ${rowCount} rows in the File Manager table.`);
 
-  if(rowCount > 0) {
-    for (let i = 0; i < rowCount; i++) {
+  //Verify no files exist, if they do delete them
+  const cellText = await page.getByRole('cell').innerText();
+  
+  if(!cellText.includes('No Results')) {
+    console.log(' files exist in File Manager.');
+     for (let i = 0; i < rowCount; i++) {
       const deleteRow = rows.nth(i).locator('td:nth-child(4) a'); // Always delete the first row
       await deleteRow.click();
 
@@ -33,7 +37,9 @@ test.beforeEach( async ({ page }) => {
 
       await page.getByRole('button', { name: 'Yes' }).click();
     }
-  }   
+   } else {
+    console.log('no Files exist in File Manager, deleting them.');
+  }  
 
 });
 
