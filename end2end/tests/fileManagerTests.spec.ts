@@ -25,7 +25,7 @@ test.beforeEach( async ({ page }) => {
     const fileTableBodyRows = page.locator('#fileList >> div table tbody tr');
     await expect(fileTableBodyRows).toHaveCount(fileCount);
     for (let i = 0; i < fileCount; i++) {
-     fileTableBodyRows.nth(i).locator('fileList table tbody tr');
+    await fileTableBodyRows.nth(i).locator('td a', { hasText: /^Delete$/ }).click();
       await expect(
         page.getByRole('button', {name: 'Yes'}),
         'Delete File'
