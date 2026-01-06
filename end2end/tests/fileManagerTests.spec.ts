@@ -12,34 +12,34 @@ test.beforeEach( async ({ page }) => {
   //Reset filename before each test
   testFileName = null;
 
-  //Go to File Manager and verify no files exist
-   await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
+  const awaitRes = page.waitForResponse(res =>
+    res.url().includes('system/files') && res.status() === 200
+  );
 
-  const parentDiv = page.locator('#fileList >> div');
-  const rows = parentDiv.locator('table tbody tr');
-  const rowCount = await rows.count();
+  await page.goto('https://host.docker.internal/Test_Request_Portal/admin/?a=mod_file_manager');
+  const fileRes = await awaitRes;
+  const filesData = await fileRes.json();
+  const fileCount = filesData?.length;
 
-  console.log(`There are ${rowCount} rows in the File Manager table.`);
-
-  //Verify no files exist, if they do delete them
-  const cellText = await page.getByRole('cell').innerText();
-  
-  if(!cellText.includes('No Results')) {
-    console.log(' files exist in File Manager.');
-     for (let i = 0; i < rowCount; i++) {
-      const deleteRow = rows.nth(i).locator('td:nth-child(4) a'); // Always delete the first row
-      await deleteRow.click();
-
+  if(fileCount > 0) {
+    const fileTableBodyRows = page.locator('#fileList >> div table tbody tr');
+    await expect(fileTableBodyRows).toHaveCount(fileCount);
+    for (let i = 0; i < fileCount; i++) {
+     fileTableBodyRows.nth(i).locator('fileList table tbody tr');
       await expect(
-        page.getByRole('button', { name: 'Yes' }),
+        page.getByRole('button', {name: 'Yes'}),
         'Delete File'
       ).toBeVisible();
+    
+      const awaitDel = page.waitForResponse(res =>
+        res.url().includes('mod_file_manager') && res.status() === 200    
+      )
 
       await page.getByRole('button', { name: 'Yes' }).click();
-    }
-   } else {
-    console.log('no Files exist in File Manager, deleting them.');
-  }  
+      await awaitDel;
+    } 
+  } 
+ 
 
 });
 
