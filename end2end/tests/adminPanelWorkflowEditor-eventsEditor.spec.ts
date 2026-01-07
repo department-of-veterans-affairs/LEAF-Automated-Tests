@@ -333,7 +333,7 @@ test.describe('Test Email Template customization and request field formatting', 
     },
     { id: 49, format: 'orgchart_employee', content: 'Boyd Schaden' },
     { id: 50, format: 'orgchart_group', content: '2911 TEST Group' },
-    { id: 51, format: 'orgchart_position', content: 'All things wonderful(--)' },
+    { id: 51, format: 'orgchart_position', content: 'All things wonderful (--)' },
   ];
   expectedEmailContent.forEach(entry => {
     bodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
@@ -531,8 +531,12 @@ test.describe('Test Email Template customization and request field formatting', 
   });
 
   let needToKnowFormID:string = '';
-  test.fail(
-    'Custom Email Event (NeedToKnow): email recipients (requestor, group), non-read field content display',
+  /** Custom event for a Need to Know form.
+   *  Sensitive data should never display.
+   *  Data from a need to know form should not display if the emailed group is not a workflow dependency.
+   */
+  test(
+    'Custom Email Event (NeedToKnow): email recipients (requestor, group), content display (no group read)',
     async({page}) =>
   {
     /* prep - form, template update, and request creation (cannot alter test database form) */
