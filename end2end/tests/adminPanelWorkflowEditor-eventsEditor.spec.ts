@@ -334,6 +334,7 @@ test.describe('Test Email Template customization and request field formatting', 
     { id: 49, format: 'orgchart_employee', content: 'Boyd Schaden' },
     { id: 50, format: 'orgchart_group', content: '2911 TEST Group' },
     { id: 51, format: 'orgchart_position', content: 'All things wonderful (--)' },
+    { id: 99999, format: '', content: '' },
   ];
   expectedEmailContent.forEach(entry => {
     bodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
@@ -392,7 +393,11 @@ test.describe('Test Email Template customization and request field formatting', 
       const f = expectedEmailContent[i].format;
       const c = expectedEmailContent[i].content;
       const testField = msgframe.locator('#format_test_' + id);
-      await expect(testField).toBeVisible();
+      if (c === '') {
+        await expect(testField).toHaveText('');
+      } else {
+        await expect(testField).toBeVisible();
+      }
 
       if (f === 'grid') {
         const headers = expectedEmailContent[i].headers;
@@ -716,7 +721,7 @@ test.describe('Test Email Template customization and request field formatting', 
     ).toHaveCount(0);
   });
 
-  test.fail('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', { tag: ['@LEAF-5172'] }, async({page}) => {
+  test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', { tag: ['@LEAF-5172'] }, async({page}) => {
     let requestIsCancelled = false;
     let emailFound = false;
 
