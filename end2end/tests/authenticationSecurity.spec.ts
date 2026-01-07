@@ -15,14 +15,14 @@ test.describe('Authentication Security', () => {
     await page.goto(`${LEAF_URLS.PORTAL_HOME}auth_domain/?r=${encodedRedirect}`);
 
     // After authentication completes, should be on the requested page
-    await expect(page).toHaveURL(/.*a=reports/);
+    await expect(page, `Should redirect to reports page after authentication with redirect parameter: ${requestedPage}`).toHaveURL(/.*a=reports/);
   });
 
   test('login uses default redirect when no redirect parameter provided', async ({ page }) => {
     await page.goto(`${LEAF_URLS.PORTAL_HOME}auth_domain/`);
 
     // Should redirect to portal home
-    await expect(page).toHaveURL(new RegExp(LEAF_URLS.PORTAL_HOME));
+    await expect(page, `Should redirect to portal home when no redirect parameter provided`).toHaveURL(new RegExp(LEAF_URLS.PORTAL_HOME));
   });
 
   test('malicious redirect is blocked', async ({ page }) => {
@@ -35,8 +35,10 @@ test.describe('Authentication Security', () => {
 
     // Should NOT redirect to evil.com, should stay on host.docker.internal
     await page.waitForLoadState('networkidle');
-    expect(page.url()).not.toContain('evil.com');
-    expect(page.url()).toContain('host.docker.internal');
+    const finalURL = page.url();
+
+    expect(finalURL, `SECURITY: Should NOT redirect to malicious domain evil.com, got: ${finalURL}`).not.toContain('evil.com');
+    expect(finalURL, `SECURITY: Should stay on our host (host.docker.internal) after blocking redirect, got: ${finalURL}`).toContain('host.docker.internal');
   });
 
   test('relative paths are properly handled', async ({ page }) => {
@@ -47,7 +49,7 @@ test.describe('Authentication Security', () => {
     await page.goto(`${LEAF_URLS.PORTAL_HOME}auth_domain/?r=${encodedRedirect}`);
 
     // Verify we successfully redirected to the admin page
-    await expect(page).toHaveURL(/.*admin/);
+    await expect(page, `Should successfully redirect to admin page using relative path: ${relativePath}`).toHaveURL(/.*admin/);
     await page.waitForLoadState('networkidle');
   });
 });

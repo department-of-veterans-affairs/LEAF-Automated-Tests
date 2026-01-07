@@ -39,22 +39,19 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
-    expect(createResponse.ok()).toBeTruthy();
+    expect(createResponse.ok(), 'API should successfully create shortened link').toBeTruthy();
     const shortCode = JSON.parse(await createResponse.text());
-    console.log(`Created short code: ${shortCode} for path: ${validPath}`);
+    expect(shortCode.length, `Short code should be at least 5 characters, got: ${shortCode}`).toBeGreaterThanOrEqual(5);
 
     // Access the shortened URL using open.php?report={shortcode}
     await page.goto(`https://host.docker.internal/Test_Request_Portal/open.php?report=${shortCode}`);
 
     const finalURL = page.url();
-    console.log(`Final URL: ${finalURL}`);
 
     // Verify we got redirected to the reports page
-    expect(finalURL).toContain('a=reports');
-    expect(finalURL).toContain('v=3');
-    expect(finalURL).toContain('host.docker.internal');
-
-    console.log(`✓ Valid redirect working: ${finalURL}`);
+    expect(finalURL, `Should redirect to reports page with 'a=reports' parameter, got: ${finalURL}`).toContain('a=reports');
+    expect(finalURL, `Should preserve 'v=3' parameter in redirect, got: ${finalURL}`).toContain('v=3');
+    expect(finalURL, `Should stay on our host (host.docker.internal), got: ${finalURL}`).toContain('host.docker.internal');
   });
 
   test('SECURITY: malicious external URL does NOT redirect to external domain', async ({ page }) => {
@@ -72,22 +69,17 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
+    expect(createResponse.ok(), 'API should accept the URL for storage (validation happens on retrieval)').toBeTruthy();
     const shortCode = JSON.parse(await createResponse.text());
-    console.log(`Created short code: ${shortCode} for malicious URL: ${maliciousURL}`);
 
     // Try to access the malicious shortened link
     await page.goto(`https://host.docker.internal/Test_Request_Portal/open.php?report=${shortCode}`);
 
     const finalURL = page.url();
-    console.log(`Final URL after accessing malicious short link: ${finalURL}`);
 
     // CRITICAL SECURITY CHECK: We should NOT be at evil.com
-    expect(finalURL).not.toContain('evil.com');
-
-    // We should still be on our host
-    expect(finalURL).toContain('host.docker.internal');
-
-    console.log(`✓ SECURITY VERIFIED: Malicious redirect blocked, stayed on: ${finalURL}`);
+    expect(finalURL, `SECURITY: Should NOT redirect to evil.com, got: ${finalURL}`).not.toContain('evil.com');
+    expect(finalURL, `SECURITY: Should stay on our host after blocking malicious redirect, got: ${finalURL}`).toContain('host.docker.internal');
   });
 
   test('SECURITY: protocol-relative malicious URL blocked', async ({ page }) => {
@@ -104,18 +96,16 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
+    expect(createResponse.ok(), 'API should accept protocol-relative URL for storage').toBeTruthy();
     const shortCode = JSON.parse(await createResponse.text());
-    console.log(`Testing protocol-relative URL: ${maliciousURL} -> ${shortCode}`);
 
     await page.goto(`https://host.docker.internal/Test_Request_Portal/open.php?report=${shortCode}`);
 
     const finalURL = page.url();
 
     // Should NOT redirect to evil.com
-    expect(finalURL).not.toContain('evil.com');
-    expect(finalURL).toContain('host.docker.internal');
-
-    console.log(`✓ Protocol-relative URL blocked: ${finalURL}`);
+    expect(finalURL, `SECURITY: Protocol-relative URL should NOT redirect to evil.com, got: ${finalURL}`).not.toContain('evil.com');
+    expect(finalURL, `SECURITY: Should stay on our host after blocking protocol-relative attack, got: ${finalURL}`).toContain('host.docker.internal');
   });
 
   test('SECURITY: another malicious domain blocked', async ({ page }) => {
@@ -132,18 +122,16 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
+    expect(createResponse.ok(), 'API should accept external URL for storage').toBeTruthy();
     const shortCode = JSON.parse(await createResponse.text());
-    console.log(`Testing malicious domain: ${maliciousURL} -> ${shortCode}`);
 
     await page.goto(`https://host.docker.internal/Test_Request_Portal/open.php?report=${shortCode}`);
 
     const finalURL = page.url();
 
     // Should NOT redirect to malicious.example.com
-    expect(finalURL).not.toContain('malicious.example.com');
-    expect(finalURL).toContain('host.docker.internal');
-
-    console.log(`✓ Malicious domain blocked: ${finalURL}`);
+    expect(finalURL, `SECURITY: Should NOT redirect to malicious.example.com, got: ${finalURL}`).not.toContain('malicious.example.com');
+    expect(finalURL, `SECURITY: Should stay on our host after blocking external domain, got: ${finalURL}`).toContain('host.docker.internal');
   });
 
   test('admin path redirects correctly', async ({ page }) => {
@@ -160,19 +148,17 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
+    expect(createResponse.ok(), 'API should successfully create admin shortlink').toBeTruthy();
     const shortCode = JSON.parse(await createResponse.text());
-    console.log(`Created short code for admin: ${shortCode}`);
 
     await page.goto(`https://host.docker.internal/Test_Request_Portal/open.php?report=${shortCode}`);
 
     const finalURL = page.url();
 
     // Verify we're on admin page
-    expect(finalURL).toContain('admin');
-    expect(finalURL).toContain('host.docker.internal');
-    await expect(page.getByRole('heading', { name: 'Get Help' })).toBeVisible();
-
-    console.log(`✓ Admin path redirect working: ${finalURL}`);
+    expect(finalURL, `Should redirect to admin page, got: ${finalURL}`).toContain('admin');
+    expect(finalURL, `Should stay on our host, got: ${finalURL}`).toContain('host.docker.internal');
+    await expect(page.getByRole('heading', { name: 'Get Help' }), 'Admin page should display "Get Help" heading').toBeVisible();
   });
 
   test('report link storage and deduplication works', async ({ page }) => {
@@ -190,7 +176,7 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
-    expect(response1.ok()).toBeTruthy();
+    expect(response1.ok(), 'First shortlink creation should succeed').toBeTruthy();
     const shortCode1 = JSON.parse(await response1.text());
 
     // Create second short code with same data
@@ -204,11 +190,12 @@ test.describe('Shortener Security - Redirect Validation', () => {
         ignoreHTTPSErrors: true
       }
     );
+
+    expect(response2.ok(), 'Second shortlink creation should succeed').toBeTruthy();
     const shortCode2 = JSON.parse(await response2.text());
 
-    // Should be identical (proves DB storage)
-    expect(shortCode1).toBe(shortCode2);
-    console.log(`✓ Report link deduplication working: ${shortCode1}`);
+    // Should be identical (proves DB storage and hash-based deduplication)
+    expect(shortCode1, `Duplicate URLs should return same short code. First: ${shortCode1}, Second: ${shortCode2}`).toBe(shortCode2);
   });
 
   test('form query retrieval works correctly', async ({ page }) => {
@@ -231,8 +218,9 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
-    expect(createResponse.ok()).toBeTruthy();
+    expect(createResponse.ok(), 'Form query shortlink creation should succeed').toBeTruthy();
     const shortCode = JSON.parse(await createResponse.text());
+    expect(shortCode.length, `Short code should be at least 5 characters, got: ${shortCode}`).toBeGreaterThanOrEqual(5);
 
     // Retrieve using the correct pattern: api/open/form/query/_{shortcode}
     const retrieveURL = `https://host.docker.internal/Test_Request_Portal/api/open/form/query/_${shortCode}`;
@@ -240,12 +228,11 @@ test.describe('Shortener Security - Redirect Validation', () => {
       ignoreHTTPSErrors: true
     });
 
-    expect(retrieveResponse.ok()).toBeTruthy();
+    expect(retrieveResponse.ok(), `Form query retrieval should succeed for URL: ${retrieveURL}`).toBeTruthy();
     const data = await retrieveResponse.json();
 
     // Verify we got record 5 back
-    expect(data).toHaveProperty('5');
-    console.log(`✓ Form query retrieved successfully`);
+    expect(data, 'Form query should return data with record ID 5').toHaveProperty('5');
   });
 
   test('short codes have valid base56 format', async ({ page }) => {
@@ -260,15 +247,14 @@ test.describe('Shortener Security - Redirect Validation', () => {
       }
     );
 
+    expect(response.ok(), 'Shortlink creation should succeed').toBeTruthy();
     const shortCode = JSON.parse(await response.text());
 
     // At least 5 characters (due to offset of 10000000)
-    expect(shortCode.length).toBeGreaterThanOrEqual(5);
+    expect(shortCode.length, `Short code should be at least 5 characters due to offset, got: ${shortCode}`).toBeGreaterThanOrEqual(5);
 
     // Only valid base56 characters (no 0, 1, I, O, l)
     const validChars = /^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]+$/;
-    expect(shortCode).toMatch(validChars);
-
-    console.log(`✓ Short code format valid: ${shortCode}`);
+    expect(shortCode, `Short code should only contain base56 characters (no 0, 1, I, O, l), got: ${shortCode}`).toMatch(validChars);
   });
 });
