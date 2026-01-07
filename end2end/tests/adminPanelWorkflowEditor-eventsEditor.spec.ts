@@ -160,7 +160,7 @@ test.describe('Events can be created from side menu, names and descriptions are 
 
   const uniqueEventNameEdit = `Evt Edit ${randNum}`;
   const uniqueDescrEdit = `Descr Edit ${randNum}`;
-  const customEventNotifyGroupID = '111';
+  const customEventNotifyGroupID_noRead = '111';
   const initialExpectedValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
   const expectedEditedInputValue = uniqueEventNameEdit.replace(/[^a-z0-9]/gi, '_');
   const expectedEventDisplayName = expectedEditedInputValue.replace(/_+/g, " ");
@@ -192,7 +192,7 @@ test.describe('Events can be created from side menu, names and descriptions are 
     await page.getByLabel('Short Description:').fill(uniqueDescrEdit);
     await page.getByLabel('Notify Requestor Email:').check();
     await page.getByLabel('Notify Next Approver Email:').check();
-    await page.getByLabel('Notify Group:').selectOption(customEventNotifyGroupID);
+    await page.getByLabel('Notify Group:').selectOption(customEventNotifyGroupID_noRead);
     awaitResponse = page.waitForResponse(res =>
       res.url().includes(`workflow/customEvents`) && res.status() === 200
     );
@@ -223,7 +223,7 @@ test.describe('Events can be created from side menu, names and descriptions are 
     await expect(page.getByLabel('Short Description:')).toHaveValue(uniqueDescrEdit);
     await expect(page.getByLabel('Notify Requestor Email:')).toBeChecked();
     await expect(page.getByLabel('Notify Next Approver Email:')).toBeChecked();
-    await expect(page.getByLabel('Notify Group:')).toHaveValue(customEventNotifyGroupID);
+    await expect(page.getByLabel('Notify Group:')).toHaveValue(customEventNotifyGroupID_noRead);
   });
 
   test('Workflow Event can be deleted', async ({ page }) => {
@@ -248,10 +248,20 @@ test.describe('Test Email Template customization and request field formatting', 
   const testCaseRequestTitle = 'Test Email Events';
   const randNum = Date.now(); //timestamp. unique but shorter than random - event name is limited to 25 chars
   const tempTestRequestTitle = testCaseRequestTitle + randNum;
-  const customEventNotifyGroupID = '111';
+  const customEventNotifyGroupID_noRead = '111';
+  const customEventNotifyGroupID_read = '206';
   const uniqueEventName = `Event ${randNum}`;
   const uniqueDescr = `Description ${randNum}`;
+
   let customEventAddedToWorkflow = false;
+
+  const ntk_data2 = 'sensitive data entry';
+  const ntk_data3 = 'non-sensitive data entry';
+  let needToKnowFormID:string = '';
+  let needToKnowRequestID:string = '';
+  let ntkQ2_id = '';
+  let ntkQ3_id = '';
+
   test('Create and add a new Custom Event from a workflow action', async ({ page}) => {
     await loadWorkflow(page);
     await expect(page.getByText('Return to Requestor')).toBeVisible();
@@ -277,7 +287,7 @@ test.describe('Test Email Template customization and request field formatting', 
 
     await page.getByLabel('Short Description:').fill(uniqueDescr);
     await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID);
+    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID_noRead);
 
     await awaitPromise(page, "events", async (p:Page) => {
       await p.getByRole('button', { name: 'Save' }).click();
@@ -512,7 +522,7 @@ test.describe('Test Email Template customization and request field formatting', 
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
     await awaitResponse;
 
-    await page.goto('http://host.docker.internal:5080/');
+    await page.goto(LEAF_URLS.EMAIL_SERVER);
     await page.waitForLoadState('load');
     //custom event email config
     await confirmEmailRecipients(page, customEventEmailSubject, expectedToFieldEmailRecipients);
@@ -535,33 +545,29 @@ test.describe('Test Email Template customization and request field formatting', 
     await expect(page.getByText(sendBackEventEmailSubject)).toHaveCount(0);
   });
 
-  let needToKnowFormID:string = '';
   /** Custom event for a Need to Know form.
    *  Sensitive data should never display.
    *  Data from a need to know form should not display if the emailed group is not a workflow dependency.
    */
-  test(
-    'Custom Email Event (NeedToKnow): email recipients (requestor, group), content display (no group read)',
-    async({page}) =>
-  {
+  test('Custom Email Event (NeedToKnow): email recipients (requestor, group), content display (no group read)', async({page}) => {
     /* prep - form, template update, and request creation (cannot alter test database form) */
     const testID = getRandomId();
 
-    const needToKnowFormID = await createTestForm(page, testID, '');
+    needToKnowFormID = await createTestForm(page, testID, '');
     await page.getByLabel('Status:').selectOption('1');
     await page.getByLabel('Workflow:').selectOption('1');
 
     await addFormQuestion(page, 'Add Section', 'Header');
-    const q2 = await addFormQuestion(page, 'Add Question to Section', 'sensitive data', 'text', '', true);
-    const q3 = await addFormQuestion(page, 'Add Question to Section', 'non sensitive data (NTK form)', 'text');
+    ntkQ2_id = await addFormQuestion(page, 'Add Question to Section', 'sensitive data', 'text', '', true);
+    ntkQ3_id = await addFormQuestion(page, 'Add Question to Section', 'non sensitive data (NTK form)', 'text');
 
     const mockDataEntry = {
-      [q2]: 'sensitive data entry',
-      [q3]: 'non-sensitive data entry'
+      [ntkQ2_id]: ntk_data2,
+      [ntkQ3_id]: ntk_data3,
     };
     const needToKnowExpectedNoReadContent = [
-      { id: q2, format: 'text', content: '**********' },
-      { id: q3, format: 'text', content: '' },
+      { id: ntkQ2_id, format: 'text', content: '**********' },
+      { id: ntkQ3_id, format: 'text', content: '' },
     ];
 
 
@@ -609,27 +615,27 @@ test.describe('Test Email Template customization and request field formatting', 
     await awaitResponse;
 
     //create and submit a test request.  Move it and then trigger the wf event.
-    const newRequestID = await createTestRequest(page, 'AS - Service', `req${testID}`, testID);
-    await expect(page.locator(`.response.blockIndicator_${q2} input`)).toBeVisible();
+    needToKnowRequestID = await createTestRequest(page, 'AS - Service', `req${testID}`, testID);
+    await expect(page.locator(`.response.blockIndicator_${ntkQ2_id} input`)).toBeVisible();
 
-    await page.locator(`.response.blockIndicator_${q2} input`).fill(mockDataEntry[q2]);
-    await page.locator(`.response.blockIndicator_${q3} input`).fill(mockDataEntry[q3]);
+    await page.locator(`.response.blockIndicator_${ntkQ2_id} input`).fill(mockDataEntry[ntkQ2_id]);
+    await page.locator(`.response.blockIndicator_${ntkQ3_id} input`).fill(mockDataEntry[ntkQ3_id]);
     await page.locator('#nextQuestion2').click();
 
     await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
     awaitResponse = page.waitForResponse(res =>
-      res.url().includes(`form/${newRequestID}/submit`) && res.status() === 200
+      res.url().includes(`form/${needToKnowRequestID}/submit`) && res.status() === 200
     );
     await page.getByRole('button', { name: 'Submit Request' }).click();
     await awaitResponse;
     await page.reload();
 
     await expect(page.getByRole('button', { name: 'Change Current Step' })).toBeVisible();
-    await printAdminMenuChangeStep(page, newRequestID, 'General Workflow: Requestor Followup');
+    await printAdminMenuChangeStep(page, needToKnowRequestID, 'General Workflow: Requestor Followup');
 
     await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
     awaitResponse = page.waitForResponse(res =>
-      res.url().includes(`formWorkflow/${newRequestID}/apply`) && res.status() === 200
+      res.url().includes(`formWorkflow/${needToKnowRequestID}/apply`) && res.status() === 200
     );
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
     await awaitResponse;
@@ -638,7 +644,7 @@ test.describe('Test Email Template customization and request field formatting', 
     Sensitive data should always display masked - ******
     Non sensitive data of a NTK form should be empty if the email has a custom recipient (eg notify group not in the workflow)
     */
-    await page.goto('http://host.docker.internal:5080/');
+    await page.goto(LEAF_URLS.EMAIL_SERVER);
     await page.waitForLoadState('load');
     //custom event config: requestor and a group that is not in the workflow
     await confirmEmailRecipients(page, emailSubjectNTK, expectedCustomEventEmailRecipients);
@@ -647,6 +653,54 @@ test.describe('Test Email Template customization and request field formatting', 
     await page.getByText(emailSubjectNTK).first().click();
 
     await confirmFieldFormatting(page, needToKnowExpectedNoReadContent);
+
+    //delete the email
+    await page.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText(emailSubjectNTK)).toHaveCount(0);
+  });
+
+  test('Custom Email Event (NeedToKnow): email recipients (requestor, group), content display (group read)', async({page}) => {
+    const needToKnowExpectedReadContent = [
+      { id: ntkQ2_id, format: 'text', content: '**********' },
+      { id: ntkQ3_id, format: 'text', content: ntk_data3 },
+    ];
+
+    //update the custom event to notify a group that is in the workflow
+    await loadWorkflow(page);
+    let awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`customEvents`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Edit Events' }).click();
+    await awaitResponse;
+    await expect(page.getByRole('heading', { name: 'List of Events' })).toBeVisible();
+
+    const idValue = "#editor_CustomEvent_" + uniqueEventName.replace(/[^a-z0-9]/gi, '_');
+    await page.locator(idValue).getByRole(`button`, { name:`Edit` }).click();
+    await expect(
+      page.locator('.ui-dialog-title:visible')
+    ).toHaveText('Edit Event ' + uniqueEventName);
+    await page.getByLabel('Notify Group:', { exact: true })
+      .selectOption(customEventNotifyGroupID_read);
+
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`editEvent`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    await awaitResponse;
+
+    //move request and trigger event
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + needToKnowRequestID)
+    await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`form/${needToKnowRequestID}/submit`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Re-Submit Request' }).click();
+    await awaitResponse;
+    await page.reload();
+
+    await expect(page.getByRole('button', { name: 'Change Current Step' })).toBeVisible();
+    await printAdminMenuChangeStep(page, needToKnowRequestID, 'General Workflow: Requestor Followup');
+
   });
 
   test(`An existing event can be added to a Workflow Action (Notify Next on Submit)`, async ({ page }) => {
@@ -682,12 +736,16 @@ test.describe('Test Email Template customization and request field formatting', 
   test('Built-In Notify Next Approver: event sends to expected recipients', async({page}) => {
     await page.goto(requestURL);
     await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();
-    await awaitPromise(page, 'lastActionSummary', async (p:Page) => {
-      await p.getByRole('button', { name: 'Re-Submit Request' }).click();
-    });
+    let awaitResponse = page.waitForResponse(res =>
+      res.url().includes('lastActionSummary') && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Re-Submit Request' }).click();
+    await awaitResponse;
+    await expect(page.locator('#workflowcontent').getByText('Pending Group A')).toBeVisible();
+
     await printAdminMenuChangeStep(page, requestId, 'General Workflow: Requestor Followup');
 
-    await page.goto('http://host.docker.internal:5080/');
+    await page.goto(LEAF_URLS.EMAIL_SERVER);
     await page.waitForLoadState('load');
     //built in notify next config
     await confirmEmailRecipients(page, notifyNextEventEmailSubject, expectedNotifyNextEmailRecipients);
@@ -721,7 +779,7 @@ test.describe('Test Email Template customization and request field formatting', 
     ).toHaveCount(0);
   });
 
-  test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', { tag: ['@LEAF-5172'] }, async({page}) => {
+  test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', async({page}) => {
     let requestIsCancelled = false;
     let emailFound = false;
 
@@ -760,7 +818,7 @@ test.describe('Test Email Template customization and request field formatting', 
       requestIsCancelled = true;
 
       //Confirm recipients set in To/Cc and field formatting
-      await page.goto('http://host.docker.internal:5080/');
+      await page.goto(LEAF_URLS.EMAIL_SERVER);
       await page.waitForLoadState('load');
       await confirmEmailRecipients(page, cancelEventEmailSubject, expectedCancelEmailRecipients);
       await confirmEmailRecipients(page, cancelEventEmailSubject, cancelEventExpectedCcRecipients, true);
@@ -800,7 +858,7 @@ test.describe('Test Email Template customization and request field formatting', 
       }
 
       if(emailFound === true) {
-        await page.goto('http://host.docker.internal:5080/');
+        await page.goto(LEAF_URLS.EMAIL_SERVER);
         await page.waitForLoadState('load');
         await page.getByText(cancelEventEmailSubject).first().click();
         await page.getByRole('button', { name: 'Delete' }).click();
