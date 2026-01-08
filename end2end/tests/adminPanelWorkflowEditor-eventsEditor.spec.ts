@@ -1,10 +1,75 @@
 import { test, expect, Page } from '@playwright/test';
 import {
   awaitPromise, loadWorkflow, deleteWorkflowEvent,
-  createTestRequest, createTestForm, addFormQuestion,
+  createTestRequest, createTestForm, addFormQuestion, selectChosenDropdownOption,
   confirmEmailRecipients, LEAF_URLS, deleteTestRequestByRequestID, getRandomId
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
+
+/**
+* helper unique to this file to facilitate testing of request fields in email template content
+* */
+const confirmFieldFormatting = async (page:Page, expectedEmailContent:Array<any>) => {
+  //danger btn might be visible on some browsers and needs to be clicked to allow the html to display
+  const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
+  const dangerBtnCount = await dangerBtn.count();
+  if(dangerBtnCount > 0) {
+    await dangerBtn.click();
+  }
+
+  const msgframe = page.frameLocator('.htmlview');
+  for(let i = 0; i < expectedEmailContent.length; i++) {
+    const id = expectedEmailContent[i].id;
+    const f = expectedEmailContent[i].format;
+    const c = expectedEmailContent[i].content;
+    const testField = msgframe.locator('#format_test_' + id);
+    if (c === '') {
+      await expect(testField).toHaveText('');
+    } else {
+      await expect(testField).toBeVisible();
+    }
+
+    if (f === 'grid') {
+      const headers = expectedEmailContent[i].headers;
+      const rows = expectedEmailContent[i].rows;
+
+      const table = testField.locator(`table`);
+      await expect(
+        table,
+        'grid question to be presented in table format'
+      ).toBeVisible();
+
+      await expect(
+        table.locator('th'),
+        `grid question to have ${headers.length} headers`
+      ).toHaveCount(headers.length);
+      await expect(
+        table.locator('tr:has(td)'),
+        `grid question to have ${rows.length} body rows`
+      ).toHaveCount(rows.length);
+
+      for (let h = 0; h < headers.length; h++) {
+        await expect(
+          table.locator('th').nth(h),
+          `grid header index ${h} to be '${headers[h]}'`
+        ).toHaveText(headers[h]);
+        for (let r = 0; r < rows.length; r++) {
+          await expect(
+            table.locator('tr:has(td)').nth(r).locator('td').nth(h),
+            `grid row index ${r}, col ${h} to have text '${rows[r][h]}'`
+          ).toHaveText(rows[r][h]);
+        }
+      }
+
+    } else {
+      const fieldHTML = await testField.innerHTML();
+      expect(
+        fieldHTML,
+        `${f} format question to have html content '${c}'`
+      ).toBe(c);
+    }
+  }
+}
 
 /**
  * Use the printview admin menu to change the step of a request
@@ -13,19 +78,35 @@ import {
  * @param newStep new step, in format 'form name: step name'
  */
 const printAdminMenuChangeStep = async (page:Page, requestID:string, newStep:string) => {
-  const awaitPage = page.waitForResponse(res => res.url().includes('lastActionSummary') && res.status() === 200);
-  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + requestID);
-  await awaitPage;
+  const recSubURL = `printview&recordID=${requestID}`;
 
-  const awaitSteps = page.waitForResponse(res => res.url().includes('steps') && res.status() === 200);
+  let awaitResponse = page.waitForResponse(res =>
+    res.url().includes(recSubURL) && res.status() === 200
+  );
+  if(page.url().includes(recSubURL)) {
+    await page.reload(); //needed after some workflow actions
+  } else {
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + requestID);
+  }
+  await awaitResponse;
+
+  await expect(page.getByRole('button', { name: 'Change Current Step' })).toBeVisible();
+  awaitResponse = page.waitForResponse(res =>
+    res.url().includes('steps') && res.status() === 200
+  );
   await page.getByRole('button', { name: 'Change Current Step' } ).click();
-  await awaitSteps;
+  await awaitResponse;
 
   const dialog = page.getByRole('dialog', { name: 'Change Step' });
   await expect(dialog.locator('div[id$="_loadIndicator"]')).toBeHidden();
-  await dialog.locator('#changeStep a.chosen-single').click();
-  await dialog.getByRole('option', { name: newStep }).click();
+  await selectChosenDropdownOption(page, '#newStep_chosen', newStep);
+
+  awaitResponse = page.waitForResponse(res =>
+    res.url().includes(recSubURL) && res.status() === 200
+  );
   await dialog.getByRole('button', { name: 'Save Change' }).click();
+  await awaitResponse;
+  await page.waitForLoadState('networkidle');
 }
 
 test('Verify Event Name only allow alphanumerical', async ({ page}) => {
@@ -58,9 +139,9 @@ test('Verify Event Name only allow alphanumerical', async ({ page}) => {
 });
 
 
-test.describe('Events can be created from side menu, names and descriptions are unique, editing and deletion', () => {
+test.describe('Event creation, name and description validation, editing and deletion', () => {
   test.describe.configure({ mode: 'serial' });
-  const randNum = Date.now(); //timestamp. unique but shorter than random - event name is limited to 25 chars
+  const randNum = Date.now(); //timestamp. shorter than random - event name is limited to 25 chars
   const uniqueEventName2 = `Event2 ${randNum}`;
   const uniqueDescr2 = `Description2 ${randNum}`;
 
@@ -234,85 +315,44 @@ test.describe('Events can be created from side menu, names and descriptions are 
 
 
 /*
-Uses a Custom Event added to return to requestor to test To/Cc, subject, body request field formatting.
-This Return to Requestor action also triggers the Send Back event to confirm requestor notification.
-Adds Builtin Notify Next to a Submit action to test notify next recipients (and to populate a prior recipient address).
-Uses a customized template for the Cancel Notification to test custom To/Cc and request field formatting.
--
-Formatted fields can be processed through either FormWorkflow (custom email and scripts)
-or through Email (generic events like Cancel). Custom Event and Cancel are used to test both paths */
+Tests To/Cc, subject, and body email template customization, email notification and field.id formatting.
+*/
 test.describe('Test Email Template customization and request field formatting', () => {
   test.describe.configure({ mode: 'serial' });
-  const requestId = '123'; //test case request
-  const requestURL = LEAF_URLS.PRINTVIEW_REQUEST + requestId;
+
+  const randNum = Date.now(); //TS - event name is limited to 25 chars
+  const requestId = '123'; //standard test case request
   const testCaseRequestTitle = 'Test Email Events';
-  const randNum = Date.now(); //timestamp. unique but shorter than random - event name is limited to 25 chars
   const tempTestRequestTitle = testCaseRequestTitle + randNum;
+
+  const notifyNextLabel = 'Email - Notify the next approver';
   const customEventNotifyGroupID_noRead = '111';
   const customEventNotifyGroupID_read = '206';
   const uniqueEventName = `Event ${randNum}`;
   const uniqueDescr = `Description ${randNum}`;
 
-  let customEventAddedToWorkflow = false;
-
+  const needToKnowTestID = getRandomId();
+  const emailSubjectNTK = `NTK ${needToKnowTestID}`;
   const ntk_data2 = 'sensitive data entry';
   const ntk_data3 = 'non-sensitive data entry';
+
+  let customEventAddedToWorkflow = false;
   let needToKnowFormID:string = '';
   let needToKnowRequestID:string = '';
   let ntkQ2_id = '';
   let ntkQ3_id = '';
 
-  test('Create and add a new Custom Event from a workflow action', async ({ page}) => {
-    await loadWorkflow(page);
-    await expect(page.getByText('Return to Requestor')).toBeVisible();
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.getByText('Return to Requestor').click();
-    });
-
-    await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.getByRole('button', { name: 'Add Event' }).click();
-    });
-
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-    await awaitPromise(page, "groups", async (p:Page) => {
-      await p.getByRole('button', { name: 'Create Event' }).click();
-    });
-
-    await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
-    expect(
-      await page.getByLabel('Event Name:').inputValue(),
-      'chars other than A-Z, 0-9 to be replaced with underscores'
-    ).toBe(uniqueEventName.replace(/[^a-z0-9]/gi, '_'));
-
-    await page.getByLabel('Short Description:').fill(uniqueDescr);
-    await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID_noRead);
-
-    await awaitPromise(page, "events", async (p:Page) => {
-      await p.getByRole('button', { name: 'Save' }).click();
-    });
-
-    await expect(
-      page.getByText(`Email - ${uniqueDescr}`),
-      'event created through the workflow action to be present and in the viewport'
-    ).toBeInViewport();
-    customEventAddedToWorkflow = true;
-  });
-
-  const notifyNextLabel = 'Email - Notify the next approver';
-
+  //custom event template and recipient info
   const customEventEmailSubject = `Custom Event ${uniqueEventName}`;
   const sendBackEventEmailSubject = `RETURNED: ${tempTestRequestTitle} (#${requestId})`;
   const notifyNextEventEmailSubject = `Action needed: ${tempTestRequestTitle} (#${requestId})`;
   const cancelEventEmailSubject = `The request for ${tempTestRequestTitle} (#${requestId}) has been canceled.`;
 
-
   const directEmailTo = 'test4892.to@fake.com';
   const directEmailCC = 'test4892.cc@fake.com';
   const customEventEmailTo = '{{$field.49}}\n{{$field.50}}\n' + directEmailTo; //ind49(emp), ind50(grp)
   const customEventEmailCC = '{{$field.54}}\n{{$field.53}}\n' + directEmailCC; //ind54(emp), ind53(grp)
-  //flip to/cc to distinguish cancel notice recipients from prior recipients - email server will show to/cc fields
+  //flip to/cc to distinguish cancel notice recipients from prior recipients
   const cancelEventEmailTo = customEventEmailCC;
   const cancelEventEmailCC = customEventEmailTo;
 
@@ -375,6 +415,7 @@ test.describe('Test Email Template customization and request field formatting', 
   const expectedSendBackEmailRecipients = [
     'tester.tester@fake-email.com',
   ];
+
   const expectedNotifyNextEmailRecipients = [
     'Donte.Glover@fake-email.com',
   ];
@@ -386,70 +427,44 @@ test.describe('Test Email Template customization and request field formatting', 
   ];
   const cancelEventExpectedCcRecipients = expectedToFieldEmailRecipients;
 
-  /**
-  * helper unique to this file that facilitates testing of request fields in email template content
-  * */
-  const confirmFieldFormatting = async (page:Page, expectedEmailContent:Array<any>) => {
-    //danger btn might be visible on some browsers and needs to be clicked to allow the html to display
-    const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
-    const dangerBtnCount = await dangerBtn.count();
-    if(dangerBtnCount > 0) {
-      await dangerBtn.click();
-    }
 
-    const msgframe = page.frameLocator('.htmlview');
-    for(let i = 0; i < expectedEmailContent.length; i++) {
-      const id = expectedEmailContent[i].id;
-      const f = expectedEmailContent[i].format;
-      const c = expectedEmailContent[i].content;
-      const testField = msgframe.locator('#format_test_' + id);
-      if (c === '') {
-        await expect(testField).toHaveText('');
-      } else {
-        await expect(testField).toBeVisible();
-      }
+  test('Create and add a new Custom Event from a workflow action', async ({ page}) => {
+    await loadWorkflow(page);
+    await expect(page.getByText('Return to Requestor')).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByText('Return to Requestor').click();
+    });
 
-      if (f === 'grid') {
-        const headers = expectedEmailContent[i].headers;
-        const rows = expectedEmailContent[i].rows;
+    await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByRole('button', { name: 'Add Event' }).click();
+    });
 
-        const table = testField.locator(`table`);
-        await expect(
-          table,
-          'grid question to be presented in table format'
-        ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await awaitPromise(page, "groups", async (p:Page) => {
+      await p.getByRole('button', { name: 'Create Event' }).click();
+    });
 
-        await expect(
-          table.locator('th'),
-          `grid question to have ${headers.length} headers`
-        ).toHaveCount(headers.length);
-        await expect(
-          table.locator('tr:has(td)'),
-          `grid question to have ${rows.length} body rows`
-        ).toHaveCount(rows.length);
+    await page.getByLabel('Event Name:').pressSequentially(uniqueEventName);
+    expect(
+      await page.getByLabel('Event Name:').inputValue(),
+      'chars other than A-Z, 0-9 to be replaced with underscores'
+    ).toBe(uniqueEventName.replace(/[^a-z0-9]/gi, '_'));
 
-        for (let h = 0; h < headers.length; h++) {
-          await expect(
-            table.locator('th').nth(h),
-            `grid header index ${h} to be '${headers[h]}'`
-          ).toHaveText(headers[h]);
-          for (let r = 0; r < rows.length; r++) {
-            await expect(
-              table.locator('tr:has(td)').nth(r).locator('td').nth(h),
-              `grid row index ${r}, col ${h} to have text '${rows[r][h]}'`
-            ).toHaveText(rows[r][h]);
-          }
-        }
+    await page.getByLabel('Short Description:').fill(uniqueDescr);
+    await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
+    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID_noRead);
 
-      } else {
-        const fieldHTML = await testField.innerHTML();
-        expect(
-          fieldHTML,
-          `${f} format question to have html content '${c}'`
-        ).toBe(c);
-      }
-    }
-  }
+    await awaitPromise(page, "events", async (p:Page) => {
+      await p.getByRole('button', { name: 'Save' }).click();
+    });
+
+    await expect(
+      page.getByText(`Email - ${uniqueDescr}`),
+      'event created through the workflow action to be present and in the viewport'
+    ).toBeInViewport();
+    customEventAddedToWorkflow = true;
+  });
 
   test('Custom Email Event: Navigation from Workflow Editor modal and Template Customization ', async({page}) => {
     await loadWorkflow(page);
@@ -464,6 +479,7 @@ test.describe('Test Email Template customization and request field formatting', 
     const editorPromise = page.waitForEvent('popup');
     await page.getByRole('link', { name: 'Email Template Editor' }).click();
     const editorPage = await editorPromise;
+
 
     const filePromise = editorPage.waitForResponse(res =>
       res.url().includes(`workflow/customEvents`) && res.status() === 200
@@ -506,7 +522,7 @@ test.describe('Test Email Template customization and request field formatting', 
 
   test('Custom Email Event (NO NeedToKnow): email recipients (To/Cc/notify), email field content for all formats', async({page}) => {
     //Trigger the custom event with Return to Requestor workflow action
-    await page.goto(requestURL);
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + requestId);
     await page.waitForLoadState('load');
 
     await page.getByRole('button', { name: 'Edit Title'}).click();
@@ -531,7 +547,7 @@ test.describe('Test Email Template customization and request field formatting', 
     //send back email config
     await confirmEmailRecipients(page, sendBackEventEmailSubject, expectedSendBackEmailRecipients);
 
-    await page.getByText(customEventEmailSubject).first().click();
+    await page.locator('#pane-messages').getByText(customEventEmailSubject).first().click();
 
     //test body content for form-workflow mediated Custom Event
     await confirmFieldFormatting(page, expectedEmailContent);
@@ -545,15 +561,12 @@ test.describe('Test Email Template customization and request field formatting', 
     await expect(page.getByText(sendBackEventEmailSubject)).toHaveCount(0);
   });
 
-  /** Custom event for a Need to Know form.
-   *  Sensitive data should never display.
-   *  Data from a need to know form should not display if the emailed group is not a workflow dependency.
-   */
-  test('Custom Email Event (NeedToKnow): email recipients (requestor, group), content display (no group read)', async({page}) => {
-    /* prep - form, template update, and request creation (cannot alter test database form) */
-    const testID = getRandomId();
-
-    needToKnowFormID = await createTestForm(page, testID, '');
+  test(`Custom Email Event (NeedToKnow):
+    - has expected email recipients (requestor, group)
+    - sensitive entry is masked
+    - non sensitive entry has expected content display (emailed group does not have read)`, async({page}) => {
+    //prep - form, template update, and request creation (cannot alter test database form)
+    needToKnowFormID = await createTestForm(page, needToKnowTestID, '');
     await page.getByLabel('Status:').selectOption('1');
     await page.getByLabel('Workflow:').selectOption('1');
 
@@ -565,18 +578,12 @@ test.describe('Test Email Template customization and request field formatting', 
       [ntkQ2_id]: ntk_data2,
       [ntkQ3_id]: ntk_data3,
     };
-    const needToKnowExpectedNoReadContent = [
+    const needToKnowExpectedContent = [
       { id: ntkQ2_id, format: 'text', content: '**********' },
       { id: ntkQ3_id, format: 'text', content: '' },
     ];
 
-
-    //update custom email templates
-    const emailSubjectNTK = `NTK ${testID}`;
-    let newBodyContent = '';
-    needToKnowExpectedNoReadContent.forEach(entry => {
-      newBodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
-    });
+    //update custom event email template
     let awaitResponse = page.waitForResponse(res =>
       res.url().includes('emailTemplates/custom') && res.status() === 200
     );
@@ -590,7 +597,7 @@ test.describe('Test Email Template customization and request field formatting', 
     await awaitResponse;
     await expect(page.getByRole('heading', { name: uniqueDescr })).toBeVisible();
 
-    //clear these out and update the subject for this test
+    //clear out ToCc and update the subject
     await page.getByRole('textbox', { name: 'Email To:' }).fill('');
     await page.getByRole('textbox', { name: 'Email CC:' }).fill('');
 
@@ -603,6 +610,11 @@ test.describe('Test Email Template customization and request field formatting', 
 
     await page.getByRole('button', { name: 'Use Code Editor' }).click();
 
+    //add new field IDs to body
+    let newBodyContent = '';
+    needToKnowExpectedContent.forEach(entry => {
+      newBodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
+    });
     let bodyArea = page.locator('#code_mirror_template_editor');
     await bodyArea.press('ControlOrMeta+A');
     await bodyArea.press('Backspace');
@@ -615,7 +627,7 @@ test.describe('Test Email Template customization and request field formatting', 
     await awaitResponse;
 
     //create and submit a test request.  Move it and then trigger the wf event.
-    needToKnowRequestID = await createTestRequest(page, 'AS - Service', `req${testID}`, testID);
+    needToKnowRequestID = await createTestRequest(page, 'AS - Service', `req${needToKnowTestID}`, needToKnowTestID);
     await expect(page.locator(`.response.blockIndicator_${ntkQ2_id} input`)).toBeVisible();
 
     await page.locator(`.response.blockIndicator_${ntkQ2_id} input`).fill(mockDataEntry[ntkQ2_id]);
@@ -628,9 +640,7 @@ test.describe('Test Email Template customization and request field formatting', 
     );
     await page.getByRole('button', { name: 'Submit Request' }).click();
     await awaitResponse;
-    await page.reload();
 
-    await expect(page.getByRole('button', { name: 'Change Current Step' })).toBeVisible();
     await printAdminMenuChangeStep(page, needToKnowRequestID, 'General Workflow: Requestor Followup');
 
     await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
@@ -640,27 +650,29 @@ test.describe('Test Email Template customization and request field formatting', 
     await page.getByRole('button', { name: 'Return to Requestor' }).click();
     await awaitResponse;
 
-    /*Email Server
-    Sensitive data should always display masked - ******
-    Non sensitive data of a NTK form should be empty if the email has a custom recipient (eg notify group not in the workflow)
-    */
     await page.goto(LEAF_URLS.EMAIL_SERVER);
     await page.waitForLoadState('load');
-    //custom event config: requestor and a group that is not in the workflow
+    //custom event config: requestor and a group that is NOT in the workflow
     await confirmEmailRecipients(page, emailSubjectNTK, expectedCustomEventEmailRecipients);
 
-    await expect(page.getByText(emailSubjectNTK).first()).toBeVisible();
-    await page.getByText(emailSubjectNTK).first().click();
+    await page.locator('#pane-messages').getByText(emailSubjectNTK).first().click();
 
-    await confirmFieldFormatting(page, needToKnowExpectedNoReadContent);
+    await confirmFieldFormatting(page, needToKnowExpectedContent);
 
     //delete the email
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(emailSubjectNTK)).toHaveCount(0);
   });
 
-  test('Custom Email Event (NeedToKnow): email recipients (requestor, group), content display (group read)', async({page}) => {
-    const needToKnowExpectedReadContent = [
+  test(`Custom Email Event (NeedToKnow):
+    - has expected email recipients (requestor, group)
+    - sensitive entry is masked
+    - non-sensitive entry has expected display (emailed group has read)`, async({page}) => {
+    const expectedCustomEventEmailRecipients = [
+      'Donte.Glover@fake-email.com',  //notify group custom event config (group 206)
+      'tester.tester@fake-email.com'  //notify requestor custom event config
+    ];
+    const needToKnowExpectedContent = [
       { id: ntkQ2_id, format: 'text', content: '**********' },
       { id: ntkQ3_id, format: 'text', content: ntk_data3 },
     ];
@@ -696,11 +708,27 @@ test.describe('Test Email Template customization and request field formatting', 
     );
     await page.getByRole('button', { name: 'Re-Submit Request' }).click();
     await awaitResponse;
-    await page.reload();
 
-    await expect(page.getByRole('button', { name: 'Change Current Step' })).toBeVisible();
     await printAdminMenuChangeStep(page, needToKnowRequestID, 'General Workflow: Requestor Followup');
+    await expect(page.getByRole('button', { name: 'Return to Requestor' })).toBeVisible();
+    awaitResponse = page.waitForResponse(res =>
+      res.url().includes(`formWorkflow/${needToKnowRequestID}/apply`) && res.status() === 200
+    );
+    await page.getByRole('button', { name: 'Return to Requestor' }).click();
+    await awaitResponse;
 
+    await page.goto(LEAF_URLS.EMAIL_SERVER);
+    await page.waitForLoadState('load');
+    //custom event config: requestor and a group that IS in the workflow
+    await confirmEmailRecipients(page, emailSubjectNTK, expectedCustomEventEmailRecipients);
+
+    await page.locator('#pane-messages').getByText(emailSubjectNTK).first().click();
+
+    await confirmFieldFormatting(page, needToKnowExpectedContent);
+
+    //delete the email
+    await page.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText(emailSubjectNTK)).toHaveCount(0);
   });
 
   test(`An existing event can be added to a Workflow Action (Notify Next on Submit)`, async ({ page }) => {
@@ -734,21 +762,26 @@ test.describe('Test Email Template customization and request field formatting', 
   });
 
   test('Built-In Notify Next Approver: event sends to expected recipients', async({page}) => {
-    await page.goto(requestURL);
+    await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + requestId);
     await expect(page.getByRole('button', { name: 'Re-Submit Request' })).toBeVisible();
     let awaitResponse = page.waitForResponse(res =>
-      res.url().includes('lastActionSummary') && res.status() === 200
+      res.url().includes(`form/${requestId}/submit`) && res.status() === 200
     );
     await page.getByRole('button', { name: 'Re-Submit Request' }).click();
     await awaitResponse;
-    await expect(page.locator('#workflowcontent').getByText('Pending Group A')).toBeVisible();
 
     await printAdminMenuChangeStep(page, requestId, 'General Workflow: Requestor Followup');
 
     await page.goto(LEAF_URLS.EMAIL_SERVER);
     await page.waitForLoadState('load');
+
     //built in notify next config
     await confirmEmailRecipients(page, notifyNextEventEmailSubject, expectedNotifyNextEmailRecipients);
+
+    //delete the email
+    await page.locator('#pane-messages').getByText(notifyNextEventEmailSubject).first().click();
+    await page.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText(notifyNextEventEmailSubject)).toHaveCount(0);
   });
 
   test('An event can be removed from a Workflow Action', async ({ page }) => {
@@ -781,7 +814,6 @@ test.describe('Test Email Template customization and request field formatting', 
 
   test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', async({page}) => {
     let requestIsCancelled = false;
-    let emailFound = false;
 
     try {
       let awaitResponse = page.waitForResponse(res =>
@@ -801,8 +833,7 @@ test.describe('Test Email Template customization and request field formatting', 
       await page.getByRole('textbox', { name: 'Email CC:' }).fill(cancelEventEmailCC);
       await page.getByRole('button', { name: 'Use Code Editor' }).click();
 
-      const bodyArea = page
-        .locator('#code_mirror_template_editor');
+      const bodyArea = page.locator('#code_mirror_template_editor');
       await bodyArea.press('ControlOrMeta+A');
       await bodyArea.press('Backspace');
       await bodyArea.fill(bodyContent); 
@@ -823,17 +854,14 @@ test.describe('Test Email Template customization and request field formatting', 
       await confirmEmailRecipients(page, cancelEventEmailSubject, expectedCancelEmailRecipients);
       await confirmEmailRecipients(page, cancelEventEmailSubject, cancelEventExpectedCcRecipients, true);
 
+      await page.locator('#pane-messages').getByText(cancelEventEmailSubject).first().click();
 
-      await expect(page.getByText(cancelEventEmailSubject).first()).toBeVisible();
-      await page.getByText(cancelEventEmailSubject).first().click();
-      emailFound = true;
-      const dangerBtn = page.getByRole('button', { name: 'Disable (DANGER!)' });
-      const dangerBtnCount = await dangerBtn.count();
-      if(dangerBtnCount > 0) {
-        await dangerBtn.click();
-      }
       //test body content for Email class mediated Custom Event
       await confirmFieldFormatting(page, expectedEmailContent);
+
+      //delete the email
+      await page.getByRole('button', { name: 'Delete' }).click();
+      await expect(page.getByText(cancelEventEmailSubject)).toHaveCount(0);
 
     } finally {
       /* POST RUN CLEANUP */
@@ -857,14 +885,6 @@ test.describe('Test Email Template customization and request field formatting', 
         await expect(page.getByRole('button', { name: 'Restore Original' })).not.toBeVisible();
       }
 
-      if(emailFound === true) {
-        await page.goto(LEAF_URLS.EMAIL_SERVER);
-        await page.waitForLoadState('load');
-        await page.getByText(cancelEventEmailSubject).first().click();
-        await page.getByRole('button', { name: 'Delete' }).click();
-        await expect(page.getByText(cancelEventEmailSubject)).toHaveCount(0);
-      }
-
       //restore the Test Case request and move it back
       if(requestIsCancelled === true) {
         await printAdminMenuChangeStep(page, requestId, 'General Workflow - Requestor Followup');
@@ -882,7 +902,8 @@ test.describe('Test Email Template customization and request field formatting', 
         await deleteWorkflowEvent(page, uniqueEventName.replace(/[^a-z0-9]/gi, '_'), uniqueDescr);
       }
 
-      page.goto(requestURL);
+      //restore the original title
+      page.goto(LEAF_URLS.PRINTVIEW_REQUEST + requestId);
       await page.getByRole('button', { name: 'Edit Title'}).click();
       await expect(page.locator('#title')).toBeVisible();
       await page.locator('#title').fill(testCaseRequestTitle);
