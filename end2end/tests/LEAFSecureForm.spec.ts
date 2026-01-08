@@ -98,26 +98,29 @@ test ('Validate Sensitive Form Preview Mode', { tag: ['@LEAF-5016'] }, async ({ 
     const rowCount = await rows.count();
     console.log(`Total Rows in Secure Form Table: ${rowCount}`);
 
-   //interate through each row to find and click the button with the specified name 
-  for (let i = 0; i < rowCount; i++) {
+    //interate through each row to find and click the button with the specified name 
+    for (let i = 0; i < rowCount; i++) {
      
-    const fieldName = await rows.nth(i).locator('td[id$="_fieldName"]');
-    const fieldNameText = await fieldName.innerText();
-    const formNameTd = rows.nth(i).locator('td[id$="_formName"]');
-    const formName = await formNameTd.innerText();
+        const fieldName = await rows.nth(i).locator('td[id$="_fieldName"]');
+        const fieldNameText = await fieldName.innerText();
+        const formNameTd = rows.nth(i).locator('td[id$="_formName"]');
+        const formName = await formNameTd.innerText();
 
-    await rows.locator('button').nth(i).click();
-    await page.waitForLoadState('load');
-       
-    //Seperate the Button Name from Form Name
-    const displayedFormName = formName.split("\n", 2);
+        await rows.locator('button').nth(i).click();
+        await page.waitForLoadState('load');
         
-    //Verify the Form Name in Preview Mode is the same as in the Table
-    await expect(page.locator(previewFormId)).toContainText(displayedFormName[0]); 
-    await expect(page.locator('#leafsFormPreview')).toContainText(fieldNameText);
-             
-    await page.getByRole('button', { name: 'Close' }).click();
+        //Seperate the Button Name from Form Name
+        const displayedFormName = formName.split("\n", 2);
+            
+        //Verify the Form Name in Preview Mode is the same as in the Table
+        await expect(page.locator(previewFormId)).toContainText(displayedFormName[0]); 
+        await expect(page.locator('#leafsFormPreview')).toContainText(fieldNameText);
 
-  }
+        // Add for testing LEAF 5168
+        await expect(page.getByText('🔒Sensitive', { exact: true })).toHaveClass('sensitiveIndicator');
+            
+        await page.getByRole('button', { name: 'Close' }).click();
+
+    }
 
   });
