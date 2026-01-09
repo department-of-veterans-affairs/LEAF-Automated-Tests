@@ -22,12 +22,9 @@ const confirmFieldFormatting = async (page:Page, expectedEmailContent:Array<any>
     const id = expectedEmailContent[i].id;
     const f = expectedEmailContent[i].format;
     const c = expectedEmailContent[i].content;
+    const assertMessage = expectedEmailContent[i]?.assertMessage || '';
     const testField = msgframe.locator('#format_test_' + id);
-    if (c === '') {
-      await expect(testField).toHaveText('');
-    } else {
-      await expect(testField).toBeVisible();
-    }
+    await expect(testField).toBeAttached();
 
     if (f === 'grid') {
       const headers = expectedEmailContent[i].headers;
@@ -65,7 +62,7 @@ const confirmFieldFormatting = async (page:Page, expectedEmailContent:Array<any>
       const fieldHTML = await testField.innerHTML();
       expect(
         fieldHTML,
-        `${f} format question to have html content '${c}'`
+        assertMessage || `${f} format question to have html content '${c}'`
       ).toBe(c);
     }
   }
@@ -138,6 +135,24 @@ test('Verify Event Name only allow alphanumerical', async ({ page}) => {
   await page.getByRole('button', { name: 'Cancel' }).click();
 });
 
+test('Navigation from Workflow Editor to Email Template Editor', async({page}) => {
+  await loadWorkflow(page);
+  await awaitPromise(page, "customEvents", async (p:Page) => {
+    await p.getByRole('button', { name: 'Edit Events' }).click();
+  });
+  await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
+
+  const mainModalLink = page.waitForEvent('popup');
+  await page.getByRole('link', { name: 'Email Template Editor' }).click();
+  await mainModalLink;
+
+  const selectorStr = `td[id^="editor_CustomEvent_"]`;
+  await page.locator(selectorStr).getByRole('button', { name: 'Edit' }).first().click();
+
+  const editModalLink = page.waitForEvent('popup');
+  await page.getByRole('link', { name: 'Email Template Editor' }).click();
+  await editModalLink;
+});
 
 test.describe('Event creation, name and description validation, editing and deletion', () => {
   test.describe.configure({ mode: 'serial' });
@@ -241,7 +256,7 @@ test.describe('Event creation, name and description validation, editing and dele
 
   const uniqueEventNameEdit = `Evt Edit ${randNum}`;
   const uniqueDescrEdit = `Descr Edit ${randNum}`;
-  const customEventNotifyGroupID_noRead = '111';
+  const customEventNotifyGroup = { id: '111', name: 'Linen Sports' };
   const initialExpectedValue = uniqueEventName2.replace(/[^a-z0-9]/gi, '_');
   const expectedEditedInputValue = uniqueEventNameEdit.replace(/[^a-z0-9]/gi, '_');
   const expectedEventDisplayName = expectedEditedInputValue.replace(/_+/g, " ");
@@ -273,7 +288,7 @@ test.describe('Event creation, name and description validation, editing and dele
     await page.getByLabel('Short Description:').fill(uniqueDescrEdit);
     await page.getByLabel('Notify Requestor Email:').check();
     await page.getByLabel('Notify Next Approver Email:').check();
-    await page.getByLabel('Notify Group:').selectOption(customEventNotifyGroupID_noRead);
+    await page.getByLabel('Notify Group:').selectOption(customEventNotifyGroup.id);
     awaitResponse = page.waitForResponse(res =>
       res.url().includes(`workflow/customEvents`) && res.status() === 200
     );
@@ -304,7 +319,9 @@ test.describe('Event creation, name and description validation, editing and dele
     await expect(page.getByLabel('Short Description:')).toHaveValue(uniqueDescrEdit);
     await expect(page.getByLabel('Notify Requestor Email:')).toBeChecked();
     await expect(page.getByLabel('Notify Next Approver Email:')).toBeChecked();
-    await expect(page.getByLabel('Notify Group:')).toHaveValue(customEventNotifyGroupID_noRead);
+    await expect(page.getByLabel('Notify Group:')).toHaveValue(customEventNotifyGroup.id);
+    const selectedOptionText = await page.getByLabel('Notify Group:').locator('option:checked').innerText();
+    expect(selectedOptionText).toBe(customEventNotifyGroup.name);
   });
 
   test('Workflow Event can be deleted', async ({ page }) => {
@@ -326,7 +343,7 @@ test.describe('Test Email Template customization and request field formatting', 
   const tempTestRequestTitle = testCaseRequestTitle + randNum;
 
   const notifyNextLabel = 'Email - Notify the next approver';
-  const customEventNotifyGroupID_noRead = '111';
+  const customEventNotifyGroupID_noRead = { id: '111', name: 'Linen Sports' };
   const customEventNotifyGroupID_read = '206';
   const uniqueEventName = `Event ${randNum}`;
   const uniqueDescr = `Description ${randNum}`;
@@ -374,7 +391,7 @@ test.describe('Test Email Template customization and request field formatting', 
     {
       id: 48,
       format: 'grid',
-      content: null, //grid will be handled separately
+      content: null, //grid will be handled differently, using headers and rows info
       headers: [ 'single line cell',	'multi-line cell',	'date cell',	'dropdown cell' ],
       rows:  [
         [ 'test single line', 'test multi line', '09/17/2025', '1' ],
@@ -384,7 +401,7 @@ test.describe('Test Email Template customization and request field formatting', 
     { id: 49, format: 'orgchart_employee', content: 'Boyd Schaden' },
     { id: 50, format: 'orgchart_group', content: '2911 TEST Group' },
     { id: 51, format: 'orgchart_position', content: 'All things wonderful (--)' },
-    { id: 99999, format: '', content: '' },
+    { id: 99999, format: '', content: '', assertMessage: 'non-existent field to be present but have no content' },
   ];
   expectedEmailContent.forEach(entry => {
     bodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
@@ -453,7 +470,7 @@ test.describe('Test Email Template customization and request field formatting', 
 
     await page.getByLabel('Short Description:').fill(uniqueDescr);
     await page.getByLabel('Notify Requestor Email:', { exact: true }).check();
-    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID_noRead);
+    await page.getByLabel('Notify Group:', { exact: true }).selectOption(customEventNotifyGroupID_noRead.id);
 
     await awaitPromise(page, "events", async (p:Page) => {
       await p.getByRole('button', { name: 'Save' }).click();
@@ -466,58 +483,58 @@ test.describe('Test Email Template customization and request field formatting', 
     customEventAddedToWorkflow = true;
   });
 
-  test('Custom Email Event: Navigation from Workflow Editor modal and Template Customization ', async({page}) => {
-    await loadWorkflow(page);
-    await awaitPromise(page, "customEvents", async (p:Page) => {
-      await p.getByRole('button', { name: 'Edit Events' }).click();
-    });
-    await expect(page.getByRole('button', { name: 'Create a new Event' })).toBeVisible();
-
-    const idValue = "#editor_CustomEvent_" + uniqueEventName.replace(/[^a-z0-9]/gi, '_');
-    await page.locator(idValue).getByRole('button', { name: 'Edit' }).click();
-
-    const editorPromise = page.waitForEvent('popup');
-    await page.getByRole('link', { name: 'Email Template Editor' }).click();
-    const editorPage = await editorPromise;
-
-
-    const filePromise = editorPage.waitForResponse(res =>
+  test('Custom Email Event: Event Display and Email Template Customization', async({page}) => {
+    const filePromise = page.waitForResponse(res =>
       res.url().includes(`workflow/customEvents`) && res.status() === 200
     );
+    await page.goto(LEAF_URLS.PORTAL_HOME + 'admin/?a=mod_templates_email');
     await expect(
-      editorPage.getByRole('button', { name: uniqueDescr, exact: true }),
+      page.getByRole('button', { name: uniqueDescr, exact: true }),
       'event description to be present in custom events list'
     ).toBeVisible();
-    await editorPage.getByRole('button', { name: uniqueDescr, exact: true }).click();
+    await page.getByRole('button', { name: uniqueDescr, exact: true }).click();
     await filePromise;
 
     await expect(
-      editorPage.getByRole('heading', { name: uniqueDescr }),
-      'Event in Email Template Editor to be successfully accessed from the Edit Events modal'
+      page.getByRole('heading', { name: uniqueDescr }),
+      `Custom event heading to be ${uniqueDescr}`
+    ).toBeVisible();
+
+    const configInfo = page.locator('#emailNotificationInfo');
+    await expect(
+      configInfo.getByText('Notifies Requestor'),
+      'Notifies Requestor bubble to be shown'
+    ).toBeVisible();
+    await expect(
+      configInfo.getByText('Notifies Next Approver'),
+      'Notifies Next Approver bubble not to be shown'
+    ).not.toBeVisible();
+    await expect(
+      configInfo.getByText(`Notifies Group '${customEventNotifyGroupID_noRead.name}'`),
+      `Notifies Group '${customEventNotifyGroupID_noRead.name}' bubble to be shown`
     ).toBeVisible();
 
     //Add custom content to To, Cc, Subject and Body of the custom event
-    await expect(editorPage.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
-    await editorPage.getByRole('textbox', { name: 'Email To:' }).fill(customEventEmailTo);
-    await editorPage.getByRole('textbox', { name: 'Email CC:' }).fill(customEventEmailCC);
+    await expect(page.getByRole('textbox', { name: 'Email To:' })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Email To:' }).fill(customEventEmailTo);
+    await page.getByRole('textbox', { name: 'Email CC:' }).fill(customEventEmailCC);
 
-    let subjectArea = editorPage
+    let subjectArea = page
       .locator('#divSubject')
       .getByLabel('Template Editor coding area.');
     await subjectArea.press('ControlOrMeta+A');
     await subjectArea.press('Backspace');
     await subjectArea.fill(customEventEmailSubject);
 
-    await editorPage.getByRole('button', { name: 'Use Code Editor' }).click();
+    await page.getByRole('button', { name: 'Use Code Editor' }).click();
 
-    let bodyArea = editorPage
-      .locator('#code_mirror_template_editor');
+    let bodyArea = page.locator('#code_mirror_template_editor');
     await bodyArea.press('ControlOrMeta+A');
     await bodyArea.press('Backspace');
     await bodyArea.fill(bodyContent); 
 
-    await editorPage.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(editorPage.getByRole('button', { name: 'Restore Original'})).toBeVisible();
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await expect(page.getByRole('button', { name: 'Restore Original'})).toBeVisible();
   });
 
   test('Custom Email Event (NO NeedToKnow): email recipients (To/Cc/notify), email field content for all formats', async({page}) => {
@@ -561,10 +578,7 @@ test.describe('Test Email Template customization and request field formatting', 
     await expect(page.getByText(sendBackEventEmailSubject)).toHaveCount(0);
   });
 
-  test(`Custom Email Event (NeedToKnow):
-    - has expected email recipients (requestor, group)
-    - sensitive entry is masked
-    - non sensitive entry has expected content display (emailed group does not have read)`, async({page}) => {
+  test(`Custom Email Event (NeedToKnow - emailed group does not have read): recipients and display`, async({page}) => {
     //prep - form, template update, and request creation (cannot alter test database form)
     needToKnowFormID = await createTestForm(page, needToKnowTestID, '');
     await page.getByLabel('Status:').selectOption('1');
@@ -579,8 +593,10 @@ test.describe('Test Email Template customization and request field formatting', 
       [ntkQ3_id]: ntk_data3,
     };
     const needToKnowExpectedContent = [
-      { id: ntkQ2_id, format: 'text', content: '**********' },
-      { id: ntkQ3_id, format: 'text', content: '' },
+      { id: ntkQ2_id, format: 'text', content: '**********',
+        assertMessage: 'sensitive data question to be masked in email' },
+      { id: ntkQ3_id, format: 'text', content: '',
+        assertMessage: 'non-sensitive data from a NTK form to be empty because the emailed group does not have read access' },
     ];
 
     //update custom event email template
@@ -664,17 +680,16 @@ test.describe('Test Email Template customization and request field formatting', 
     await expect(page.getByText(emailSubjectNTK)).toHaveCount(0);
   });
 
-  test(`Custom Email Event (NeedToKnow):
-    - has expected email recipients (requestor, group)
-    - sensitive entry is masked
-    - non-sensitive entry has expected display (emailed group has read)`, async({page}) => {
+  test(`Custom Email Event (NeedToKnow - emailed group has read): recipients and display`, async({page}) => {
     const expectedCustomEventEmailRecipients = [
       'Donte.Glover@fake-email.com',  //notify group custom event config (group 206)
       'tester.tester@fake-email.com'  //notify requestor custom event config
     ];
     const needToKnowExpectedContent = [
-      { id: ntkQ2_id, format: 'text', content: '**********' },
-      { id: ntkQ3_id, format: 'text', content: ntk_data3 },
+      { id: ntkQ2_id, format: 'text', content: '**********',
+        assertMessage: 'sensitive data question to be masked in email' },
+      { id: ntkQ3_id, format: 'text', content: ntk_data3,
+        assertMessage: 'non-sensitive data from a NTK form to be displayed because the emailed group has read access' },
     ];
 
     //update the custom event to notify a group that is in the workflow
@@ -813,6 +828,7 @@ test.describe('Test Email Template customization and request field formatting', 
   });
 
   test('Customized Cancel Notification: confirm email recipients (custom To/Cc) and email field content', async({page}) => {
+    test.setTimeout(120000);
     let requestIsCancelled = false;
 
     try {
