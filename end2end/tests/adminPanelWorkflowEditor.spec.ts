@@ -3,7 +3,7 @@ import {
     LEAF_URLS, getRandomId, loadWorkflow,
     createBaseTestWorkflow, selectChosenDropdownOption
 } from '../leaf_test_utils/leaf_util_methods';
-import { arrayBuffer } from 'stream/consumers';
+
 
 test('Create a new workflow and add a step and an action', async ({ page }) => {
     // Generate unique workflow title
