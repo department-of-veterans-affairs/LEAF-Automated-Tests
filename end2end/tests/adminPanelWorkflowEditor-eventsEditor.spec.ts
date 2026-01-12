@@ -659,8 +659,8 @@ test.describe('Email Template customization, recipients, request field formattin
     const needToKnowExpectedContent = [
       { id: ntkQ2_id, format: 'text', content: '**********',
         assertMessage: 'sensitive data question to be masked in email' },
-      { id: ntkQ3_id, format: 'text', content: '',
-        assertMessage: 'non-sensitive data from a NTK form to be empty because the emailed group does not have read access' },
+      { id: ntkQ3_id, format: 'text', content: '[ protected data ]',
+        assertMessage: `non-sensitive data from a NTK form not to display because an emailed group did not have read access` },
     ];
 
     //update custom event email template
