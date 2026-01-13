@@ -213,6 +213,82 @@ test('Create a read only workflow step', async ({ page }) => {
     await expect(page.locator('#step_requirements')).toContainText(requirementOption);
 });
 
+/**
+ * Test for LEAF-5201 Fix to allow all requirements to now be removed from a workflow step
+ */
+test('Test that requirements can be added then removed from workflow successfully', async ({ page }) => {
+    const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
+    const confirmationDialog = page.locator('span.ui-dialog-title:has-text("Confirmation required")');
+    const workflowsDropdown = page.locator('#workflows_chosen');
+    const newWorkflowButton = page.locator('#btn_newWorkflow');
+    const workflowDescription = page.locator('#description');
+    const saveButton = page.locator('#button_save');
+    const deleteWorkflowButton = page.locator('#btn_deleteWorkflow');
+    const confirmDeleteButton = page.locator('#confirm_button_save');
+
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+
+    // Create new workflow
+    await newWorkflowButton.click();
+    await expect(workflowCreateDialog).toBeVisible();
+    await workflowDescription.fill(uniqueWorkflowName);
+    await saveButton.click();
+    await expect(workflowsDropdown).toContainText(uniqueWorkflowName);
+
+    // Add a new step to the workflow
+    await page.getByRole('button', { name: 'New Step' }).click();
+    await page.getByRole('textbox', { name: 'Step Title:' }).fill('Test');
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    // Add and then remove 'Group A' requirement from the step
+    await page.getByRole('button', { name: 'workflow step: Test' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Remove Requirement' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+    //Add rest of requirements then remove them all
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await page.getByRole('option', { name: 'Group Designated by the' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await page.getByRole('option', { name: 'Person Designated by the' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await page.getByRole('option', { name: 'Quadrad' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await page.getByRole('option', { name: 'Requestor Followup' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await page.getByRole('option', { name: 'Service Chief' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Group Designated by the' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Requestor Followup (depID:-2)' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Person Designated by the' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Service Chief (depID:1)' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('button', { name: 'Remove Requirement' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('button', { name: 'Remove Step' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+    // Delete the workflow and verify deletion
+    await deleteWorkflowButton.click();
+    await expect(confirmationDialog).toBeVisible();
+    await confirmDeleteButton.click();
+    await expect(workflowsDropdown).not.toContainText(uniqueWorkflowName);
+});
+
 test('Create a new workflow and delete it', async ({ page }) => {
     const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
     const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
