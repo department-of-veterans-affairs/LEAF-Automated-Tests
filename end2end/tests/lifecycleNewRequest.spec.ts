@@ -122,6 +122,7 @@ test('a new request can be created, and edited before being submitted', async ()
 });
 
 test('Change title of request', async () => {
+  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
   await page.getByRole('button', { name: 'Edit Title' }).click();
   await page.getByLabel('Title:').click();
   await page.getByLabel('Title:').fill(uniqueText + ' Renamed');
@@ -281,7 +282,7 @@ test('original request and copied requests can be cancelled', async () => {
   while(numRequests--) {
     await requests.nth(numRequests).click();
     await page.getByRole('button', { name: 'Cancel Request' }).click();
-    await page.getByPlaceholder('Enter Comment').fill('No longer needed');
+    await page.getByLabel('Comments:').fill("No longer needed");
     await page.getByRole('button', { name: 'Yes' }).click();
 
     // Verify cancellation page appears
@@ -336,6 +337,7 @@ test('a negative currency is allowed when editing a request', { tag: ['@LEAF-466
 
   //cleanup
   await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByLabel('Comments:').fill("No longer needed");
   await page.getByRole('button', { name: 'Yes' }).click();
 });
 
