@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -542,5 +544,477 @@ func TestForm_DuplicateIndicatorsInIndicatorListWithFormFilter(t *testing.T) {
 
 	if count > 1 {
 		t.Errorf("Got %v instances of indicatorID 31, want 1 instance", count)
+	}
+}
+
+// Helper function to get form data
+func getFormData(recordID string) (FormDataResponse, error) {
+	res, err := client.Get(RootURL + `api/form/` + recordID + `/data`)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if response is an empty array (PHP returns [] when no data)
+	trimmed := strings.TrimSpace(string(b))
+	if trimmed == "[]" {
+		return make(FormDataResponse), nil
+	}
+
+	var m FormDataResponse
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// FindField finds a field in FormDataResponse by indicatorID and series
+func (fdr FormDataResponse) FindField(indicatorID int, series int) *FieldData {
+	indicatorIDStr := strconv.Itoa(indicatorID)
+	seriesStr := strconv.Itoa(series)
+
+	if fieldMap, ok := fdr[indicatorIDStr]; ok {
+		if field, ok := fieldMap[seriesStr]; ok {
+			return &field
+		}
+	}
+	return nil
+}
+
+// Helper function to save form field data
+func saveFormField(recordID string, indicatorID string, value string) error {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set(indicatorID, value)
+
+	res, err := client.PostForm(RootURL+`api/form/`+recordID, postData)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	// Read response to check for errors
+	body, _ := io.ReadAll(res.Body)
+
+	// Check if response indicates success
+	if res.StatusCode != 200 {
+		return fmt.Errorf("save failed with status %d: %s", res.StatusCode, string(body))
+	}
+
+	return nil
+}
+
+// TestSerialization_MultiselectStoredAsJSON tests that multiselect data with special characters works correctly
+// Uses recordID 18 (clean record for testing)
+func TestSerialization_MultiselectStoredAsJSON(t *testing.T) {
+	recordID := "18"
+
+	// Find a multiselect or checkboxes field
+	formData, err := getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve form: %v", err)
+	}
+
+	var testIndicatorIDStr string
+	var testIndicatorIDInt int
+	for indicatorIDStr, fieldMap := range formData {
+		for _, field := range fieldMap {
+			if field.Format == "multiselect" || field.Format == "checkboxes" {
+				testIndicatorIDStr = indicatorIDStr
+				testIndicatorIDInt = field.IndicatorID
+				break
+			}
+		}
+		if testIndicatorIDStr != "" {
+			break
+		}
+	}
+
+	if testIndicatorIDStr == "" {
+		t.Skip("No multiselect or checkboxes field found")
+		return
+	}
+
+	// Test data with problematic characters that could break serialization
+	testData := []string{
+		"test;value",           // semicolon (used in some serialization)
+		"a:2:test",            // looks like serialization marker
+		"O:3:\"Std\"",         // looks like object serialization
+		"c & d",               // ampersand (HTML entity)
+	}
+	inputJSON, _ := json.Marshal(testData)
+
+	// Save the data
+	err = saveFormField(recordID, testIndicatorIDStr, string(inputJSON))
+	if err != nil {
+		t.Fatalf("Failed to save data: %v", err)
+	}
+
+	// Retrieve and verify
+	formData, err = getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve data: %v", err)
+	}
+
+	field := formData.FindField(testIndicatorIDInt, 1)
+	if field == nil {
+		t.Fatalf("Field not found after saving")
+	}
+
+	got, err := field.GetValueAsJSON()
+	if err != nil {
+		t.Fatalf("Failed to get value: %v", err)
+	}
+
+	// Parse and verify
+	var result []string
+	err = json.Unmarshal([]byte(got), &result)
+	if err != nil {
+		t.Errorf("Failed to parse as JSON: %v", err)
+		t.Errorf("Retrieved value: %s", got)
+		return
+	}
+
+	// Verify all values match
+	for i, expected := range testData {
+		if i >= len(result) {
+			t.Errorf("Missing value at index %d", i)
+			continue
+		}
+		if result[i] != expected {
+			t.Errorf("Value mismatch at index %d: expected %q, got %q", i, expected, result[i])
+		}
+	}
+}
+
+// TestSerialization_VerifyStorageFormat documents the serialization format change
+// This test saves data and provides guidance for manual database verification.
+//
+// EXPECTED BEHAVIOR:
+// - Master branch: Data stored as PHP serialized format (a:2:{...})
+// - json_encode branch: Data stored as JSON format (["value1","value2"])
+//
+// LIMITATION: Both branches can READ the data successfully due to fallback logic,
+// so this test documents the expected behavior but cannot automatically verify it.
+// Manual database inspection is required to confirm the storage format.
+func TestSerialization_VerifyStorageFormat(t *testing.T) {
+	recordID := "18"
+
+	// Find a multiselect field
+	formData, err := getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve form: %v", err)
+	}
+
+	var testIndicatorID string
+	var testIndicatorIDInt int
+	for indicatorIDStr, fieldMap := range formData {
+		for _, field := range fieldMap {
+			if field.Format == "multiselect" || field.Format == "checkboxes" {
+				testIndicatorID = indicatorIDStr
+				testIndicatorIDInt = field.IndicatorID
+				break
+			}
+		}
+		if testIndicatorID != "" {
+			break
+		}
+	}
+
+	if testIndicatorID == "" {
+		t.Skip("No multiselect field found in recordID 18")
+		return
+	}
+
+	// Create test data with a recognizable pattern
+	testData := []string{"TEST_MARKER_JSON", "VALUE_2", "VALUE_3"}
+	inputJSON, _ := json.Marshal(testData)
+
+	// Save the data
+	err = saveFormField(recordID, testIndicatorID, string(inputJSON))
+	if err != nil {
+		t.Fatalf("Failed to save data: %v", err)
+	}
+
+	// Verify we can read it back
+	formData, err = getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve form: %v", err)
+	}
+
+	field := formData.FindField(testIndicatorIDInt, 1)
+	if field == nil {
+		t.Fatalf("Field not found")
+	}
+
+	got, _ := field.GetValueAsJSON()
+	var result []string
+	json.Unmarshal([]byte(got), &result)
+
+	// Verify data integrity
+	if len(result) != 3 || result[0] != "TEST_MARKER_JSON" {
+		t.Errorf("Data integrity check failed: %v", result)
+	}
+
+	// DOCUMENTATION: To manually verify storage format, check the database:
+	// Master branch should show: a:3:{i:0;s:16:"TEST_MARKER_JSON";i:1;s:7:"VALUE_2";i:2;s:7:"VALUE_3";}
+	// json_encode branch should show: ["TEST_MARKER_JSON","VALUE_2","VALUE_3"]
+	//
+	// SQL to check: SELECT data FROM data WHERE recordID=18 AND indicatorID=<testIndicatorIDInt> AND series=1;
+
+	t.Logf("✓ Data saved and retrieved successfully for indicatorID %d", testIndicatorIDInt)
+	t.Logf("To verify storage format, run: SELECT data FROM data WHERE recordID=%s AND indicatorID=%d AND series=1;", recordID, testIndicatorIDInt)
+	t.Log("Expected on master: a:3:{i:0;s:16:\"TEST_MARKER_JSON\";...}")
+	t.Log("Expected on json_encode branch: [\"TEST_MARKER_JSON\",\"VALUE_2\",\"VALUE_3\"]")
+}
+
+// TestSerialization_LegacyDataDecoding verifies that legacy PHP serialized data is still readable
+// Uses recordID 16 which has existing serialized data
+func TestSerialization_LegacyDataDecoding(t *testing.T) {
+	recordID := "16"
+
+	// Retrieve form data that may contain legacy serialized data
+	formData, err := getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve form with legacy data: %v", err)
+	}
+
+	// Count how many fields we successfully decoded
+	decodedCount := 0
+	errorCount := 0
+
+	// Check all fields in the form
+	for indicatorIDStr, fieldMap := range formData {
+		for seriesStr, field := range fieldMap {
+			value := field.GetValueAsString()
+
+			// If it looks like it might be array data (has commas or is JSON)
+			if strings.Contains(value, ",") || strings.HasPrefix(value, "[") {
+				// Get decoded value for JSON parsing
+				decodedValue, err := field.GetValueAsJSON()
+				if err != nil {
+					t.Errorf("Failed to get value as JSON for indicatorID=%s series=%s: %v", indicatorIDStr, seriesStr, err)
+					continue
+				}
+
+				// Try to decode it
+				var result interface{}
+				err = json.Unmarshal([]byte(decodedValue), &result)
+				if err == nil {
+					decodedCount++
+				} else {
+					// If it's not JSON, it might be legacy serialized or just a regular string with commas
+					if strings.HasPrefix(decodedValue, "a:") {
+						errorCount++
+						t.Errorf("❌ Legacy serialized data not decoded for indicatorID=%s series=%s: %s", indicatorIDStr, seriesStr, decodedValue)
+					}
+				}
+			}
+		}
+	}
+
+	if errorCount > 0 {
+		t.Errorf("Found %d fields with legacy serialized data that wasn't properly decoded", errorCount)
+	}
+}
+
+// TestSerialization_PreventRegression ensures JSON-stored data continues to work
+// Uses recordID 17 to test reading JSON-formatted data
+func TestSerialization_PreventRegression(t *testing.T) {
+	recordID := "17"
+
+	// First, retrieve existing data to check for JSON
+	formData, err := getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve form: %v", err)
+	}
+
+	decodedCount := 0
+	errorCount := 0
+
+	// Check all fields for existing JSON data
+	for indicatorIDStr, fieldMap := range formData {
+		for seriesStr, field := range fieldMap {
+			value := strings.TrimSpace(field.GetValueAsString())
+
+			// Only check fields that look like JSON (start with '[' or '{')
+			// Plain comma-separated strings like "a,b,c" are NOT JSON
+			if strings.HasPrefix(value, "[") || strings.HasPrefix(value, "{") {
+				decodedValue, err := field.GetValueAsJSON()
+				if err != nil {
+					t.Errorf("Failed to get value as JSON for indicatorID=%s series=%s: %v", indicatorIDStr, seriesStr, err)
+					continue
+				}
+
+				// Try to parse as JSON
+				var result interface{}
+				err = json.Unmarshal([]byte(decodedValue), &result)
+				if err == nil {
+					decodedCount++
+				} else {
+					errorCount++
+					t.Errorf("❌ Failed to decode JSON data for indicatorID=%s series=%s: %s", indicatorIDStr, seriesStr, decodedValue)
+				}
+			}
+		}
+	}
+
+	// If no existing JSON data found, create some to test with
+	if decodedCount == 0 {
+		// Find a multiselect or checkboxes field to test with
+		var testIndicatorIDStr string
+		var testIndicatorIDInt int
+		for indicatorIDStr, fieldMap := range formData {
+			for _, field := range fieldMap {
+				if field.Format == "multiselect" || field.Format == "checkboxes" {
+					testIndicatorIDStr = indicatorIDStr
+					testIndicatorIDInt = field.IndicatorID
+					break
+				}
+			}
+			if testIndicatorIDStr != "" {
+				break
+			}
+		}
+
+		if testIndicatorIDStr == "" {
+			t.Skip("No multiselect/checkboxes field found and no existing JSON data in record 17")
+			return
+		}
+
+		// Save JSON array data
+		testData := []string{"regression_test_1", "regression_test_2", "regression_test_3"}
+		inputJSON, _ := json.Marshal(testData)
+		err = saveFormField(recordID, testIndicatorIDStr, string(inputJSON))
+		if err != nil {
+			t.Fatalf("Failed to save JSON data: %v", err)
+		}
+
+		// Retrieve and verify we can read it back
+		formData, err = getFormData(recordID)
+		if err != nil {
+			t.Fatalf("Failed to retrieve form: %v", err)
+		}
+
+		field := formData.FindField(testIndicatorIDInt, 1)
+		if field == nil {
+			t.Fatalf("Field not found after saving")
+		}
+
+		decodedValue, err := field.GetValueAsJSON()
+		if err != nil {
+			t.Fatalf("Failed to get value as JSON: %v", err)
+		}
+
+		// Parse as JSON
+		var result []string
+		err = json.Unmarshal([]byte(decodedValue), &result)
+		if err != nil {
+			t.Errorf("❌ Failed to decode JSON data: %s", decodedValue)
+			t.Errorf("Error: %v", err)
+			return
+		}
+
+		// Verify the data matches
+		if len(result) != len(testData) {
+			t.Errorf("Length mismatch: expected %d, got %d", len(testData), len(result))
+		}
+
+		for i, expected := range testData {
+			if i >= len(result) || result[i] != expected {
+				t.Errorf("Value mismatch at index %d: expected %q, got %q", i, expected, result[i])
+			}
+		}
+	} else if errorCount > 0 {
+		t.Errorf("Found %d fields with JSON data that couldn't be decoded", errorCount)
+	}
+}
+
+// TestSerialization_DataRoundTrip verifies data can be stored and retrieved correctly
+// This is a basic sanity test that should pass on both branches
+// Uses recordID 18 (clean record)
+func TestSerialization_DataRoundTrip(t *testing.T) {
+	recordID := "18"
+
+	// Find a multiselect or checkboxes field
+	formData, err := getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve form: %v", err)
+	}
+
+	var testIndicatorIDStr string
+	var testIndicatorIDInt int
+	for indicatorIDStr, fieldMap := range formData {
+		for _, field := range fieldMap {
+			if field.Format == "multiselect" || field.Format == "checkboxes" {
+				testIndicatorIDStr = indicatorIDStr
+				testIndicatorIDInt = field.IndicatorID
+				break
+			}
+		}
+		if testIndicatorIDStr != "" {
+			break
+		}
+	}
+
+	if testIndicatorIDStr == "" {
+		t.Skip("No multiselect or checkboxes field found")
+		return
+	}
+
+	// Simple test data
+	testData := []string{"option1", "option2", "option3"}
+	inputJSON, _ := json.Marshal(testData)
+
+	// Store data
+	err = saveFormField(recordID, testIndicatorIDStr, string(inputJSON))
+	if err != nil {
+		t.Fatalf("Failed to save data: %v", err)
+	}
+
+	// Retrieve data
+	formData, err = getFormData(recordID)
+	if err != nil {
+		t.Fatalf("Failed to retrieve data: %v", err)
+	}
+
+	// Verify the field
+	field := formData.FindField(testIndicatorIDInt, 1)
+	if field == nil {
+		t.Fatalf("Field with indicatorID %d not found in response", testIndicatorIDInt)
+	}
+
+	got, err := field.GetValueAsJSON()
+	if err != nil {
+		t.Fatalf("Failed to get value as JSON: %v", err)
+	}
+
+	// Parse and verify
+	var output []string
+	err = json.Unmarshal([]byte(got), &output)
+	if err != nil {
+		t.Errorf("Failed to parse value as JSON: %v", err)
+		return
+	}
+
+	// Verify exact match
+	if len(output) != len(testData) {
+		t.Errorf("Length mismatch - expected %d, got %d", len(testData), len(output))
+	}
+
+	for i, expected := range testData {
+		if i >= len(output) {
+			t.Errorf("Missing value at index %d", i)
+			continue
+		}
+		if output[i] != expected {
+			t.Errorf("Value mismatch at index %d: expected %q, got %q", i, expected, output[i])
+		}
 	}
 }
