@@ -213,9 +213,7 @@ test('Create a read only workflow step', async ({ page }) => {
     await expect(page.locator('#step_requirements')).toContainText(requirementOption);
 });
 
-/**
- * Test for LEAF-5201 Fix to allow all requirements to now be removed from a workflow step
- */
+
 test('Test that requirements can be added then removed from workflow successfully', async ({ page }) => {
     const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
     const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
@@ -223,6 +221,10 @@ test('Test that requirements can be added then removed from workflow successfull
     const workflowsDropdown = page.locator('#workflows_chosen');
     const newWorkflowButton = page.locator('#btn_newWorkflow');
     const workflowDescription = page.locator('#description');
+
+    const requirementsAnchor = page.locator('#dependencyList a.chosen-single');
+    const requirementsSubmenuList = page.locator('ul#step_requirements');
+
     const saveButton = page.locator('#button_save');
     const deleteWorkflowButton = page.locator('#btn_deleteWorkflow');
     const confirmDeleteButton = page.locator('#confirm_button_save');
@@ -244,31 +246,59 @@ test('Test that requirements can be added then removed from workflow successfull
     // Add and then remove 'Group A' requirement from the step
     await page.getByRole('button', { name: 'workflow step: Test' }).click();
     await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Group A' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
+    await expect(
+        requirementsSubmenuList,
+        'Requirements submenu to contain the saved custom requirement'
+    ).toContainText('Group A');
     await page.getByRole('button', { name: 'Remove Requirement' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
 
     //Add rest of requirements then remove them all
     await page.getByRole('button', { name: 'Add Requirement' }).click();
-    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
     await page.getByRole('option', { name: 'Group Designated by the' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('button', { name: 'Add Requirement' }).click();
-    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await page.getByRole('button', { name: 'Create a new requirement' }).click();
+    await page.getByRole('textbox', { name: 'Requirement Label:' }).click();
+    await page.getByRole('textbox', { name: 'Requirement Label:' }).fill('TestRequirementRemoval');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByLabel('Grant Privileges to Group:')).toBeVisible();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(
+        requirementsSubmenuList,
+        'Requirements submenu to contain the saved custom requirement'
+    ).toContainText('TestRequirementRemoval');
+    
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
     await page.getByRole('option', { name: 'Person Designated by the' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('button', { name: 'Add Requirement' }).click();
-    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
     await page.getByRole('option', { name: 'Quadrad' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('button', { name: 'Add Requirement' }).click();
-    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
     await page.getByRole('option', { name: 'Requestor Followup' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('button', { name: 'Add Requirement' }).click();
-    await page.locator('a').filter({ hasText: 'Group A' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
     await page.getByRole('option', { name: 'Service Chief' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
+
+    //Remove all added components
+    await page.getByRole('listitem').filter({ hasText: 'TestRequirementRemoval 2911' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
     await page.getByRole('listitem').filter({ hasText: 'Group Designated by the' }).getByLabel('Remove Requirement').click();
     await page.getByRole('button', { name: 'Yes' }).click();
     await page.getByRole('listitem').filter({ hasText: 'Requestor Followup (depID:-2)' }).getByLabel('Remove Requirement').click();
