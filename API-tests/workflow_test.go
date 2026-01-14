@@ -11,6 +11,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+var commonWorkflow = Workflow{
+	WorkflowID:    0,
+	InitialStepID: 0,
+	Description:   "",
+}
+
 func getWorkflowStep(stepID string) WorkflowStep {
 	res, _ := client.Get(RootURL + "api/workflow/step/" + stepID)
 	b, _ := io.ReadAll(res.Body)
@@ -118,4 +124,25 @@ func TestWorkflow_PreventModifyReservedRequirements(t *testing.T) {
 	if res.StatusCode != 400 {
 		t.Errorf("Expected status code 400, got %v", res.StatusCode)
 	}
+}
+
+func TestNewWorkflow(t *testing.T) {
+	workflowName := "Go API Test Workflow"
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("description", workflowName)
+
+	res, _ := client.PostForm(RootURL+`api/workflow/new`, postData)
+	b, _ := io.ReadAll(res.Body)
+	var workflowID string
+	err := json.Unmarshal(b, &workflowID)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	workflowIDInt, err := strconv.Atoi(workflowID)
+	if err != nil || workflowIDInt <= 0 {
+		t.Errorf("Expected valid workflow ID, got %v", workflowID)
+	}
+	commonWorkflow.WorkflowID = workflowIDInt
+	commonWorkflow.Description = workflowName
 }

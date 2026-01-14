@@ -1,5 +1,12 @@
 package main
 
+type Workflow struct {
+	WorkflowID    int    `json:"workflowID"`
+	InitialStepID int    `json:"initialStepID"`
+	Description   string `json:"description"`
+}
+
+
 type WorkflowStep struct {
 	WorkflowID                       int    `json:"workflowID"`
 	StepID                           int    `json:"stepID"`
