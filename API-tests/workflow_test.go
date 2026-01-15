@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"net/http"
+	"strings"
 	"strconv"
 	"testing"
 
@@ -15,6 +17,11 @@ var commonWorkflow = Workflow{
 	WorkflowID:    0,
 	InitialStepID: 0,
 	Description:   "",
+}
+var commonWorkflowStep = WorkflowStep{
+	WorkflowID:		0,
+	StepID:			0,
+	StepTitle:		"",
 }
 
 func getWorkflowStep(stepID string) WorkflowStep {
@@ -133,7 +140,12 @@ func TestNewWorkflow(t *testing.T) {
 	postData.Set("description", workflowName)
 
 	res, _ := client.PostForm(RootURL+`api/workflow/new`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
 	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
 	var workflowID string
 	err := json.Unmarshal(b, &workflowID)
 	if err != nil {
@@ -145,4 +157,120 @@ func TestNewWorkflow(t *testing.T) {
 	}
 	commonWorkflow.WorkflowID = workflowIDInt
 	commonWorkflow.Description = workflowName
+	commonWorkflowStep.WorkflowID = workflowIDInt
+}
+
+func TestNewWorkflowStep(t *testing.T) {
+	stepTitle := "Initial Step"
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("stepTitle", stepTitle)
+
+	if(commonWorkflow.WorkflowID == 0) {
+		t.Errorf("commonWorkflow.WorkflowID is 0, cannot create step without valid workflow ID")
+	}
+
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+	res, _ := client.PostForm(RootURL+`api/workflow/` + workflowIDStr + `/step`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var stepID string
+	err := json.Unmarshal(b, &stepID)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	stepIDInt, err := strconv.Atoi(stepID)
+	if err != nil || stepIDInt <= 0 {
+		t.Errorf("Expected valid step ID, got %v", stepID)
+	}
+	commonWorkflow.InitialStepID = stepIDInt
+	commonWorkflowStep.StepID = stepIDInt
+	commonWorkflowStep.StepTitle = stepTitle
+}
+
+func TestWorkflowStepDependencies(t *testing.T) {
+	if(commonWorkflow.WorkflowID == 0 || commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflow.WorkflowID or commonWorkflowStep.StepID is 0, cannot add dependency without valid IDs")
+	}
+	type Requirement struct {
+		DependencyID int
+		Name		 string
+	}
+	var requirementTypes = []Requirement{
+		{DependencyID: -1, Name: "Person Designated"},
+		{DependencyID: -2, Name: "Requestor Followup"},
+		{DependencyID: -3, Name: "Group Designated"},
+		{DependencyID: 1, Name: "Service Chief"},
+		{DependencyID: 8, Name: "ELT/Quadrad"},
+		{DependencyID: 9, Name: "Custom Requirement"},
+	}
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("workflowID", workflowIDStr)
+
+	//add each type of dependency to this workflow step
+	for _, dep := range requirementTypes {
+		dependencyIDStr := strconv.Itoa(dep.DependencyID)
+		postData.Set("dependencyID", dependencyIDStr)
+
+		res, _ := client.PostForm(RootURL+`api/workflow/step/` + stepIDStr + `/dependencies`, postData)
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got %v", res.StatusCode)
+		}
+		b, _ := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		var result string
+		err := json.Unmarshal(b, &result)
+		if err != nil {
+			t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+		}
+
+		got := result
+		want := "1"
+		if !cmp.Equal(got, want) {
+			t.Errorf("Error adding requirement type = %v, got = %v, want = %v", dep.Name, got, want)
+		}
+	}
+	//remove each type of dependency from this workflow step
+	for _, dep := range requirementTypes {
+		dependencyIDStr := strconv.Itoa(dep.DependencyID)
+		postData.Set("dependencyID", dependencyIDStr)
+
+		params := "?dependencyID=" + dependencyIDStr + "&workflowID=" + workflowIDStr + "&CSRFToken=" + CsrfToken
+		req, err := http.NewRequest("DELETE", RootURL+`api/workflow/step/` + stepIDStr + `/dependencies` + params, strings.NewReader(postData.Encode()))
+		if err != nil {
+			t.Errorf("Error creating DELETE request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		res, err := client.Do(req)
+		if err != nil {
+			t.Errorf("Error sending delete request: %v", err)
+		}
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got %v", res.StatusCode)
+		}
+		b, _ := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		var result string
+		err = json.Unmarshal(b, &result)
+		if err != nil {
+			t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+		}
+
+		got := result
+		want := "1"
+		if !cmp.Equal(got, want) {
+			t.Errorf("Error removing requirement type = %v, got = %v, want = %v", dep.Name, got, want)
+		}
+	}
 }
