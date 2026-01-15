@@ -19,8 +19,8 @@ var commonWorkflow = Workflow{
 	Description:   "Go API Test Workflow",
 }
 var commonWorkflowStep = WorkflowStep{
-	StepID:			0,
-	StepTitle:		"Go API Test Step",
+	StepID: 0,
+	StepTitle: "Go API Test Step",
 }
 var commonDependencies = WorkflowDependencies{
 	{DependencyID: -1, Description: "Person Designated"},
@@ -33,6 +33,7 @@ var commonDependencies = WorkflowDependencies{
 func getWorkflowStep(stepID string) WorkflowStep {
 	res, _ := client.Get(RootURL + "api/workflow/step/" + stepID)
 	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var m WorkflowStep
 	err := json.Unmarshal(b, &m)
@@ -46,6 +47,7 @@ func getWorkflowStep(stepID string) WorkflowStep {
 func getWorkflowStepDependencies(stepID string) WorkflowStepDependencies {
 	res, _ := client.Get(RootURL + "api/workflow/step/" + stepID + "/dependencies")
 	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var m WorkflowStepDependencies
 	err := json.Unmarshal(b, &m)
@@ -65,6 +67,7 @@ func setStepCoordinates(workflowID string, stepID string, x string, y string) st
 
 	res, _ := client.PostForm(RootURL+`api/workflow/`+workflowID+`/editorPosition`, postData)
 	bodyBytes, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var c string
 	err := json.Unmarshal(bodyBytes, &c)
@@ -73,6 +76,7 @@ func setStepCoordinates(workflowID string, stepID string, x string, y string) st
 	}
 	return c
 }
+
 
 func TestWorkflow_Set_Step_Coordinates(t *testing.T) {
 	//negative coords use min val of 0
@@ -116,6 +120,7 @@ func TestWorkflow_Set_Step_Coordinates(t *testing.T) {
 func TestWorkflow_Step_Actions(t *testing.T) {
 	res, _ := client.Get(RootURL + "api/workflow/step/2/actions")
 	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var data StepActions
 	err := json.Unmarshal(b, &data)
@@ -140,12 +145,14 @@ func TestWorkflow_PreventModifyReservedRequirements(t *testing.T) {
 	// -4 is a reserved requirement ID
 	// this should fail with a HTTP 400 error
 	res, _ := client.PostForm(RootURL+`api/workflow/dependency/-4`, postData)
+	defer res.Body.Close()
 
 	if res.StatusCode != 400 {
 		t.Errorf("Expected status code 400, got %v", res.StatusCode)
 	}
 
 	res, _ = client.PostForm(RootURL+`api/workflow/dependency/-4/privileges`, postData)
+	defer res.Body.Close()
 
 	if res.StatusCode != 400 {
 		t.Errorf("Expected status code 400, got %v", res.StatusCode)
@@ -207,9 +214,17 @@ func TestWorkflow_NewWorkflowStep(t *testing.T) {
 	commonWorkflowStep.StepID = stepIDInt
 }
 
-func TestWorkflow_NewDependency(t *testing.T) {
-	depDescription := "Test API Dependency"
 
+var mockWorkflowStepDep = WorkflowStepDependency{
+	DependencyID: 0,
+	Description: "Test API Dependency",
+	IndicatorID_for_assigned_empUID: 8,  //standard test database org_emp indicator ID
+	IndicatorID_for_assigned_groupID: 9, //standard test database org_grp indicator ID
+	GroupID: 206,                        //standard test database group (Group A)
+	Name: "Group A",
+}
+func TestWorkflow_NewDependency(t *testing.T) {
+	depDescription := mockWorkflowStepDep.Description
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
 	postData.Set("description", depDescription)
@@ -279,10 +294,11 @@ func TestWorkflow_SetCustomDependencyGroupPrivileges(t *testing.T) {
 	if(newDependency.DependencyID <= 8) {
 		t.Errorf("Did not get expected new dependencyID, got %v", newDependencyIDStr)
 	}
+	groupIDStr := strconv.Itoa(mockWorkflowStepDep.GroupID)
 
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
-	postData.Set("groupID", "206")//standard DB test group, 'Group A'
+	postData.Set("groupID", groupIDStr)
 
 	res, _ := client.PostForm(RootURL+`api/workflow/dependency/` + newDependencyIDStr + `/privileges`, postData)
 	if res.StatusCode != 200 {
@@ -307,12 +323,13 @@ func TestWorkflow_SetStepPersonDesignatedField(t *testing.T) {
 	if(commonWorkflowStep.StepID == 0) {
 		t.Errorf("commonWorkflowStep.StepID is 0, cannot set person designated field without valid ID")
 	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	indStr := strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_empUID)
 
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
-	postData.Set("indicatorID", "8")//standard test database ID
+	postData.Set("indicatorID", indStr)
 
-	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
 	res, _ := client.PostForm(RootURL+`api/workflow/step/` + stepIDStr + `/indicatorID_for_assigned_empUID`, postData)
 	if res.StatusCode != 200 {
 		t.Errorf("Expected status code 200, got %v", res.StatusCode)
@@ -336,12 +353,13 @@ func TestWorkflow_SetStepGroupDesignatedField(t *testing.T) {
 	if(commonWorkflowStep.StepID == 0) {
 		t.Errorf("commonWorkflowStep.StepID is 0, cannot set group designated field without valid ID")
 	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	indStr := strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_groupID)
 
 	postData := url.Values{}
 	postData.Set("CSRFToken", CsrfToken)
-	postData.Set("indicatorID", "9")//standard test database ID
+	postData.Set("indicatorID", indStr)
 
-	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
 	res, _ := client.PostForm(RootURL+`api/workflow/step/` + stepIDStr + `/indicatorID_for_assigned_groupID`, postData)
 	if res.StatusCode != 200 {
 		t.Errorf("Expected status code 200, got %v", res.StatusCode)
@@ -361,14 +379,77 @@ func TestWorkflow_SetStepGroupDesignatedField(t *testing.T) {
 	}
 }
 
-func TestWorkflow_StepDependencyConfig(t *testing.T) {
+func TestWorkflow_GetStepDependencyConfig(t *testing.T) {
 	if(commonWorkflowStep.StepID == 0) {
-		t.Errorf("commonWorkflowStep.StepID is 0, cannot set group designated field without valid ID")
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot get step dependencies without valid ID")
 	}
 	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
 	stepConfig := getWorkflowStepDependencies(stepIDStr)
-	num := len(stepConfig)
-	log.Printf("got: %v", num)
+
+	for _, dep := range stepConfig {
+		dependencyID := dep.DependencyID
+
+		switch dependencyID {
+		case -1:
+			got := dep.Description
+			want := "Person Designated by the Requestor"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+			got = strconv.Itoa(dep.IndicatorID_for_assigned_empUID)
+			want = strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_empUID)
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected value of assigned emp, got = %v, want = %v", got, want)
+			}
+		case -2:
+			got := dep.Description
+			want := "Requestor Followup"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+		case -3:
+			got := dep.Description
+			want := "Group Designated by the Requestor"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+			got = strconv.Itoa(dep.IndicatorID_for_assigned_groupID)
+			want = strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_groupID)
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected value of assigned group, got = %v, want = %v", got, want)
+			}
+		case 1:
+			got := dep.Description
+			want := "Service Chief"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+		case 8:
+			got := dep.Description
+			want := "Quadrad"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+		case mockWorkflowStepDep.DependencyID:
+			got := dep.Description
+			want := mockWorkflowStepDep.Description
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+			//if multiple groups had been given privs, they would be additional step dep entries
+			got = strconv.Itoa(dep.GroupID)
+			want = strconv.Itoa(mockWorkflowStepDep.GroupID)
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected custom requirement groupID, got = %v, want = %v", got, want)
+			}
+			got = dep.Name
+			want = mockWorkflowStepDep.Name
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected custom requirement group name, got = %v, want = %v", got, want)
+			}
+		default:
+		}
+	}
 }
 
 func TestWorkflow_RemoveStepDependenciesFromWorkflowStep(t *testing.T) {
@@ -413,5 +494,24 @@ func TestWorkflow_RemoveStepDependenciesFromWorkflowStep(t *testing.T) {
 		if !cmp.Equal(got, want) {
 			t.Errorf("Error removing requirement type = %v, got = %v, want = %v", dep.Description, got, want)
 		}
+	}
+}
+
+func TestWorkflow_DesignatedIndicatorValuesAreResetAfterRemoval(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot add get step without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	step := getWorkflowStep(stepIDStr)
+
+	got := step.IndicatorID_for_assigned_empUID
+	want := 0
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error clearing designated empID = %v, want = %v", got, want)
+	}
+	got = step.IndicatorID_for_assigned_groupID
+	want = 0
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error clearing designated empID = %v, want = %v", got, want)
 	}
 }
