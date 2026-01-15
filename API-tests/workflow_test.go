@@ -251,7 +251,7 @@ func TestWorkflow_NewDependency(t *testing.T) {
 	)
 }
 
-func TestWorkflow_AddStepDependenciesToWorkflowStep(t *testing.T) {
+func TestWorkflow_LinkStepDependenciesToWorkflowStep(t *testing.T) {
 	if(commonWorkflowStep.StepID == 0) {
 		t.Errorf("commonWorkflowStep.StepID is 0, cannot add dependency without valid ID")
 	}
@@ -452,7 +452,7 @@ func TestWorkflow_GetStepDependencyConfig(t *testing.T) {
 	}
 }
 
-func TestWorkflow_RemoveStepDependenciesFromWorkflowStep(t *testing.T) {
+func TestWorkflow_UnlinkStepDependenciesFromWorkflowStep(t *testing.T) {
 	if(commonWorkflowStep.StepID == 0) {
 		t.Errorf("commonWorkflowStep.StepID is 0, cannot get dependencies without valid ID")
 	}
@@ -513,5 +513,81 @@ func TestWorkflow_DesignatedIndicatorValuesAreResetAfterRemoval(t *testing.T) {
 	want = 0
 	if !cmp.Equal(got, want) {
 		t.Errorf("Error clearing designated empID = %v, want = %v", got, want)
+	}
+}
+
+func TestWorkflow_DeleteWorkflowStep(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot delete step without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	params := "?CSRFToken=" + CsrfToken
+	req, err := http.NewRequest("DELETE", RootURL+`api/workflow/step/` + stepIDStr + params, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating DELETE request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending delete request: %v", err)
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error deleting workflow step = %v, got = %v, want = %v", stepIDStr, got, want)
+	}
+}
+
+func TestWorkflow_DeleteWorkflow(t *testing.T) {
+	if(commonWorkflow.WorkflowID == 0) {
+		t.Errorf("commonWorkflow.WorkflowID is 0, cannot delete workflow without valid ID")
+	}
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	params := "?CSRFToken=" + CsrfToken
+	req, err := http.NewRequest("DELETE", RootURL+`api/workflow/` + workflowIDStr + params, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating DELETE request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending delete request: %v", err)
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error deleting workflow = %v, got = %v, want = %v", workflowIDStr, got, want)
 	}
 }
