@@ -407,12 +407,12 @@ test('Report Allows Negative Currency', async ({ page}) => {
 
   // Choose reports which use the Input Formats form
   await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
-  await page.getByRole('option', { name: formType }).click();
+  await page.getByRole('option', { name: formType, exact: true }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
-  await page.locator('#indicatorList').getByText(formType).click();
+  await page.locator('#indicatorList').getByText(formType, {exact: true} ).click();
 
   // Choose currency as one of the columns
-  await page.getByText('currency', { exact: true }).click();
+  await page.getByText('currency', { exact: true }).first().click();
   await page.getByRole('button', { name: 'Generate Report' }).click();
   await rowLocator.click();
 
