@@ -14,6 +14,7 @@ func main() {
 	http.HandleFunc("/", handleIndex)
 	http.HandleFunc("/api/v1/test", handleRunTest)
 	http.HandleFunc("/api/v1/testLLM", handleRunTestLLM)
+	http.HandleFunc("/api/v1/benchLLM", handleBenchLLM)
 
 	http.ListenAndServe(":8000", nil)
 }
@@ -120,5 +121,37 @@ func handleRunTestLLM(w http.ResponseWriter, r *http.Request) {
 		mxRunningTests.Unlock()
 	} else {
 		io.WriteString(w, "Already running tests")
+	}
+}
+
+func handleBenchLLM(w http.ResponseWriter, r *http.Request) {
+	modeVerbose := r.URL.Query().Has("-v")
+
+	mxRunningTests.Lock()
+	if !runningTests {
+		runningTests = true
+		printLog(w, "Running LLM Benchmark: LEAF/LEAF_Agent")
+
+		var cmd *exec.Cmd
+		if modeVerbose {
+			printLog(w, "Running in verbose mode")
+			cmd = exec.Command("go", "test", "-bench=.", "-benchtime=5s", "-v")
+		} else {
+			cmd = exec.Command("go", "test", "-bench=.", "-benchtime=5s")
+		}
+
+		cmd.Dir = "../LEAF_Agent"
+		pipe, err := cmd.StdoutPipe()
+		if err != nil {
+			log.Println(err)
+		}
+		cmd.Start()
+		io.Copy(w, pipe)
+		cmd.Wait()
+
+		runningTests = false
+		mxRunningTests.Unlock()
+	} else {
+		io.WriteString(w, "Already running LLM benchmark")
 	}
 }
