@@ -10,6 +10,7 @@ import {
     deleteTestFormByFormID
 } from '../leaf_test_utils/leaf_util_methods';
 
+
 test('Create a new workflow and add a step and an action', async ({ page }) => {
     // Generate unique workflow title
     const testID = getRandomId();
@@ -37,6 +38,38 @@ test('Create a new workflow and add a step and an action', async ({ page }) => {
         // verify its visibility
         await page.getByRole('button', { name: 'Save' }).click();
         await expect(page.getByText('Approve')).toBeInViewport();
+
+    ////////////LEAF-5196: Workflow Editor UX Inprovements///////////////////////////////
+
+        //Count the number of workflow connections
+        const jtkConnectors = await page.locator('.jtk-connector').all();
+        console.log(`Number of workflow connections: ${jtkConnectors.length}`);
+
+        //Verify the you can not drag the endpoint of the end step to another step
+    
+        await endConnector.dragTo(stepConnector);
+        const jtkConnectorsAfterInvalidDrag = await page.locator('.jtk-connector').all();
+        expect((jtkConnectorsAfterInvalidDrag.length),
+            'Number of workflow connections should remain the same after invalid drag').
+        toBe(jtkConnectors.length);
+
+        //Verify when canceling a connection the connection is not present
+
+        await stepConnector.dragTo(endConnector);
+
+        // Wait for the "Create New Workflow Action" dialog and save the action
+        const actionDialogCancel = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
+        await expect(actionDialogCancel).toBeVisible();
+        await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
+
+        // verify its visibility
+        await page.getByRole('button', { name: 'Cancel' }).click();
+
+        const jtkConnectorsAfterCancel = await page.locator('.jtk-connector').all();
+        expect((jtkConnectorsAfterCancel.length),                   
+            'Number of workflow connections should remain the same after canceling connection').
+        toBe(jtkConnectors.length);
+
 
     } finally {
         if(workflowID != '') {
