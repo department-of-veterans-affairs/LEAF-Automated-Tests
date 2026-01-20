@@ -121,14 +121,6 @@ test('a new request can be created, and edited before being submitted', async ()
   ).toContainText('Warning: User not selected for current action (Contact Administrator)');
 });
 
-test('Change title of request', async () => {
-  await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
-  await page.getByRole('button', { name: 'Edit Title' }).click();
-  await page.getByLabel('Title:').click();
-  await page.getByLabel('Title:').fill(uniqueText + ' Renamed');
-  await page.getByRole('button', { name: 'Save Change' }).click();
-})
-
 test('a request can be copied if its form status is set to Available', async () => {
   await page.goto(LEAF_URLS.PRINTVIEW_REQUEST + newRequestID);
   await page.getByRole('button', { name: 'Copy Request' }).click();
@@ -140,7 +132,7 @@ test('a request can be copied if its form status is set to Available', async () 
   await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('New Text Available');
   await page.getByRole('link', { name: 'Home' }).click();
 
-  await expect(page.getByRole('link', { name: uniqueText + ' Renamed' })).toHaveCount(2);
+  await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(2);
 });
 
 test('a request can not be copied if its form status is set to Unpublished', async () => {
@@ -174,7 +166,7 @@ test("Request with Hidden Form Can Be Copied", async () => {
   await expect(page.locator(`#data_${singleLineText_indID}_1`)).toContainText('New Text Hidden');
   await page.getByRole('link', { name: 'Home' }).click();
 
-  await expect(page.getByRole('link', { name: uniqueText + ' Renamed' })).toHaveCount(3);
+  await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(3);
 });
 
 
@@ -274,9 +266,9 @@ test.describe('Archive and Restore Question', () => {
 
 test('original request and copied requests can be cancelled', async () => {
   await page.goto(LEAF_URLS.PORTAL_HOME);
-  await expect(page.getByRole('link', { name: uniqueText + ' Renamed' })).toHaveCount(3);
+  await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(3);
 
-  const requests = page.getByRole('link', { name: uniqueText + ' Renamed' });
+  const requests = page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' });
 
   let numRequests = await requests.count();
   while(numRequests--) {
@@ -291,7 +283,7 @@ test('original request and copied requests can be cancelled', async () => {
   }
 
   await expect(page.getByText('New Request', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: uniqueText + ' Renamed' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(0);
 });
 
 

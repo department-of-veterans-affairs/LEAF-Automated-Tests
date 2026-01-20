@@ -25,3 +25,38 @@ test('links in user content are visible', async ({ page }) => {
   // check explicit tags
   await expect(page.locator('#data_4_1')).toContainText('<a href="https://va.gov">va.gov</a>');
 });
+
+test('Change title of request', async ({ page }) => {
+  
+  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=957');
+
+  const newTitle = 'Renamed Request';
+  let renamed = false;
+
+  await page.getByRole('button', { name: 'Edit Title' }).click();
+  const originalTitle = await page.getByLabel('Title:').inputValue();  
+  
+  try {
+    await page.getByLabel('Title:').click();
+    await page.getByLabel('Title:').fill(newTitle);
+    await page.getByRole('button', { name: 'Save Change' }).click();
+    renamed = true;
+    await expect(page.locator('#requestTitle')).toContainText(newTitle);
+
+  } finally {
+    
+    if(renamed) {
+      await page.reload();
+
+      await page.getByRole('button', { name: 'Edit Title' }).click();
+      await page.getByLabel('Title:').click();
+      await page.getByLabel('Title:').fill(originalTitle);
+      await page.getByRole('button', { name: 'Save Change' }).click();
+    }
+  }
+  
+
+  
+  
+  
+})
