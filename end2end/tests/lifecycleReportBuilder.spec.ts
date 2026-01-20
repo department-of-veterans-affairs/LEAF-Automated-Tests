@@ -196,10 +196,10 @@ test('Add a New Row and Populate', async ({ page }) => {
   await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
   await page.getByRole('option', { name: 'Type' }).click();
   await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
-  await page.getByRole('option', { name: 'Input Formats' }).click();
+  await page.getByRole('option', { name: 'Input Formats', exact: true }).click();
   await page.getByRole('button', { name: 'Next Step' }).click();
 
-  await page.locator('#indicatorList').getByText('Input Formats').click();
+  await page.locator('#indicatorList').getByText('Input Formats', { exact: true }).click();
   await page.getByTitle('indicatorID: 45\ncheckboxes (LEAF-check)').locator('span').click();
   await page.getByRole('button', { name: 'Generate Report' }).click();
 
