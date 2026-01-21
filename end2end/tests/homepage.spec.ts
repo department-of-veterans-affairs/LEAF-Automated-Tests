@@ -1,4 +1,12 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+test('View Home Accessibility Scan', async ({ page }) => {
+  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.waitForLoadState('networkidle');
+  const scanResults = await new AxeBuilder({ page }).analyze();
+  expect(scanResults.violations).toHaveLength(0);
+});
 
 test('search record ID using quick search', async ({ page }, testInfo) => {
   await page.goto('https://host.docker.internal/Test_Request_Portal/');
