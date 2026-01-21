@@ -274,7 +274,7 @@ test('original request and copied requests can be cancelled', async () => {
   while(numRequests--) {
     await requests.nth(numRequests).click();
     await page.getByRole('button', { name: 'Cancel Request' }).click();
-    await page.getByPlaceholder('Enter Comment').fill('No longer needed');
+    await page.getByLabel('Comments:').fill("No longer needed");
     await page.getByRole('button', { name: 'Yes' }).click();
 
     // Verify cancellation page appears
@@ -285,6 +285,7 @@ test('original request and copied requests can be cancelled', async () => {
   await expect(page.getByText('New Request', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: uniqueText + ' to Edit, Copy, and Cancel' })).toHaveCount(0);
 });
+
 
 
 test('a negative currency is allowed in a new request', { tag: ['@LEAF-4665'] }, async () => {
@@ -328,6 +329,7 @@ test('a negative currency is allowed when editing a request', { tag: ['@LEAF-466
 
   //cleanup
   await page.getByRole('button', { name: 'Cancel Request' }).click();
+  await page.getByLabel('Comments:').fill("No longer needed");
   await page.getByRole('button', { name: 'Yes' }).click();
 });
 
