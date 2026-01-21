@@ -28,13 +28,13 @@ test('links in user content are visible', async ({ page }) => {
 
 test('Change title of request', async ({ page }) => {
   
-  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=957');
+  await page.goto('https://host.docker.internal/Test_Request_Portal/index.php?a=printview&recordID=917');
 
   const newTitle = 'Renamed Request';
   let renamed = false;
 
   await page.getByRole('button', { name: 'Edit Title' }).click();
-  const originalTitle = await page.getByLabel('Title:').inputValue();  
+  const originalTitle = 'Test Request Title Edit';
   
   try {
     await page.getByLabel('Title:').click();
