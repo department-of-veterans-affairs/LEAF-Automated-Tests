@@ -1,15 +1,14 @@
 import { test, expect } from '@playwright/test';
 import {
     LEAF_URLS, 
-	getRandomId, 
-	loadWorkflow,
+    getRandomId, 
+    loadWorkflow,
     createBaseTestWorkflow, 
-	selectChosenDropdownOption,
+    selectChosenDropdownOption,
     createTestForm,
     addFormQuestion,
-    deleteTestFormByFormID				
+    deleteTestFormByFormID
 } from '../leaf_test_utils/leaf_util_methods';
-
 
 test('Create a new workflow and add a step and an action', async ({ page }) => {
     // Generate unique workflow title
@@ -19,12 +18,12 @@ test('Create a new workflow and add a step and an action', async ({ page }) => {
 
     let [ workflowID, stepID ] = [ '', ''];
 
-    try {
+    try{
          [ workflowID, stepID ] = await createBaseTestWorkflow(page, workflowTitle, initialStepName);
 
         // Locate connectors and drag them to connect steps
         const stepConnector = page.locator('.jtk-endpoint').nth(0);
-        const endConnector =  page.locator('.jtk-endpoint').nth(2);
+        const endConnector = page.locator('.jtk-endpoint').nth(2);
 
         await expect(page.getByText('Submit')).toBeInViewport();
 
@@ -91,38 +90,44 @@ test('Rename workflow', async ({ page }) => {
     const testID = getRandomId();
     const initialWorkflowTitle = `New_Workflow_${testID}`;
     const updatedWorkflowTitle = `Updated_Workflow_${testID}`;
+    const initialStepName = `st_${testID}`;
 
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    let [ workflowID, stepID ] = [ '', ''];
 
-    await page.locator('#btn_newWorkflow').click();
-	
-    // Wait for the "Create new workflow" dialog to be visible
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await expect(workflowCreateDialog).toBeVisible();
+    try{
+        [ workflowID, stepID ] = await createBaseTestWorkflow(page, initialWorkflowTitle, initialStepName);
 
-    await page.locator('#description').fill(initialWorkflowTitle);
+        await expect(page.locator('a').filter({ hasText: initialWorkflowTitle })).toBeVisible();
 
-    const saveButton = page.locator('#button_save');
-    await saveButton.click();
+        // Click on the 'Rename Workflow' button
+        await page.locator('#btn_renameWorkflow').click();
 
-    // Assert that the newly created workflow is visible
-    await expect(page.locator('a').filter({ hasText: initialWorkflowTitle })).toBeVisible();
+        // Wait for the "Rename Workflow" dialog to be visible
+        const renameWorkflowDialog = page.locator('span.ui-dialog-title:has-text("Rename Workflow")');
+        await expect(renameWorkflowDialog).toBeVisible();
 
-    // Click on the 'Rename Workflow' button
-    await page.locator('#btn_renameWorkflow').click();
+        // Fill in the new workflow name
+        const renameInput = page.locator('#workflow_rename');
+        await renameInput.fill(updatedWorkflowTitle);
 
-    // Wait for the "Rename Workflow" dialog to be visible
-    const renameWorkflowDialog = page.locator('span.ui-dialog-title:has-text("Rename Workflow")');
-    await expect(renameWorkflowDialog).toBeVisible();
+        const saveButton = page.locator('#button_save');
+        await saveButton.click();
 
-    // Fill in the new workflow name
-    const renameInput = page.locator('#workflow_rename');
-    await renameInput.fill(updatedWorkflowTitle);
-    await saveButton.click();
+        // Assert that the renamed workflow is visible
+        await expect(page.locator('a').filter({ hasText: updatedWorkflowTitle })).toBeVisible();
 
-    // Assert that the renamed workflow is visible
-    await expect(page.locator('a').filter({ hasText: updatedWorkflowTitle })).toBeVisible();
-	 
+    }finally {
+        if(workflowID != '') {
+
+            if(stepID != '') {
+                await page.getByLabel('workflow step: ' + initialStepName).click();
+                await page.getByLabel('Remove Step').click();
+                await page.getByRole('button', { name: 'Yes' }).click();
+                await page.getByRole('button', { name: 'Delete Workflow' }).click();
+                await page.getByRole('button', { name: 'Yes' }).click();
+            }
+        }    
+    }
 });
 
 test('Changing Form Field appears in Workflow History', async ({ page }) => {
@@ -195,6 +200,7 @@ test('Changing Form Field appears in Workflow History', async ({ page }) => {
 });
 
 test('create a requestor to end workflow, copy it, then delete the copy', async ({ page }) => {
+
 
     // Generate unique workflow title for original and copied workflow
     const testID = getRandomId();
