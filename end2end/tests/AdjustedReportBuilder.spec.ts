@@ -2,18 +2,24 @@ import { test, expect } from '@playwright/test';
 import {
   LEAF_URLS,
   createTestRequest,
+  deleteTestRequestByRequestID,
   getRandomId,
   selectChosenDropdownOption
 } from '../leaf_test_utils/leaf_util_methods';
 
 
 test('Comment approval functionality and comment visibility on record page', async ({ page }) => {
+  
+  let testRequestID = '';
+  
+  try {
+
   const testId = getRandomId();
   const testComment = `testing purpose ${testId}`;
   const requestTitle = `test request ${testId}`;
 
   //create and submit a request to move it to an actionable step where approval/comments will be made
-  const testRequestID = await createTestRequest(page, 'Cotton Computers', requestTitle, 'Simple Form');
+  testRequestID = await createTestRequest(page, 'Cotton Computers', requestTitle, 'Simple Form');
   await page.getByLabel('single line text').fill(`test entry ${testId}`);
   await page.getByRole('button', { name: 'Next Question' }).first().click();
   await expect(page.getByRole('button', { name: 'Submit Request' })).toBeVisible();
@@ -66,6 +72,14 @@ test('Comment approval functionality and comment visibility on record page', asy
   for (let i = 0; i < commentsAdded.length; i++) {
     await expect(page.locator('#comments')).toContainText(commentsAdded[i]);
   }
+
+} finally {
+  if(testRequestID != '') {
+    await deleteTestRequestByRequestID(page, testRequestID);
+  }
+  
+}
+  
 });
 
 
@@ -321,71 +335,91 @@ test('Share Report button is visible on the UI', async ({ page }) => {
 });
 
 test('Report builder workflow and create row button functionality', async ({ page }) => {
-  await page.goto(LEAF_URLS.PORTAL_HOME);
 
-  // Validate and click Report Builder button
-  const reportBuilderButton = page.locator('//span[text()="Report Builder"]');
-  await expect(reportBuilderButton).toBeVisible();
-  await reportBuilderButton.click();
+  let newRowCreated = false;
+  let requestID = '';
 
-  // Verify step 1
-  const developSearchFilter = page.locator('#step_1');
-  await developSearchFilter.waitFor();
+  try {
 
-  // apply filters
-  const currentStatusLink = page.getByRole('cell', { name: 'Current Status' }).locator('a');
-  await expect(currentStatusLink).toBeVisible();
-  await currentStatusLink.click();
+    //TODO: Clean up how the report is created
+    await page.goto(LEAF_URLS.PORTAL_HOME);
 
-  const typeOption = page.getByRole('option', { name: 'Type' });
-  await expect(typeOption).toBeVisible();
-  await typeOption.click();
+    // Validate and click Report Builder button
+    const reportBuilderButton = page.locator('//span[text()="Report Builder"]');
+    await expect(reportBuilderButton).toBeVisible();
+    await reportBuilderButton.click();
 
-  const complexFormLink = page.getByRole('cell').locator('select[aria-label="categories"] + div a');
-  await expect(complexFormLink).toBeVisible();
-  await complexFormLink.click();
+    // Verify step 1
+    const developSearchFilter = page.locator('#step_1');
+    await developSearchFilter.waitFor();
 
-  const generalFormOption = page.getByRole('option', { name: 'General Form' });
-  await expect(generalFormOption).toBeVisible();
-  await generalFormOption.click();
+    // apply filters
+    const currentStatusLink = page.getByRole('cell', { name: 'Current Status' }).locator('a');
+    await expect(currentStatusLink).toBeVisible();
+    await currentStatusLink.click();
 
-  // Proceed to next step
-  const nextButton = page.getByRole('button', { name: 'Next Step' });
-  await expect(nextButton).toBeVisible();
-  await nextButton.click();
+    const typeOption = page.getByRole('option', { name: 'Type' });
+    await expect(typeOption).toBeVisible();
+    await typeOption.click();
 
-  // select action button checkbox, type of request checkbox add genral form
-  const typeOfRequestCheckbox = page.locator('label[for="indicators_type"]');
-  await typeOfRequestCheckbox.click();
-  await expect(typeOfRequestCheckbox).toBeChecked();
+    const complexFormLink = page.getByRole('cell').locator('select[aria-label="categories"] + div a');
+    await expect(complexFormLink).toBeVisible();
+    await complexFormLink.click();
 
-  const actionButtonCheckbox = page.locator('label[for="indicators_actionButton"]');
-  await actionButtonCheckbox.click();
-  await expect(actionButtonCheckbox).toBeChecked();
+    const generalFormOption = page.getByRole('option', { name: 'General Form' });
+    await expect(generalFormOption).toBeVisible();
+    await generalFormOption.click();
 
-  const generalForm = page.locator('#indicatorList').getByText('General Form');
-  await expect(generalForm).toBeVisible();
-  await generalForm.click();
+    // Proceed to next step
+    const nextButton = page.getByRole('button', { name: 'Next Step' });
+    await expect(nextButton).toBeVisible();
+    await nextButton.click();
 
-  const AssignedPerson = page.getByText('Assigned Person 2')
-  await expect(AssignedPerson).toBeVisible();
-  await AssignedPerson.click();
+    // select action button checkbox, type of request checkbox add genral form
+    const typeOfRequestCheckbox = page.locator('label[for="indicators_type"]');
+    await typeOfRequestCheckbox.click();
+    await expect(typeOfRequestCheckbox).toBeChecked();
 
-  // Generate Report
-  const generateReportButton = page.locator('#generateReport');
-  await generateReportButton.click();
+    const actionButtonCheckbox = page.locator('label[for="indicators_actionButton"]');
+    await actionButtonCheckbox.click();
+    await expect(actionButtonCheckbox).toBeChecked();
 
-  // Validate Create Row button visibility
-  const createRowButton = page.getByRole('button', { name: 'Create Row' });
-  await createRowButton.waitFor();
-  await expect(createRowButton).toBeVisible();
-  await createRowButton.click();
-  await page.reload();
+    const generalForm = page.locator('#indicatorList').getByText('General Form');
+    await expect(generalForm).toBeVisible();
+    await generalForm.click();
 
-  // Validate that a new row with the title 'untitled' is created
-  const newRowTitle = page.locator('//tbody/tr[1]/td[3]');
-  await newRowTitle.waitFor({ state: 'visible' });
-  await expect(newRowTitle).toContainText('untitled');
+    const AssignedPerson = page.getByText('Assigned Person 2')
+    await expect(AssignedPerson).toBeVisible();
+    await AssignedPerson.click();
+
+    // Generate Report
+    const generateReportButton = page.locator('#generateReport');
+    await generateReportButton.click();
+
+    // Validate Create Row button visibility
+    const createRowButton = page.getByRole('button', { name: 'Create Row' });
+    await createRowButton.waitFor();
+    await expect(createRowButton).toBeVisible();
+    await createRowButton.click();
+    newRowCreated = true;
+    await page.reload();
+    
+    // Is there a better way to do this?
+    const tempRequestID = await page.locator('//tbody/tr[1]/td[1]').textContent();
+    requestID = tempRequestID != null ? tempRequestID : '';
+
+    // Validate that a new row with the title 'untitled' is created
+    const newRowTitle = page.locator('//tbody/tr[1]/td[3]');
+    await newRowTitle.waitFor({ state: 'visible' });
+    await expect(newRowTitle).toContainText('untitled'); 
+
+  } finally {
+
+    if(newRowCreated && requestID != '' ) {
+      await deleteTestRequestByRequestID(page, requestID);
+    }
+  }
+  
 });
 
 /**
@@ -394,35 +428,48 @@ test('Report builder workflow and create row button functionality', async ({ pag
  *  allowed to be added to a report
  */
 test('Report Allows Negative Currency', async ({ page}) => {
-  const formType = 'Input Formats';
-  const testId = getRandomId();
-  const testRequestID = await createTestRequest(page, 'Cotton Computers', 'validation_' + testId, formType);
-  const rowLocator = page.locator(`[data-record-id="${testRequestID}"]`);
 
-  // Create a new report
-  await page.goto(LEAF_URLS.PORTAL_HOME);
-  await page.getByText('Report Builder Create custom').click();
-  await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
-  await page.getByRole('option', { name: 'Type' }).click();
+  let testRequestID = '';
 
-  // Choose reports which use the Input Formats form
-  await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
-  await page.getByRole('option', { name: formType, exact: true }).click();
-  await page.getByRole('button', { name: 'Next Step' }).click();
-  await page.locator('#indicatorList').getByText(formType, {exact: true} ).click();
+  try {
 
-  // Choose currency as one of the columns
-  await page.getByText('currency', { exact: true }).first().click();
-  await page.getByRole('button', { name: 'Generate Report' }).click();
-  await rowLocator.click();
+    const formType = 'Input Formats';
+    const testId = getRandomId();
+    testRequestID = await createTestRequest(page, 'Cotton Computers', 'validation_' + testId, formType);
+    const rowLocator = page.locator(`[data-record-id="${testRequestID}"]`);
 
-  // Input a negative currency 
-  await page.getByRole('textbox', { name: 'currency' }).click();
-  await page.getByRole('textbox', { name: 'currency' }).fill('-200');
-  await page.getByRole('button', { name: 'Save Change' }).click();
+    // Create a new report
+    await page.goto(LEAF_URLS.PORTAL_HOME);
+    await page.getByText('Report Builder Create custom').click();
+    await page.getByRole('cell', { name: 'Current Status' }).locator('a').click();
+    await page.getByRole('option', { name: 'Type' }).click();
 
-  // Verify the negative currency is displayed
-  await expect(rowLocator).toContainText('-200.00');
+    // Choose reports which use the Input Formats form
+    await page.getByRole('cell').locator('select[aria-label="categories"] + div a').click();
+    await page.getByRole('option', { name: formType, exact: true }).click();
+    await page.getByRole('button', { name: 'Next Step' }).click();
+    await page.locator('#indicatorList').getByText(formType, {exact: true} ).click();
+
+    // Choose currency as one of the columns
+    await page.getByText('currency', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Generate Report' }).click();
+    await rowLocator.click();
+
+    // Input a negative currency 
+    await page.getByRole('textbox', { name: 'currency' }).click();
+    await page.getByRole('textbox', { name: 'currency' }).fill('-200');
+    await page.getByRole('button', { name: 'Save Change' }).click();
+
+    // Verify the negative currency is displayed
+    await expect(rowLocator).toContainText('-200.00');
+
+  } finally {
+
+    if(testRequestID != '') {
+      await deleteTestRequestByRequestID(page, testRequestID);
+    }
+  }
+  
 })
 
 test('Hashtag/Pound/number sign in query', async ({ page }) => {
