@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test';
 import {
-    LEAF_URLS, getRandomId, loadWorkflow,
-    createBaseTestWorkflow, selectChosenDropdownOption
+    LEAF_URLS, 
+    getRandomId, 
+    loadWorkflow,
+    createBaseTestWorkflow, 
+    selectChosenDropdownOption,
+    createTestForm,
+    addFormQuestion,
+    deleteTestFormByFormID
 } from '../leaf_test_utils/leaf_util_methods';
-
 
 test('Create a new workflow and add a step and an action', async ({ page }) => {
     // Generate unique workflow title
@@ -11,130 +16,192 @@ test('Create a new workflow and add a step and an action', async ({ page }) => {
     const workflowTitle = `wf_${testID}`;
     const initialStepName = `st_${testID}`;
 
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
-    await createBaseTestWorkflow(page, workflowTitle, initialStepName);
+    let [ workflowID, stepID ] = [ '', ''];
 
-    // Locate connectors and drag them to connect steps
-    const stepConnector = page.locator('.jtk-endpoint').nth(0);
-    const endConnector =  page.locator('.jtk-endpoint').nth(2);
+    try{
+         [ workflowID, stepID ] = await createBaseTestWorkflow(page, workflowTitle, initialStepName);
 
-    await expect(page.getByText('Submit')).toBeInViewport();
+        // Locate connectors and drag them to connect steps
+        const stepConnector = page.locator('.jtk-endpoint').nth(0);
+        const endConnector = page.locator('.jtk-endpoint').nth(2);
 
-    await stepConnector.dragTo(endConnector);
+        await expect(page.getByText('Submit')).toBeInViewport();
 
-    // Wait for the "Create New Workflow Action" dialog and save the action
-    const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
-    await expect(actionDialog).toBeVisible();
-    await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
+        await stepConnector.dragTo(endConnector);
 
-    // verify its visibility
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Approve')).toBeInViewport();
+        // Wait for the "Create New Workflow Action" dialog and save the action
+        const actionDialog = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
+        await expect(actionDialog).toBeVisible();
+        await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
 
-   ////////////LEAF-5196: Workflow Editor UX Inprovements///////////////////////////////
+        // verify its visibility
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(page.getByText('Approve')).toBeInViewport();
 
-    //Count the number of workflow connections
-    const jtkConnectors = await page.locator('.jtk-connector').all();
-    console.log(`Number of workflow connections: ${jtkConnectors.length}`);
+    ////////////LEAF-5196: Workflow Editor UX Inprovements///////////////////////////////
 
-    //Verify the you can not drag the endpoint of the end step to another step
- 
-    await endConnector.dragTo(stepConnector);
-    const jtkConnectorsAfterInvalidDrag = await page.locator('.jtk-connector').all();
-    expect((jtkConnectorsAfterInvalidDrag.length),
-         'Number of workflow connections should remain the same after invalid drag').
-    toBe(jtkConnectors.length);
+        //Count the number of workflow connections
+        const jtkConnectors = await page.locator('.jtk-connector').all();
+        console.log(`Number of workflow connections: ${jtkConnectors.length}`);
 
-    //Verify when canceling a connection the connection is not present
+        //Verify the you can not drag the endpoint of the end step to another step
+    
+        await endConnector.dragTo(stepConnector);
+        const jtkConnectorsAfterInvalidDrag = await page.locator('.jtk-connector').all();
+        expect((jtkConnectorsAfterInvalidDrag.length),
+            'Number of workflow connections should remain the same after invalid drag').
+        toBe(jtkConnectors.length);
 
-    await stepConnector.dragTo(endConnector);
+        //Verify when canceling a connection the connection is not present
 
-    // Wait for the "Create New Workflow Action" dialog and save the action
-    const actionDialogCancel = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
-    await expect(actionDialogCancel).toBeVisible();
-    await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
+        await stepConnector.dragTo(endConnector);          
 
-    // verify its visibility
-    await page.getByRole('button', { name: 'Cancel' }).click();
+        // Wait for the "Create New Workflow Action" dialog and save the action
+        const actionDialogCancel = page.locator('span.ui-dialog-title:has-text("Create New Workflow Action")');
+        await expect(actionDialogCancel).toBeVisible();
+        await selectChosenDropdownOption(page, '#actionType_chosen', 'Approve');
 
-    const jtkConnectorsAfterCancel = await page.locator('.jtk-connector').all();
-    expect((jtkConnectorsAfterCancel.length),                   
-         'Number of workflow connections should remain the same after canceling connection').
-    toBe(jtkConnectors.length);
+        // verify its visibility
+        await page.getByRole('button', { name: 'Cancel' }).click();
 
+        const jtkConnectorsAfterCancel = await page.locator('.jtk-connector').all();
+        expect((jtkConnectorsAfterCancel.length),                   
+            'Number of workflow connections should remain the same after canceling connection').
+        toBe(jtkConnectors.length);
+		
+    } finally {
+
+        if(workflowID != '') {
+
+            if(stepID != '') {
+                await page.getByLabel('workflow step: ' + initialStepName).click();
+                await page.getByLabel('Remove Step').click();																	
+                await page.getByRole('button', { name: 'Yes' }).click();
+                await page.getByRole('button', { name: 'Delete Workflow' }).click();
+                await page.getByRole('button', { name: 'Yes' }).click();
+            }
+        }
+    }    
 });
 
 test('Rename workflow', async ({ page }) => {
+
     // Generate unique workflow title
     const testID = getRandomId();
     const initialWorkflowTitle = `New_Workflow_${testID}`;
     const updatedWorkflowTitle = `Updated_Workflow_${testID}`;
+    const initialStepName = `st_${testID}`;
 
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    let [ workflowID, stepID ] = [ '', ''];
 
-    await page.locator('#btn_newWorkflow').click();
+    try{
+        [ workflowID, stepID ] = await createBaseTestWorkflow(page, initialWorkflowTitle, initialStepName);
 
-    // Wait for the "Create new workflow" dialog to be visible
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await expect(workflowCreateDialog).toBeVisible();
+        await expect(page.locator('a').filter({ hasText: initialWorkflowTitle })).toBeVisible();
 
-    await page.locator('#description').fill(initialWorkflowTitle);
+        // Click on the 'Rename Workflow' button
+        await page.locator('#btn_renameWorkflow').click();
 
-    const saveButton = page.locator('#button_save');
-    await saveButton.click();
+        // Wait for the "Rename Workflow" dialog to be visible
+        const renameWorkflowDialog = page.locator('span.ui-dialog-title:has-text("Rename Workflow")');
+        await expect(renameWorkflowDialog).toBeVisible();
 
-    // Assert that the newly created workflow is visible
-    await expect(page.locator('a').filter({ hasText: initialWorkflowTitle })).toBeVisible();
+        // Fill in the new workflow name
+        const renameInput = page.locator('#workflow_rename');
+        await renameInput.fill(updatedWorkflowTitle);
 
-    // Click on the 'Rename Workflow' button
-    await page.locator('#btn_renameWorkflow').click();
+        const saveButton = page.locator('#button_save');
+        await saveButton.click();
 
-    // Wait for the "Rename Workflow" dialog to be visible
-    const renameWorkflowDialog = page.locator('span.ui-dialog-title:has-text("Rename Workflow")');
-    await expect(renameWorkflowDialog).toBeVisible();
+        // Assert that the renamed workflow is visible
+        await expect(page.locator('a').filter({ hasText: updatedWorkflowTitle })).toBeVisible();
 
-    // Fill in the new workflow name
-    const renameInput = page.locator('#workflow_rename');
-    await renameInput.fill(updatedWorkflowTitle);
-    await saveButton.click();
+    }finally {
+        if(workflowID != '') {
 
-    // Assert that the renamed workflow is visible
-    await expect(page.locator('a').filter({ hasText: updatedWorkflowTitle })).toBeVisible();
+            if(stepID != '') {
+                await page.getByLabel('workflow step: ' + initialStepName).click();
+                await page.getByLabel('Remove Step').click();
+                await page.getByRole('button', { name: 'Yes' }).click();
+                await page.getByRole('button', { name: 'Delete Workflow' }).click();
+                await page.getByRole('button', { name: 'Yes' }).click();
+            }
+        }    
+    }
 });
 
-test('View workflow history', async ({ page }) => {
-    // Generate unique workflow title
-    const testID = getRandomId();
-    const workflowTitle = `New_Workflow_${testID}`;
+test('Changing Form Field appears in Workflow History', async ({ page }) => {
 
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+    let formID = '';
+    let [ workflowID, stepID ] = [ '', ''];
+    
+    const testId = getRandomId();
+    const workflowName = `workflow_name_${testId}`;
+    const stepTitle = "Step 1";
+    const stepElement = await page.getByLabel(`workflow step: ${stepTitle}`, { exact: true });
 
-    await page.locator('#btn_newWorkflow').click();
+    try {
 
-    // Wait for the "Create new workflow" dialog to be visible
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    await expect(workflowCreateDialog).toBeVisible();
+        // Create workflow with one step
+         [ workflowID, stepID ] = await createBaseTestWorkflow(page, workflowName, stepTitle);
+        await expect(stepElement).toBeVisible();
 
-    await page.locator('#description').fill(workflowTitle);
+        // Create form and add a section with a Single line text
+        formID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
+        const textSectionID = await addFormQuestion(page, 'Add Section', 'Single line text', 'Single line text');
+        await page.getByLabel('Workflow: No Workflow. Users').selectOption(workflowID);
 
-    const saveButton = page.locator('#button_save');
-    await saveButton.click();
+        // Go back to the workflow
+        await loadWorkflow(page, workflowID);
+        await expect(stepElement).toBeVisible();
 
-    // Assert that the newly created workflow is visible
-    await expect(page.locator('a').filter({ hasText: workflowTitle })).toBeVisible();
+        // Set the Single Line Text form field on the step
+        await stepElement.click();
+        await page.getByLabel('Form Field:').selectOption(textSectionID);
+        await stepElement.click();
 
-    await page.locator('#btn_viewHistory').click();
+        // View History and verify that the form field change is listed
+        await page.getByRole('button', { name: 'View History' }).click();
+        await expect(page.locator('#historyName')).toContainText(workflowName);
+        const historyText = `Tester Tester changed form field to ${textSectionID} in workflow step: ${stepID}`;
+        await expect(page.locator('tbody')).toContainText(historyText);
+        await page.getByRole('button', { name: 'Close' }).click();
 
-    // Wait for the Workflow History dialog to become visible
-    const workflowHistoryDialog = page.locator('span.ui-dialog-title:has-text("Workflow History")');
-    await expect(workflowHistoryDialog).toBeVisible();
+    } finally {
+        
+        if(workflowID != '') {
+            
+            if(stepID != '') {
 
-    // Verify if the new workflow name appears in the history
-    await expect(page.locator('#historyName')).toContainText(workflowTitle);
+                // If workflow and step were created, delete the step
+                await expect(stepElement).toBeVisible();
+                await stepElement.click();
+                await page.getByLabel('Remove Step').click();
+                await page.getByRole('button', { name: 'Yes' }).click();
+            }
+        }
+
+        if(formID != '') {
+
+            // if the form was created, delete the form
+            await deleteTestFormByFormID(page, formID);
+        }
+        
+        if(workflowID != '') {
+
+            // If the workflow was created, delete it
+            await loadWorkflow(page, workflowID);
+            await page.getByRole('button', { name: 'Delete Workflow' }).click();
+            await page.getByRole('button', { name: 'Yes' }).click();
+        }
+        
+    }
+    
 });
-
 
 test('create a requestor to end workflow, copy it, then delete the copy', async ({ page }) => {
+
+
     // Generate unique workflow title for original and copied workflow
     const testID = getRandomId();
     const originalWorkflowTitle = `New_Workflow_${testID}`;
@@ -244,6 +311,112 @@ test('Create a read only workflow step', async ({ page }) => {
     await page.reload();
     await roStepBtn.click();
     await expect(page.locator('#step_requirements')).toContainText(requirementOption);
+});
+
+
+test('Test that requirements can be added then removed from workflow successfully', async ({ page }) => {
+    const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
+    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
+    const confirmationDialog = page.locator('span.ui-dialog-title:has-text("Confirmation required")');
+    const workflowsDropdown = page.locator('#workflows_chosen');
+    const newWorkflowButton = page.locator('#btn_newWorkflow');
+    const workflowDescription = page.locator('#description');
+
+    const requirementsAnchor = page.locator('#dependencyList a.chosen-single');
+    const requirementsSubmenuList = page.locator('ul#step_requirements');
+
+    const saveButton = page.locator('#button_save');
+    const deleteWorkflowButton = page.locator('#btn_deleteWorkflow');
+    const confirmDeleteButton = page.locator('#confirm_button_save');
+
+    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
+
+    // Create new workflow
+    await newWorkflowButton.click();
+    await expect(workflowCreateDialog).toBeVisible();
+    await workflowDescription.fill(uniqueWorkflowName);
+    await saveButton.click();
+    await expect(workflowsDropdown).toContainText(uniqueWorkflowName);
+
+    // Add a new step to the workflow
+    await page.getByRole('button', { name: 'New Step' }).click();
+    await page.getByRole('textbox', { name: 'Step Title:' }).fill('Test');
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    // Add and then remove 'Group A' requirement from the step
+    await page.getByRole('button', { name: 'workflow step: Test' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Group A' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(
+        requirementsSubmenuList,
+        'Requirements submenu to contain the saved custom requirement'
+    ).toContainText('Group A');
+    await page.getByRole('button', { name: 'Remove Requirement' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+    //Add rest of requirements then remove them all
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Group Designated by the' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await page.getByRole('button', { name: 'Create a new requirement' }).click();
+    await page.getByRole('textbox', { name: 'Requirement Label:' }).click();
+    await page.getByRole('textbox', { name: 'Requirement Label:' }).fill('TestRequirementRemoval');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByLabel('Grant Privileges to Group:')).toBeVisible();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(
+        requirementsSubmenuList,
+        'Requirements submenu to contain the saved custom requirement'
+    ).toContainText('TestRequirementRemoval');
+    
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Person Designated by the' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Quadrad' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Requestor Followup' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Add Requirement' }).click();
+    await expect(requirementsAnchor).toBeVisible();
+    await requirementsAnchor.click();
+    await page.getByRole('option', { name: 'Service Chief' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    //Remove all added components
+    await page.getByRole('listitem').filter({ hasText: 'TestRequirementRemoval 2911' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Group Designated by the' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Requestor Followup (depID:-2)' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Person Designated by the' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Service Chief (depID:1)' }).getByLabel('Remove Requirement').click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('button', { name: 'Remove Requirement' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('button', { name: 'Remove Step' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+    // Delete the workflow and verify deletion
+    await deleteWorkflowButton.click();
+    await expect(confirmationDialog).toBeVisible();
+    await confirmDeleteButton.click();
+    await expect(workflowsDropdown).not.toContainText(uniqueWorkflowName);
 });
 
 test('Create a new workflow and delete it', async ({ page }) => {
