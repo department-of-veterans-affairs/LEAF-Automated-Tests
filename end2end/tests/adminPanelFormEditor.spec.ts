@@ -242,40 +242,67 @@ test('warning message is displayed if both hidden and shown display states are o
 
 
 test('Verify Alert Dialog does not Appear', async ({ page }) => {
-  const formName =`LEAF-5005_${testId}`;
-  const formDescription =`FormDescription_${testId}`;
-  const LEAF_5005_formId = await createTestForm(page, formName, formDescription);
 
-  //FORM Details
-  await expect(page.locator('#edit-properties-other-properties')).toBeVisible();
-  await page.getByLabel('Workflow:').selectOption('1');
-  await page.getByLabel('Status:').selectOption('1');
-  await page.getByLabel('Form Type:').selectOption('parallel_processing');
+  let requestId = '';
+  let originalRequestCancelled = false;
+  let newRequestID = 0;
+  let LEAF_5005_formId = '';
 
-  await addFormQuestion(page, 'Add Section', 'Heading', '');
-  const fileUploadIndId = await addFormQuestion(page, 'Add Question to Section', 'Upload Question', 'fileupload');
+  try {
+    const formName =`LEAF-5005_${testId}`;
+    const formDescription =`FormDescription_${testId}`;
+    LEAF_5005_formId = await createTestForm(page, formName, formDescription);
 
-  const title = `request LEAF-5005_${testId}`;
-  const requestId = await createTestRequest(page, 'AS - Service', title, formName);
+    //FORM Details
+    await expect(page.locator('#edit-properties-other-properties')).toBeVisible();
+    await page.getByLabel('Workflow:').selectOption('1');
+    await page.getByLabel('Status:').selectOption('1');
+    await page.getByLabel('Form Type:').selectOption('parallel_processing');
 
-  await expect(page.getByRole('group', { name: 'File Attachment(s)' })).toBeVisible();
-  await awaitPromise(page, `form/${requestId}`, async (p:Page) => {
-    await p.locator(`#file${fileUploadIndId}_control input`).setInputFiles(`./artifacts/LEAF-5005.txt`);
-  });
-  await expect(page.getByText('File LEAF-5005.txt has been')).toBeVisible();
-  await expect(page.locator('#nextQuestion2')).toBeVisible();
-  await page.locator('#nextQuestion2').click();
+    await addFormQuestion(page, 'Add Section', 'Heading', '');
+    const fileUploadIndId = await addFormQuestion(page, 'Add Question to Section', 'Upload Question', 'fileupload');
 
-  await expect(page.getByText('Select a data field Assigned PersonAssigned Group Selected Employee(s):')).toBeVisible();
-  await page.locator('#indicator_selector').selectOption('9');
-  await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('tes');
-  await page.locator('#btn203').click();
-  await expect(page.getByText('RemoveAS Test Group 1')).toBeVisible();
+    const title = `request LEAF-5005_${testId}`;
+    requestId = await createTestRequest(page, 'AS - Service', title, formName);
 
-  await page.getByRole('button', { name: 'Send Request to Selected' }).click();
-  await expect(page.locator('#saveLinkContainer')).toContainText('Requests have been assigned to these people 1 recordsStop and show results');
+    await expect(page.getByRole('group', { name: 'File Attachment(s)' })).toBeVisible();
+    await awaitPromise(page, `form/${requestId}`, async (p:Page) => {
+      await p.locator(`#file${fileUploadIndId}_control input`).setInputFiles(`./artifacts/LEAF-5005.txt`);
+    });
+    await expect(page.getByText('File LEAF-5005.txt has been')).toBeVisible();
+    await expect(page.locator('#nextQuestion2')).toBeVisible();
+    await page.locator('#nextQuestion2').click();
 
-  //Clean Up
-  await deleteTestFormByFormID(page, LEAF_5005_formId);
-  await deleteTestRequestByRequestID(page, requestId)
+    await expect(page.getByText('Select a data field Assigned PersonAssigned Group Selected Employee(s):')).toBeVisible();
+    await page.locator('#indicator_selector').selectOption('9');
+    await page.getByRole('searchbox', { name: 'Search for user to add as' }).fill('tes');
+    await page.locator('#btn203').click();
+    await expect(page.getByText('RemoveAS Test Group 1')).toBeVisible();
+
+    // This cancels the original request and creates a new one
+    await page.getByRole('button', { name: 'Send Request to Selected' }).click();
+    await expect(page.locator('#saveLinkContainer')).toContainText('Requests have been assigned to these people 1 recordsStop and show results');
+    originalRequestCancelled = true;
+    newRequestID = parseInt(requestId) + 1;
+
+  } finally {
+
+    // If the form was created, delete it
+    if(LEAF_5005_formId != '') {
+      await deleteTestFormByFormID(page, LEAF_5005_formId);
+    }
+    
+    // If requestid is blank then no requests were created
+    if(requestId != '') {
+
+      // If the original request was cancelled, then cancel the new one
+      if(originalRequestCancelled) {
+        await deleteTestRequestByRequestID(page, newRequestID.toString());
+      
+      // Otherwise cancel the original request
+      } else {
+        await deleteTestRequestByRequestID(page, requestId);  
+      }
+    }
+  }
 });
