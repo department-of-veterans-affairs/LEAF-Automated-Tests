@@ -68,7 +68,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await expect(page.locator('#xhr')).toBeVisible();
 
     //1. page one is not relevant for this test and has no required questions
-    await expect(page.locator('#nextQuestion2')).not.toBeVisible();
+    await expect(page.locator('#nextQuestion2')).toBeVisible();
     await page.locator('#nextQuestion2').click();
 
     //2. Assigned Person - step 1 approver
