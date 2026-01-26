@@ -125,18 +125,22 @@ test.describe('LEAF-5043 - Take Action From Email', () => {
 
 
     await expect(page.getByText(emailSubject).first()).toBeVisible();
-    const awaitResponse = page.waitForResponse(res =>
-      res.url().includes('index.php?a=printview') && res.status() === 200
-    );
+   
 
     await page.getByText(emailSubject).first().click();
 
-        await awaitResponse;
+  const iframeLocator = page.frameLocator('iframe[class="htmlview"]');
 
+  // 3. Use the frame locator to find the element inside the iframe and click it
+  // Replace 'button.submit-button' with the selector for the item you want to click
+  const itemToClick = iframeLocator.locator('#dependency_action_-2_approve');
+  await itemToClick.click();
     
-    await expect(page.locator('#dependency_action_-2_approve')).toBeVisible();
+    //await expect(page.locator('#dependency_action_-2_approve')).toBeVisible();
 
-    await page.locator('#dependency_action_-2_approve').click()
+    //await page.locator('#dependency_action_-2_approve').click()
+
+    //await page.getByRole('button', { name: 'Approve' }).click();
 
   });
 
