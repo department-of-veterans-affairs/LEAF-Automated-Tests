@@ -42,14 +42,16 @@ test.describe('Update heading of a form then reset back to original heading', ()
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.locator(headerLabelSelector)).toContainText(originalText);
 
-    //cleanup
+    // TODO: Move to try/finally
     await deleteTestFormByFormID(page, formEditorFieldsFormID);
   });
 });
 
 
 test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
+
   let requestID_emailing = '';
+
   test('Create a New Request', async ({ page }) => {
     const groupText = `Group A`;
     const singleLineName = `Single line text`;
@@ -162,8 +164,13 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await emailLink.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(emailLink).not.toBeVisible();
-    await deleteTestRequestByRequestID(page, requestID_emailing)
   });
+
+  test.afterAll('Cancel request', async ({ page }) => {
+    if(requestID_emailing != '')
+      await deleteTestRequestByRequestID(page, requestID_emailing);
+  })
+
 });
 
 
@@ -237,6 +244,8 @@ test('warning message is displayed if both hidden and shown display states are o
 
   await expect(page.getByText('Close')).toBeVisible();
   await page.getByLabel('Close').click();
+
+  // TODO: Move to try/finally
   await deleteTestFormByFormID(page, LEAF_4888_formId);
 });
 
