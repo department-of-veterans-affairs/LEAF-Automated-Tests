@@ -220,11 +220,17 @@ test('create a requestor to end workflow, copy it, then delete the copy', async 
     const saveButton = page.locator('#button_save');
     await saveButton.click();
     await expect(page.locator('a').filter({ hasText: originalWorkflowTitle })).toBeVisible();
+    const wfText = await page.locator('a').filter({ hasText: originalWorkflowTitle }).innerText();
+    const origID = wfText.slice(wfText.indexOf('#') + 1, wfText.length - 1);
 
+    let awaitResponse = page.waitForResponse(res =>
+        res.url().includes('route') && res.status() === 200
+    );
     const requestorConnector = page.locator('.jtk-endpoint').nth(0);
     const endConnector = page.locator('.jtk-endpoint').nth(1);
 
     await requestorConnector.dragTo(endConnector);
+    await awaitResponse;
     await expect(page.getByText('Submit')).toBeInViewport();
 
     // Click the 'Copy Workflow' button to start the copy process
@@ -258,6 +264,16 @@ test('create a requestor to end workflow, copy it, then delete the copy', async 
     await page.locator('#confirm_button_save').click();
 
     await expect(page.locator('a').filter({ hasText: copiedWorkflowTitle })).not.toBeVisible();
+
+    await loadWorkflow(page, origID);
+    await expect(page.locator('a').filter({ hasText: originalWorkflowTitle })).toBeVisible();
+    await page.locator("div.jtk-overlay", { hasText: 'Submit'}).click();
+    await page.getByRole('button', { name: 'Remove Action' }).click();
+    await page.click("span#confirm_saveBtnText:visible");
+    await deleteButton.click();
+    await expect(page.getByText('Confirmation required')).toBeVisible();
+    await page.locator('#confirm_button_save').click();
+    await expect(page.locator('a').filter({ hasText: originalWorkflowTitle })).not.toBeVisible();
 });
 
 test('Create a read only workflow step', async ({ page }) => {
@@ -416,39 +432,6 @@ test('Test that requirements can be added then removed from workflow successfull
     await deleteWorkflowButton.click();
     await expect(confirmationDialog).toBeVisible();
     await confirmDeleteButton.click();
-    await expect(workflowsDropdown).not.toContainText(uniqueWorkflowName);
-});
-
-test('Create a new workflow and delete it', async ({ page }) => {
-    const uniqueWorkflowName = `New_Workflow_${Math.floor(Math.random() * 10000)}`;
-    const workflowCreateDialog = page.locator('span.ui-dialog-title:has-text("Create new workflow")');
-    const confirmationDialog = page.locator('span.ui-dialog-title:has-text("Confirmation required")');
-    const workflowsDropdown = page.locator('#workflows_chosen');
-    const newWorkflowButton = page.locator('#btn_newWorkflow');
-    const workflowDescription = page.locator('#description');
-    const saveButton = page.locator('#button_save');
-    const deleteWorkflowButton = page.locator('#btn_deleteWorkflow');
-    const confirmDeleteButton = page.locator('#confirm_button_save');
-
-    await page.goto(LEAF_URLS.WORKFLOW_EDITOR);
-
-    // Create new workflow
-    await newWorkflowButton.click();
-    await expect(workflowCreateDialog).toBeVisible();
-
-    await workflowDescription.fill(uniqueWorkflowName);
-    await saveButton.click();
-
-    await expect(workflowsDropdown).toContainText(uniqueWorkflowName);
-
-    // Delete the workflow
-    await deleteWorkflowButton.click();
-    await expect(confirmationDialog).toBeVisible();
-
-    // Confirm the deletion
-    await confirmDeleteButton.click();
-
-    // Verify the workflow was deleted
     await expect(workflowsDropdown).not.toContainText(uniqueWorkflowName);
 });
 
