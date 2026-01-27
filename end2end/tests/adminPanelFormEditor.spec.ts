@@ -19,31 +19,40 @@ test.beforeAll(() => {
 });
 
 test.describe('Update heading of a form then reset back to original heading', () => {
-  const originalText = 'Section 1'
-  const newText = 'Edited Section 1';
-  let formEditorFieldsFormID = '';
+  
 
   test('edit a section heading', async ({ page }) => {
-    formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
-    const sectionID = await addFormQuestion(page, 'Add Section', originalText, '');
-    const headerEditSelector = `edit indicator ${sectionID}`;
-    const headerLabelSelector = `#format_label_${sectionID}`;
-    await expect(page.getByTitle(headerEditSelector)).toBeVisible();
+    
+    let formEditorFieldsFormID = '';
+    
+    try {
+      const originalText = 'Section 1'
+      const newText = 'Edited Section 1';
 
-    await page.getByTitle(headerEditSelector).click();
-    await expect(page.getByLabel('Section Heading')).toBeVisible();
-    await page.getByLabel('Section Heading').fill(newText);
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator(headerLabelSelector)).toContainText(newText);
+      formEditorFieldsFormID = await createTestForm(page, `form_name_${testId}`, `form_descr_${testId}`);
+      const sectionID = await addFormQuestion(page, 'Add Section', originalText, '');
+      const headerEditSelector = `edit indicator ${sectionID}`;
+      const headerLabelSelector = `#format_label_${sectionID}`;
+      await expect(page.getByTitle(headerEditSelector)).toBeVisible();
 
-    await page.getByTitle(headerEditSelector).click();
-    await expect(page.getByLabel('Section Heading')).toBeVisible();
-    await page.getByLabel('Section Heading').fill(originalText);
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator(headerLabelSelector)).toContainText(originalText);
+      await page.getByTitle(headerEditSelector).click();
+      await expect(page.getByLabel('Section Heading')).toBeVisible();
+      await page.getByLabel('Section Heading').fill(newText);
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.locator(headerLabelSelector)).toContainText(newText);
 
-    // TODO: Move to try/finally
-    await deleteTestFormByFormID(page, formEditorFieldsFormID);
+      await page.getByTitle(headerEditSelector).click();
+      await expect(page.getByLabel('Section Heading')).toBeVisible();
+      await page.getByLabel('Section Heading').fill(originalText);
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.locator(headerLabelSelector)).toContainText(originalText);
+    } finally {
+      
+      if(formEditorFieldsFormID != '') {
+        await deleteTestFormByFormID(page, formEditorFieldsFormID);
+      }
+      
+    }    
   });
 });
 
@@ -52,9 +61,14 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
 
   test.describe.configure({ mode: 'serial' });
 
+  let page: Page;
+  test.beforeAll(async ({ browser }) => {
+     page = await browser.newPage();
+  });
+
   let requestID_emailing = '';
 
-  test('Create a New Request', async ({ page }) => {
+  test('Create a New Request', async () => {
     const groupText = `Group A`;
     const singleLineName = `Single line text`;
     const assignedPersonOne = `Tester, Tester Product Liaison`;
@@ -106,7 +120,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     });
   });
 
-  test('Mass Action Email Reminder', async ({ page }) => {
+  test('Mass Action Email Reminder', async () => {
     await page.goto(LEAF_URLS.MASS_ACTION);
     await expect(page.getByText('Choose Action -Select- Cancel')).toBeVisible();
 
@@ -140,7 +154,7 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     ).toBeVisible();
   });
 
-  test('email reminder is only sent to remaining dependency', async ({ page }) => {
+  test('email reminder is only sent to remaining dependency', async () => {
     await page.goto(LEAF_URLS.EMAIL_SERVER);
     //approver 1 should be a recipient, but group A requirement has been met, so its member should not be
     const expectedSubject = `Reminder for General Form (#${requestID_emailing})`;
@@ -166,89 +180,105 @@ test.describe('Create New Request, Send Mass Email, then Verify Email',  () => {
     await emailLink.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(emailLink).not.toBeVisible();
+    
   });
 
-  test.afterAll('Cancel request', async ({ page }) => {
-    if(requestID_emailing != '')
+  test.afterAll(async () => {
+
+    if(requestID_emailing != '') {
       await deleteTestRequestByRequestID(page, requestID_emailing);
-  })
+    }
+    page.close();
+    
+  });
 
 });
 
 
 test('warning message is displayed if both hidden and shown display states are on the same question', async ({ page }) => {
-  await page.goto(LEAF_URLS.FORM_EDITOR);
 
-  const formName = `Test LEAF-4888-${testId}`;
-  const formDescription = "Testing the if/then warning message";
-  const sectionHeading = "Header One";
-  const questionOne ="What is your age range?'";
-  const questionOneOptions ="12 - 18\n19 - 25\n26 - 33\n34 -45";
-  const questionTwo= "Where do you go to school?";
-  const questionTwoOptions = "Middle School\nHigh School";
+  let LEAF_4888_formId = '';
 
-  const LEAF_4888_formId = await createTestForm(page, formName, formDescription);
+  try {
 
-  await expect(page.getByRole('heading', { name: 'Form Browser' })).toBeVisible();
+    await page.goto(LEAF_URLS.FORM_EDITOR);
 
-  await addFormQuestion(page, 'Add Section', sectionHeading, '');
-  const controllerIndID = await addFormQuestion(
-    page, 'Add Question to Section', questionOne, 'dropdown', questionOneOptions
-  );
-  const conditionalIndID = await addFormQuestion(
-    page, 'Add Question to Section', questionTwo, 'dropdown', questionTwoOptions
-  );
-  const mainOption1 = "19 - 25";
-  const mainOption2 = "12 - 18";
+    const formName = `Test LEAF-4888-${testId}`;
+    const formDescription = "Testing the if/then warning message";
+    const sectionHeading = "Header One";
+    const questionOne ="What is your age range?'";
+    const questionOneOptions ="12 - 18\n19 - 25\n26 - 33\n34 -45";
+    const questionTwo= "Where do you go to school?";
+    const questionTwoOptions = "Middle School\nHigh School";
 
-  await page.locator(`#edit_conditions_${conditionalIndID}`).click();
-  await expect(page.locator('#condition_editor_inputs')).toBeVisible();
+    LEAF_4888_formId = await createTestForm(page, formName, formDescription);
 
-  await page.getByRole('button', { name: 'New Condition' }).click();
+    await expect(page.getByRole('heading', { name: 'Form Browser' })).toBeVisible();
 
-  await expect(page.getByLabel('Select an outcome')).toBeVisible();
-  await page.getByLabel('Select an outcome').selectOption('show');
-  await page.getByLabel('select controller question').selectOption(controllerIndID);
-  await page.getByLabel('select condition').selectOption('!=');
+    await addFormQuestion(page, 'Add Section', sectionHeading, '');
+    const controllerIndID = await addFormQuestion(
+      page, 'Add Question to Section', questionOne, 'dropdown', questionOneOptions
+    );
+    const conditionalIndID = await addFormQuestion(
+      page, 'Add Question to Section', questionTwo, 'dropdown', questionTwoOptions
+    );
+    const mainOption1 = "19 - 25";
+    const mainOption2 = "12 - 18";
 
-  await expect(page.getByRole('searchbox', { name: 'parent value choices'})).toBeVisible();
-  await page.getByRole('searchbox', { name: 'parent value choices'}).click();
-  await page.getByRole('option', { name: mainOption1 + ' Press to select' }).click();
-  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await page.locator(`#edit_conditions_${conditionalIndID}`).click();
+    await expect(page.locator('#condition_editor_inputs')).toBeVisible();
 
-  await awaitPromise(page, `${conditionalIndID}/conditions`, async (p:Page) => {
-    await p.getByRole('button', { name: 'Save' }).click();
-  });
-  await expect(page.getByText('This field will be shown IF')).toBeVisible();
+    await page.getByRole('button', { name: 'New Condition' }).click();
 
-  //Create a second condition
-  await page.getByRole('button', { name: 'New Condition' }).click();
+    await expect(page.getByLabel('Select an outcome')).toBeVisible();
+    await page.getByLabel('Select an outcome').selectOption('show');
+    await page.getByLabel('select controller question').selectOption(controllerIndID);
+    await page.getByLabel('select condition').selectOption('!=');
 
-  await expect(page.getByLabel('Select an outcome')).toBeVisible();
-  await page.getByLabel('Select an outcome').selectOption('hide');
-  await page.getByLabel('select controller question').selectOption(controllerIndID);
-  await page.getByLabel('select condition').selectOption('==');
+    await expect(page.getByRole('searchbox', { name: 'parent value choices'})).toBeVisible();
+    await page.getByRole('searchbox', { name: 'parent value choices'}).click();
+    await page.getByRole('option', { name: mainOption1 + ' Press to select' }).click();
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
 
-  await expect(page.getByRole('searchbox', { name: 'parent value choices'})).toBeVisible();
-  await page.getByRole('searchbox', { name: 'parent value choices'}).click();
-  await page.getByRole('option', { name: mainOption2 + ' Press to select' }).click();
-  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await awaitPromise(page, `${conditionalIndID}/conditions`, async (p:Page) => {
+      await p.getByRole('button', { name: 'Save' }).click();
+    });
+    await expect(page.getByText('This field will be shown IF')).toBeVisible();
 
-  await awaitPromise(page, `${conditionalIndID}/conditions`, async (p:Page) => {
-    await p.getByRole('button', { name: 'Save' }).click();
-  });
+    //Create a second condition
+    await page.getByRole('button', { name: 'New Condition' }).click();
 
-  await expect(page.locator(
-    '.entry_warning',
-    { hasText: 'Having both \'hidden\' and \'shown\' can cause fields to display incorrectly.'}),
-    'warning is about setting conflicting display states is visisble'
-  ).toBeVisible();
+    await expect(page.getByLabel('Select an outcome')).toBeVisible();
+    await page.getByLabel('Select an outcome').selectOption('hide');
+    await page.getByLabel('select controller question').selectOption(controllerIndID);
+    await page.getByLabel('select condition').selectOption('==');
 
-  await expect(page.getByText('Close')).toBeVisible();
-  await page.getByLabel('Close').click();
+    await expect(page.getByRole('searchbox', { name: 'parent value choices'})).toBeVisible();
+    await page.getByRole('searchbox', { name: 'parent value choices'}).click();
+    await page.getByRole('option', { name: mainOption2 + ' Press to select' }).click();
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
 
-  // TODO: Move to try/finally
-  await deleteTestFormByFormID(page, LEAF_4888_formId);
+    await awaitPromise(page, `${conditionalIndID}/conditions`, async (p:Page) => {
+      await p.getByRole('button', { name: 'Save' }).click();
+    });
+
+    await expect(page.locator(
+      '.entry_warning',
+      { hasText: 'Having both \'hidden\' and \'shown\' can cause fields to display incorrectly.'}),
+      'warning is about setting conflicting display states is visisble'
+    ).toBeVisible();
+
+    await expect(page.getByText('Close')).toBeVisible();
+    await page.getByLabel('Close').click();
+
+  } finally {
+
+    if(LEAF_4888_formId != '') {
+      await deleteTestFormByFormID(page, LEAF_4888_formId);
+    }
+}
+  
+  
 });
 
 
