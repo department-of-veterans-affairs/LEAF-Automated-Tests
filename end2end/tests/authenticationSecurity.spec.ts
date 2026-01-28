@@ -4,12 +4,6 @@ import { LEAF_URLS } from '../leaf_test_utils/leaf_util_methods';
 /**
  * Authentication Security Tests - COMPREHENSIVE VERIFICATION
  *
- * PURPOSE: Prove the Security class fix works by running on both branches
- *
- * EXPECTED BEHAVIOR:
- * - On MASTER (before fix): ~35+ security tests will FAIL (attacks succeed)
- * - On PR BRANCH (after fix): All 39 tests should PASS (attacks blocked)
- *
  * This comprehensive suite tests EVERY known bypass technique.
  */
 
@@ -18,10 +12,6 @@ test.describe('Authentication Security - Comprehensive Open Redirect Prevention'
   test.use({
     ignoreHTTPSErrors: true
   });
-
-  // ============================================================================
-  // LEGITIMATE USE CASES (Should PASS on both master and PR branch)
-  // ============================================================================
 
   test('allows valid relative path redirect', async ({ page }) => {
     const requestedPage = '/?a=reports';
@@ -56,7 +46,6 @@ test.describe('Authentication Security - Comprehensive Open Redirect Prevention'
 
   // ============================================================================
   // CATEGORY 1: HTML TAG INJECTION
-  // MASTER: FAIL (attacks succeed) | PR: PASS (attacks blocked)
   // ============================================================================
 
   test('SECURITY: blocks <br> tag followed by URL', async ({ page }) => {
