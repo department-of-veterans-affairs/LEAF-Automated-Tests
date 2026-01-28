@@ -351,19 +351,3 @@ func TestShortener_ShortCodeFormat(t *testing.T) {
 
 	t.Logf("✓ Short code format valid: %s", shortCode)
 }
-
-// Helper functions
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func getKeys(m map[int]interface{}) []int {
-	keys := make([]int, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
