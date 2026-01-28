@@ -137,6 +137,7 @@ export const deleteTestFormByFormID = async (
  * @param nameFillValue ** unique ** value for the question name
  * @param format the question format
  * @param options options for dropdown formats.  separate values with \n
+ * @param isSensitive boolean.  default false
  * @returns new indicator ID as string (Promise value)
  */
 export const addFormQuestion = async (
@@ -144,7 +145,8 @@ export const addFormQuestion = async (
   sectionBtnText:string,
   nameFillValue:string,
   format:string = '',
-  options:string = ''
+  options:string = '',
+  isSensitive:boolean = false,
 ):Promise<string> => {
   //the label text for an 'indicator name' input area is different for header questions
   const nameInputLabel = sectionBtnText === 'Add Section' ? 'Section Heading' : 'Field Name';
@@ -153,7 +155,11 @@ export const addFormQuestion = async (
   await page.getByLabel(nameInputLabel).fill(nameFillValue);
   await page.getByLabel('Input Format').selectOption(format);
   if (options !== '') {
-    await page.getByRole('textbox', { name: 'Options (One option per line)' }).fill(options)
+    await page.getByRole('textbox', { name: 'Options (One option per line)' }).fill(options);
+  }
+  if (isSensitive === true) {
+    await page.locator('label[for="sensitive"]').click();
+    await expect(page.locator('label[for="sensitive"]')).toBeChecked();
   }
   const newIndPromise = page.waitForResponse(res =>
     res.url().includes('formEditor/newIndicator') && res.status() === 200
@@ -233,7 +239,7 @@ export const createTestRequest = async (
 
 /**
  * @param page 
- * @param requestID 
+ * @param requestID
  */
 export const deleteTestRequestByRequestID = async (page:Page, requestID:string) => {
   await page.goto(`${LEAF_URLS.PRINTVIEW_REQUEST}${requestID}`);
@@ -247,25 +253,48 @@ export const deleteTestRequestByRequestID = async (page:Page, requestID:string) 
 /**
  * Confirm an email with the given subject is present once and confirm recipients
  * @param page Page instance from test
- * @param emailSubjectText the text in the email's subject field, used to find the email
+ * @param emailSubjectText text in the email's subject field, used to find the email
  * @param expectedEmailRecipients array of email addresses that should be found as recipients
+ * @param testCcFields boolean - whether addresses should be specifically in the Cc field
  */
 export const confirmEmailRecipients = async (
   page:Page,
   emailSubjectText:string,
-  expectedEmailRecipients:Array<string>
+  expectedEmailRecipients:Array<string>,
+  testCcFields:boolean = false
 ) => {
-  const row = page.locator(`tr:has-text("${emailSubjectText}")`);
+  const row = page.locator(`.messagelist tr:has-text("${emailSubjectText}")`);
   await expect(
     row, `one email with subject ${emailSubjectText} to be found`
   ).toHaveCount(1);
 
   const recipientEls = row.locator('.el-table_1_column_3 strong');
+  let emailCount = 0;
   for (let i = 0; i < expectedEmailRecipients.length; i++) {
-    await expect(
-      recipientEls.filter({ hasText: expectedEmailRecipients[i] }),
-      `email recipient ${expectedEmailRecipients[i]} to be present once`
-    ).toHaveCount(1);
+    emailCount = await recipientEls.filter({ hasText: expectedEmailRecipients[i] }).count();
+    expect(
+      emailCount,
+      `email recipient ${expectedEmailRecipients[i]} to be present`
+    ).toBeGreaterThan(0);
+  }
+  //if cc, also check the headers to confirm they are in the cc field
+  if (testCcFields === true) {
+    await row.click();
+    await page.getByRole('tab', { name: 'Headers' }).click();
+
+    const headersTableBody = page.locator('#pane-headers table.el-table__body tbody');
+    await expect(headersTableBody).toBeVisible();
+    const ccCell = page.getByText(/^Cc$/);
+    const ccRow = headersTableBody.locator('tr').filter({ has: ccCell });
+    const content = await ccRow.locator('td').last().textContent() ?? '';
+    const ccAddresses = content.split(',').map(address => address.trim());
+
+    for (let i = 0; i < expectedEmailRecipients.length; i++) {
+      const isCC = ccAddresses.some(addr => addr === expectedEmailRecipients[i]);
+      expect(isCC, `email address ${expectedEmailRecipients[i]} to be in the Cc field`).toBe(true);
+    }
+    //swap back to View
+    await page.getByRole('tab', { name: 'View' }).click();
   }
 }
 

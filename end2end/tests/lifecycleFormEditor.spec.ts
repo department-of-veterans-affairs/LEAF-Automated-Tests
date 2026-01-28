@@ -9,7 +9,9 @@ import {
   loadWorkflow,
   addFormQuestion,
   deleteTestFormByFormID,
-  createBaseTestWorkflow
+  createBaseTestWorkflow,
+  createTestRequest,
+  deleteTestRequestByRequestID
 } from '../leaf_test_utils/leaf_util_methods.ts';
 
 test.describe.configure({ mode: 'serial' });
@@ -17,11 +19,15 @@ test.describe.configure({ mode: 'serial' });
 // Generate unique text to help ensure that fields are being filled correctly.
 let testId:string = '';
 let uniqueText:string = '';
+let internalFormName:string = '';
+
 test.beforeAll(() => {
   testId = getRandomId();
   uniqueText = `New Form ${testId}`;
+  internalFormName = `Internal Form ${testId}`;
 });
 
+const GENERAL_WORKFLOW_ID = '1';
 let newFormID = ''; //set in first test.  tests are serial (1 worker)
 
 /**
@@ -40,6 +46,10 @@ test('Create New Form', async ({ page }) => {
   // Confirm form has name and description that were given
   await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
   await expect(page.getByLabel('Form description')).toHaveValue(uniqueText + ' Description');
+
+  // Set form Status to available
+  const AVAILABLE_STATUS = '1';
+  await page.getByLabel('Status:').selectOption(AVAILABLE_STATUS);
 
   // Confirm the new form is visible in the list of forms
   await page.getByRole('link', { name: 'Form Browser' }).click();
@@ -178,32 +188,120 @@ test('Create Pre-Filled If/Then Question', async ({ page }) => {
  *  it is visible to steps in the workflow
  */
 test('Add Internal Use Form', async ({ page }) => {
+
   await page.goto(LEAF_URLS.FORM_EDITOR_FORM + newFormID);
   await expect(page.getByLabel('Form name')).toHaveValue(uniqueText);
 
   // Add a workflow to the form
-  await page.getByLabel('Workflow: No Workflow. Users').selectOption('1');
+  await page.getByLabel('Workflow: No Workflow. Users').selectOption(GENERAL_WORKFLOW_ID);
 
   // Add an internal form
   await page.getByRole('button', { name: 'Add Internal-Use' }).click();
-  await page.getByLabel('Form Name (up to 50').fill('My Internal Form');
+  await page.getByLabel('Form Name (up to 50').fill(internalFormName);
   await page.getByLabel('Form Description (up to 255').click();
-  await page.getByLabel('Form Description (up to 255').fill('My Internal Form Description');
+  await page.getByLabel('Form Description (up to 255').fill(internalFormName + ' Description');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.locator(".internal_forms")).toContainText('My Internal Form');
 
-  // Check form is available to the workflow
-  await page.getByLabel(uniqueText + ', main form').click();
-  const page1Promise = page.waitForEvent('popup');
-  await page.getByRole('link', { name: 'View Workflow' }).click();
-  const page1 = await page1Promise;
-  await page1.getByLabel('workflow step: Step 2').click();
+  const internalFormIDShort = 'Internal Form id_';
+  await expect(page.locator(".internal_forms")).toContainText(internalFormIDShort);
+
+  // Add a section to the internal form
+  await page.getByLabel('Add Section').click();
+  await page.getByLabel('Section Heading').fill(internalFormName + ' Section');
+  await page.getByLabel('Input Format').selectOption('text');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText(internalFormName + ' Section')).toBeVisible();
   
-  // Confirm Form Field drop down contains the new Internal Form
-  let optionArray = page1.getByLabel('Form Field:');
-  await expect(page1.getByLabel('Form Field:')).toContainText(uniqueText + ': ' + uniqueText + ' Section');
 });
 
+/**
+ * Verify the internal form added above is visible to steps in 
+ * a workflow
+ */
+test('Internal Form is Visible to Workflow', async ({ page }) => {
+
+  // Check form is available to the workflow
+  
+  await page.goto(LEAF_URLS.WORKFLOW_EDITOR_WF + GENERAL_WORKFLOW_ID);
+  await page.getByLabel('workflow step: Step 2').click();
+  
+  // Confirm Form Field drop down contains the new Internal Form
+  await expect(page.getByLabel('Form Field:')).toContainText(internalFormName + ': ' + internalFormName + ' Section');
+
+});
+
+let newRequestID = '';
+/**
+ * Test for LEAF 5054
+ * Verify that the internal form is visible when choosing columns for
+ * a quick review
+ */
+test("Internal Form is Visible in Quick Review", async ({ page }) => {
+
+    // Create a new request using the form with the internal form
+    const newRequestName = `New Request ${testId}`;
+    newRequestID = await createTestRequest(page, 'Concrete Electronics', newRequestName, uniqueText);
+    await page.locator('#nextQuestion2').click();
+
+    // Submit the request
+    await page.getByRole('button', { name: 'Submit Request' }).click();
+
+    // Go to setup a Quick Review
+    await page.getByRole('link', { name: 'Admin Panel' }).click();
+    await page.getByRole('button', { name: 'Setup Quick Review Link' }).click();
+    
+    // Select the created form as the Form Type
+    const selectFormType = page.locator('#forms');
+    await selectFormType.selectOption({ label: uniqueText})
+
+    // Select 'Step 1'
+    const selectStep = page.locator('#steps')
+    await selectStep.selectOption({ label: 'Step 1'});
+    
+    await page.getByRole('button', { name: 'Setup Quick Review' }).click();
+
+    // Verify the Internal Form is included in the Field Names dropdown
+    const fieldNameDropDown = page.locator('#fieldNames');
+    await fieldNameDropDown.click();
+    await expect(fieldNameDropDown.getByRole('option', {name: internalFormName})).toHaveCount(1);
+    
+})
+
+/**
+ * Test for LEAF 5054
+ * Verify that the internal form is visible when choosing columns for
+ * propose actions
+ */
+test("Internal Form is Visible in Propose Actions", async ({ page }) => {
+
+  try{
+      
+      // Go to the Create Proposed Actions Page
+      await page.goto(LEAF_URLS.PORTAL_HOME + 'report.php?a=LEAF_Propose_Actions');
+      
+      // Select the form created by the above tests as the Form Type
+      const selectFormType = page.locator('#forms');
+      await selectFormType.selectOption({ label: uniqueText})
+
+      // Select 'Step 1'
+      const selectStep = page.locator('#steps')
+      await selectStep.selectOption({ label: 'Step 1'});
+
+      await page.getByRole('button', { name: 'Setup Proposed Actions' }).click();
+
+      // Verify the Internal Form is included in the Field Names dropdown
+      const fieldNameDropDown = page.locator('#fieldNames');
+      await fieldNameDropDown.click();
+      await expect(fieldNameDropDown.getByRole('option', {name: internalFormName})).toHaveCount(1);
+
+    } finally {
+
+      // if a new request was created, cancel it
+      if(newRequestID != '') {
+        await deleteTestRequestByRequestID(page, newRequestID);
+    }
+  }
+})
 
 /**
  *  Export the created form to a new forms folder
