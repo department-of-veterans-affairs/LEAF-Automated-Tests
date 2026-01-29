@@ -1,7 +1,13 @@
 import { test, expect } from '@playwright/test';
+import {
+  LEAF_URLS,
+  createTestRequest,
+  deleteTestRequestByRequestID,
+  getRandomId
+} from '../leaf_test_utils/leaf_util_methods';
 
 test('search record ID using quick search', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
 
   await page.getByLabel('Enter your search text').click();
 
@@ -14,7 +20,7 @@ test('search record ID using quick search', async ({ page }, testInfo) => {
 });
 
 test('search record ID using advanced options', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
 
   await page.getByRole('button', { name: 'Advanced Options' }).click();
   await expect(page.getByRole('button', { name: 'Apply Filters' })).toBeInViewport();
@@ -32,29 +38,36 @@ test('search record ID using advanced options', async ({ page }, testInfo) => {
 });
 
 test('new record', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
-  
-  let randNum = Math.random();
-  let uniqueText = `New e2e request ${randNum}`;
 
-  await page.getByText('New Request', { exact: true }).click();
-  await page.getByRole('cell', { name: 'Select an Option Service' }).locator('a').click();
-  await page.getByRole('option', { name: 'Iron Sports' }).click();
-  await page.getByRole('cell', { name: 'Please enter keywords to' }).click();
-  await page.getByLabel('Title of Request').fill(uniqueText);
-  await page.getByText('Simple form').click();
-  await page.getByRole('button', { name: 'Click here to Proceed' }).click();
-  await page.getByLabel('single line text').click();
+  let requestID = '';
+  
+  try {
+
+  let randNum = getRandomId();
+  let uniqueText = `New e2e request ${randNum}`;
+ 
+  requestID = await createTestRequest(page, 'Iron Sports', uniqueText, 'Simple form');
+
   await page.getByLabel('single line text').fill('single line');
   await page.getByRole('button', { name: 'Next Question', exact: true }).first().click();
   await expect(page.locator('#requestTitle')).toContainText(uniqueText);
 
   const screenshot = await page.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+
+  } finally {
+
+    if(requestID != '')
+    {
+      await deleteTestRequestByRequestID(page, requestID);
+    }
+    
+  }
+
 });
 
 test('table header background color is inverted when scrolled down', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
 
   // The homepage runs an async request, and we need to wait for it to complete
   // before navigating to the end of the page.
@@ -70,7 +83,7 @@ test('table header background color is inverted when scrolled down', async ({ pa
 });
 
 test('show more records', async ({ page }, testInfo) => {
-  await page.goto('https://host.docker.internal/Test_Request_Portal/');
+  await page.goto(LEAF_URLS.PORTAL_HOME);
 
   // Wait for async load
   await expect(page.locator('#searchContainer')).not.toContainText('Searching for records');
