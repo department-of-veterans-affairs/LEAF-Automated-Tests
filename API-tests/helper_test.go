@@ -9,8 +9,17 @@ import (
 
 func httpGet(url string) (string, *http.Response) {
 	url = strings.Replace(url, " ", "%20", -1)
-	res, _ := client.Get(url)
-	bodyBytes, _ := io.ReadAll(res.Body)
+	res, err := client.Get(url)
+	if err != nil || res == nil {
+		return "", nil
+	}
+	defer res.Body.Close()
+
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", res
+	}
+
 	return string(bodyBytes), res
 }
 
@@ -31,30 +40,17 @@ func getKeys(m map[int]interface{}) []int {
 	return keys
 }
 
-// containsAny checks if a string contains any of the provided substrings
-func containsAny(s string, substrings []string) bool {
-	for _, substring := range substrings {
-		if strings.Contains(s, substring) {
-			return true
-		}
-	}
-	return false
+var noRedirectClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	},
 }
 
-// createNoRedirectClient creates an HTTP client that doesn't follow redirects
-// Useful for testing redirect security
-func createNoRedirectClient() *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-}
 
 // truncateString safely truncates a string to maxLen characters
 // Adds "..." if truncated

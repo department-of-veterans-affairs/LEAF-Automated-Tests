@@ -37,18 +37,19 @@ func TestAuthDomain_ValidRedirects(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(tc.redirectPath))
 			targetURL := RootURL + "auth_domain/?r=" + encodedRedirect
 
-			// Don't follow redirects - we want to check the Location header
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(targetURL)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("Failed to read body: %v", err)
+			}
+
 			// Should redirect (302 or 301)
 			if res.StatusCode != http.StatusFound && res.StatusCode != http.StatusMovedPermanently {
-				body, _ := io.ReadAll(res.Body)
 				t.Fatalf("Expected redirect status, got %d. Body: %s", res.StatusCode, string(body))
 			}
 
@@ -64,16 +65,19 @@ func TestAuthDomain_ValidRedirects(t *testing.T) {
 
 // TestAuthDomain_DefaultRedirect tests redirect when no parameter provided
 func TestAuthDomain_DefaultRedirect(t *testing.T) {
-	noRedirectClient := createNoRedirectClient()
-
 	res, err := noRedirectClient.Get(RootURL + "auth_domain/")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Request failed: %v", err)
 	}
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("Failed to read body: %v", err)
+	}
+
 	if res.StatusCode != http.StatusFound && res.StatusCode != http.StatusMovedPermanently {
-		t.Fatalf("Expected redirect status, got %d", res.StatusCode)
+		t.Fatalf("Expected redirect status, got %d. body: %s", res.StatusCode, body)
 	}
 
 	location := res.Header.Get("Location")
@@ -82,42 +86,6 @@ func TestAuthDomain_DefaultRedirect(t *testing.T) {
 	}
 
 	t.Logf("✓ Default redirect works: %s", location)
-}
-
-// TestAuthDomain_HTMLTagInjection tests blocking of HTML tag injections
-func TestAuthDomain_HTMLTagInjection(t *testing.T) {
-	maliciousPaths := []string{
-		"/<br>https://malicious.example.com/phishing",
-		"/<div>https://attacker.example.org",
-		"/<script>location=\"https://phishing.test\"</script>",
-		"/<iframe src=\"https://evil.com\"></iframe>",
-	}
-
-	for _, maliciousPath := range maliciousPaths {
-		t.Run(truncateString(maliciousPath, 20), func(t *testing.T) {
-			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
-
-			noRedirectClient := createNoRedirectClient()
-
-			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer res.Body.Close()
-
-			location := res.Header.Get("Location")
-
-			// Should NOT redirect to malicious domains
-			maliciousDomains := []string{"malicious.example.com", "attacker.example.org", "phishing.test", "evil.com"}
-			for _, domain := range maliciousDomains {
-				if strings.Contains(location, domain) {
-					t.Errorf("SECURITY FAILURE: Redirected to malicious domain %s. Location: %s", domain, location)
-				}
-			}
-
-			t.Logf("✓ Blocked HTML tag injection: %s", truncateString(maliciousPath, 50))
-		})
-	}
 }
 
 // TestAuthDomain_ProtocolRelativeURLs tests blocking of protocol-relative URLs
@@ -133,11 +101,9 @@ func TestAuthDomain_ProtocolRelativeURLs(t *testing.T) {
 		t.Run(maliciousPath, func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -169,11 +135,9 @@ func TestAuthDomain_URLEncodingBypass(t *testing.T) {
 		t.Run(truncateString(maliciousPath, 30), func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -204,11 +168,9 @@ func TestAuthDomain_BackslashBypass(t *testing.T) {
 		t.Run(maliciousPath, func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -239,11 +201,9 @@ func TestAuthDomain_AtSignBypass(t *testing.T) {
 		t.Run(maliciousPath, func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -275,11 +235,9 @@ func TestAuthDomain_ControlCharacters(t *testing.T) {
 		t.Run("control_char_test", func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -313,11 +271,9 @@ func TestAuthDomain_ProtocolVariations(t *testing.T) {
 		t.Run(truncateString(maliciousPath, 30), func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -362,11 +318,9 @@ func TestAuthDomain_ProtocolInPath(t *testing.T) {
 		t.Run(maliciousPath, func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(maliciousPath))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -400,11 +354,9 @@ func TestAuthDomain_EdgeCases(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(tc.path))
 
-			noRedirectClient := createNoRedirectClient()
-
 			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Request failed: %v", err)
 			}
 			defer res.Body.Close()
 
@@ -428,11 +380,9 @@ func TestAuthDomain_EdgeCases(t *testing.T) {
 func TestAuthDomain_InvalidBase64(t *testing.T) {
 	invalidBase64 := "this-is-not-valid-base64!!!"
 
-	noRedirectClient := createNoRedirectClient()
-
 	res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + invalidBase64)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Request failed: %v", err)
 	}
 	defer res.Body.Close()
 
@@ -444,4 +394,96 @@ func TestAuthDomain_InvalidBase64(t *testing.T) {
 	}
 
 	t.Logf("✓ Invalid base64 handled gracefully: %s", location)
+}
+
+// TestAuthDomain_HTMLTagInjection tests blocking of HTML / script injection
+// Uses inert, non-executing payloads to avoid browser side-effects
+func TestAuthDomain_HTMLTagInjection(t *testing.T) {
+	maliciousPaths := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "encoded script tag",
+			path: "/%3Cscript%3Ealert(1)%3C/script%3E",
+		},
+		{
+			name: "encoded script with location assignment",
+			path: "/%3Cscript%3Elocation%3D%22https://phishing.test%22%3C/script%3E",
+		},
+		{
+			name: "encoded iframe",
+			path: "/%3Ciframe%20src%3D%22https://evil.com%22%3E%3C/iframe%3E",
+		},
+		{
+			name: "encoded br tag",
+			path: "/%3Cbr%3Ehttps://malicious.example.com",
+		},
+		{
+			name: "encoded div tag",
+			path: "/%3Cdiv%3Ehttps://attacker.example.org%3C/div%3E",
+		},
+	}
+
+	for _, tc := range maliciousPaths {
+		t.Run(tc.name, func(t *testing.T) {
+			encodedRedirect := base64.StdEncoding.EncodeToString([]byte(tc.path))
+
+			res, err := noRedirectClient.Get(RootURL + "auth_domain/?r=" + encodedRedirect)
+			if err != nil {
+				t.Fatalf("Request failed: %v", err)
+			}
+			defer res.Body.Close()
+
+			// We only care about redirect behavior
+			if res.StatusCode != http.StatusFound && res.StatusCode != http.StatusMovedPermanently {
+				t.Fatalf("Expected redirect status, got %d", res.StatusCode)
+			}
+
+			location := res.Header.Get("Location")
+			if location == "" {
+				t.Fatalf("Missing Location header")
+			}
+
+			if !strings.HasPrefix(location, RootURL) && !strings.HasPrefix(location, "/") {
+				t.Errorf("Redirect escaped allowed scope: %s", location)
+			}
+
+
+			// Assert no malicious domains are ever used
+			maliciousDomains := []string{
+				"malicious.example.com",
+				"attacker.example.org",
+				"phishing.test",
+				"evil.com",
+			}
+
+			for _, domain := range maliciousDomains {
+				if strings.Contains(strings.ToLower(location), domain) {
+					t.Errorf(
+						"SECURITY FAILURE: HTML/script injection redirect to %s. Location: %s",
+						domain,
+						location,
+					)
+				}
+			}
+
+			// Assert no HTML or JS survives into Location
+			disallowedTokens := []string{
+				"<", ">", "script", "iframe", "javascript:",
+			}
+
+			for _, token := range disallowedTokens {
+				if strings.Contains(strings.ToLower(location), token) {
+					t.Errorf(
+						"SECURITY FAILURE: HTML token %q leaked into Location: %s",
+						token,
+						location,
+					)
+				}
+			}
+
+			t.Logf("✓ Blocked HTML/script injection safely: %s", tc.name)
+		})
+	}
 }
