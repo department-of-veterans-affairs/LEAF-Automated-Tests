@@ -100,7 +100,7 @@ test('Verify the Sensitive Content is Masked in Inbox and shown when hovered', a
   await expect(unmaskedContent).not.toBeVisible();
   await expect(maskingContent).toBeVisible();
   await expect(maskingContent).toHaveText('**********');
-  await maskingContent.click({force:true});
+  await page.locator('div.sensitiveIndicatorMaskToggle label').click({force:true});
   await expect(maskingContent).not.toBeVisible();
   await unmaskedContent.waitFor({ state: "visible" });
   const rawUnsmaskedContent = await unmaskedContent.textContent();
