@@ -443,15 +443,10 @@ test.describe('Email Template customization, recipients, request field formattin
   const uniqueEventName = `Event ${randNum}`;
   const uniqueDescr = `Description ${randNum}`;
 
-  const needToKnowTestID = getRandomId();
-  const ntk_data2 = 'sensitive data entry';
-  const ntk_data3 = 'non-sensitive data entry';
-  let ntkQ2_id = '';
-  let ntkQ3_id = '';
+
 
   //email template subjects
   const customEventEmailSubject = `Custom Event ${uniqueEventName}`;
-  const emailSubjectNTK = `NTK ${needToKnowTestID}`;
   const sendBackEventEmailSubject = `RETURNED: ${tempTestRequestTitle} (#${requestId})`;
   const notifyNextEventEmailSubject = `Action needed: ${tempTestRequestTitle} (#${requestId})`;
   const cancelEventEmailSubject = `The request for ${tempTestRequestTitle} (#${requestId}) has been canceled.`;
@@ -501,7 +496,6 @@ test.describe('Email Template customization, recipients, request field formattin
 
   //Data for field formatting content addition and display assertions.
   //Data is from a standard database test case record with constant IDs and content
-  let bodyContent = '<p>request fields</p><br>';
   const expectedEmailContent = [
     { id: 34, format: 'text', content: '53778' },
     { id: 35, format: 'textarea', content: 'test textarea' },
@@ -530,9 +524,6 @@ test.describe('Email Template customization, recipients, request field formattin
     { id: 51, format: 'orgchart_position', content: 'All things wonderful' },
     { id: 99999, format: '', content: '', assertMessage: 'non-existent field to be present but have no content' },
   ];
-  expectedEmailContent.forEach(entry => {
-    bodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
-  });
 
   test('Create and add a new Custom Event from a workflow action bubble', async ({ page}) => {
     await loadWorkflow(page);
@@ -634,6 +625,10 @@ test.describe('Email Template customization, recipients, request field formattin
 
     await page.getByRole('button', { name: 'Use Code Editor' }).click();
 
+    let bodyContent = '<p>request fields</p><br>';
+    expectedEmailContent.forEach(entry => {
+      bodyContent += `<div id="format_test_${entry.id}">{{$field.${entry.id}}}</div><br>`
+    });
     let bodyArea = page.locator('#code_mirror_template_editor');
     await bodyArea.press('ControlOrMeta+A');
     await bodyArea.press('Backspace');
@@ -688,23 +683,28 @@ test.describe('Email Template customization, recipients, request field formattin
   });
 
   test(`Custom Email Event (PHI): a field set to sensitive/PHI is masked`, async({page}) => {
-    //prep isolated form, template, and request (changing PHI setting of a built-in form would cause issues) 
-    needToKnowFormID = await createTestForm(page, needToKnowTestID, '');
+    test.setTimeout(120000);
+    const needToKnowFormName = getRandomId();
+
+    /* This test needs an isolated form and request because altering PHI settings
+    influences other behavior, which would otherwise interfer with other tests.
+    Using this block's event reduces duplicated coverage  */
+    needToKnowFormID = await createTestForm(page, needToKnowFormName, '');
     await page.getByLabel('Status:').selectOption('1');
     await page.getByLabel('Workflow:').selectOption('1');
 
     await addFormQuestion(page, 'Add Section', 'Header');
-    ntkQ2_id = await addFormQuestion(page, 'Add Question to Section', 'sensitive data', 'text', '', true);
-    ntkQ3_id = await addFormQuestion(page, 'Add Question to Section', 'non sensitive data (NTK form)', 'text');
+    const ntkQ2_id = await addFormQuestion(page, 'Add Question to Section', 'sensitive data', 'text', '', true);
+    const ntkQ3_id = await addFormQuestion(page, 'Add Question to Section', 'non sensitive data (NTK form)', 'text');
 
     const mockDataEntry = {
-      [ntkQ2_id]: ntk_data2,
-      [ntkQ3_id]: ntk_data3,
+      [ntkQ2_id]: 'sensitive data entry',
+      [ntkQ3_id]: 'non-sensitive data entry',
     };
     const needToKnowExpectedContent = [
       { id: ntkQ2_id, format: 'text', content: '**********',
         assertMessage: 'sensitive data question to be masked in email' },
-      { id: ntkQ3_id, format: 'text', content: ntk_data3 },
+      { id: ntkQ3_id, format: 'text', content: mockDataEntry[ntkQ3_id] },
     ];
 
     //update custom event email template
@@ -725,6 +725,7 @@ test.describe('Email Template customization, recipients, request field formattin
     await page.getByRole('textbox', { name: 'Email To:' }).fill('');
     await page.getByRole('textbox', { name: 'Email CC:' }).fill('');
 
+    const emailSubjectNTK = `NTK ${needToKnowFormName}`;
     let subjectArea = page
       .locator('#divSubject')
       .getByLabel('Template Editor coding area.');
@@ -750,8 +751,7 @@ test.describe('Email Template customization, recipients, request field formattin
     await awaitResponse;
 
     //create and submit a test request.  Move it and then trigger the event.
-    needToKnowRequestID = await createTestRequest(page, 'AS - Service', `req${needToKnowTestID}`, needToKnowTestID);
-    const sendBackSubject = `RETURNED: ${needToKnowTestID} (#${needToKnowRequestID})`;
+    needToKnowRequestID = await createTestRequest(page, 'AS - Service', `req${needToKnowFormName}`, needToKnowFormName);
 
     await expect(page.locator(`.response.blockIndicator_${ntkQ2_id} input`)).toBeVisible();
     await page.locator(`.response.blockIndicator_${ntkQ2_id} input`).fill(mockDataEntry[ntkQ2_id]);
@@ -784,6 +784,7 @@ test.describe('Email Template customization, recipients, request field formattin
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(emailSubjectNTK)).toHaveCount(0);
 
+    const sendBackSubject = `RETURNED: ${needToKnowFormName} (#${needToKnowRequestID})`;
     await page.getByText(sendBackSubject).first().click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText(sendBackSubject)).toHaveCount(0);
