@@ -45,6 +45,12 @@ func setupTestDB() {
 	}
 	importLibrarySql := string(f)
 
+	f, err = os.ReadFile("database/platform_privacy_test_db.sql")
+	if err != nil {
+		log.Fatal("Couldn't open the file: ", err.Error())
+	}
+	importPlatformPrivSql := string(f)
+
 	db.Exec("USE national_leaf_launchpad")
 
 	// Get original DB config
@@ -75,6 +81,11 @@ func setupTestDB() {
 	db.Exec("USE " + testLibraryDbName)
 	db.Exec(importLibrarySql)
 
+	db.Exec("DROP DATABASE " + testPlatformPrivacyDbName)
+	db.Exec("CREATE DATABASE " + testPlatformPrivacyDbName)
+	db.Exec("USE " + testPlatformPrivacyDbName)
+	db.Exec(importPlatformPrivSql)
+
 	// Switch to test DB
 	db.Exec("USE national_leaf_launchpad")
 
@@ -103,6 +114,18 @@ func setupTestDB() {
 			testNationalNexusDbName,
 		)
 	}
+
+	err = db.QueryRow(`SELECT portal_database FROM sites
+			WHERE portal_database="leaf_platform_privacy_testing"`).
+	Scan(&testPlatformPrivacyDbName)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		_, err = db.Exec(
+			`INSERT INTO sites (launchpadID, site_type, site_path, site_uploads, portal_database, orgchart_path, orgchart_database, decommissionTimestamp)
+			VALUES (0, "portal", "/platform/privacy", "/var/www/html/LEAF_Request_Portal/UPLOADS_test/", ?,	"/LEAF_NationalNexus", ?, 0)`,
+			testPlatformPrivacyDbName,
+			testNationalNexusDbName,
+		)
+	}
 }
 
 func updateTestDBSchema() {
@@ -126,13 +149,21 @@ func updateTestDBSchema() {
 	if strings.Contains(res, `Db Update failed`) {
 		log.Fatal(`Could not update Nexus (Orgchart) schema: ` + res)
 	}
-
 	fmt.Println("OK")
-	//LEAF_Request_Portal dir maps to LEAF_Request_Portal, Test_Request_Portal and LEAF/library Docker volumes
+
+	//LEAF_Request_Portal dir maps to:
+	//LEAF_Request_Portal, Test_Request_Portal, LEAF/library, platform/privacy Docker volumes
 	fmt.Print("Updating DB Schema: LEAF Library ... ")
 	res, _ = httpGet(LibraryURL + `scripts/updateDatabase.php`)
 	if strings.Contains(res, `Db Update failed`) {
 		log.Fatal(`Could not update LEAF Library schema: ` + res)
+	}
+	fmt.Println("OK")
+
+	fmt.Print("Updating DB Schema: LEAF Platform Privacy ... ")
+	res, _ = httpGet(PlatformPrivacyURL + `scripts/updateDatabase.php`)
+	if strings.Contains(res, `Db Update failed`) {
+		log.Fatal(`Could not update LEAF Plaform Privacy schema: ` + res)
 	}
 	fmt.Println("OK")
 }
