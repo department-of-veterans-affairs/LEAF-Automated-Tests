@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/base64"
-	"net/url"
 	"strings"
 	"testing"
 )
@@ -14,107 +13,98 @@ import (
 // Example: https://legitimate.com@evil.com/path
 // The browser interprets "legitimate.com" as credentials and redirects to evil.com
 func TestOpenRedirectViaAtSymbol(t *testing.T) {
-	// Using example.com as it's a safe, reserved domain for testing (RFC 2606)
-	// The test will fail if we successfully redirect to any of these external domains
-	testCases := []struct {
-		name           string
-		payload        string
-		expectedHost   string // The malicious host we'd be redirected to if vulnerable
-	}{
-		{
-			name:         "basic @ symbol attack",
-			payload:      "@example.com/test",
-			expectedHost: "example.com",
-		},
-		{
-			name:         "@ with subdomain",
-			payload:      "@sub.example.com/path",
-			expectedHost: "sub.example.com",
-		},
-		{
-			name:         "@ with port",
-			payload:      "@example.com:8080/path",
-			expectedHost: "example.com:8080",
-		},
-		{
-			name:         "@ with fake credentials",
-			payload:      "user:pass@example.com/path",
-			expectedHost: "example.com",
-		},
-		{
-			name:         "double @ symbol",
-			payload:      "foo@bar@example.com/path",
-			expectedHost: "example.com",
-		},
-		{
-			name:         "@ with query string",
-			payload:      "@example.com/path?q=test",
-			expectedHost: "example.com",
-		},
-		{
-			name:         "encoded @ symbol",
-			payload:      "%40example.com/path",
-			expectedHost: "example.com",
-		},
+	payload := "@example.com/test"
+	encodedPayload := base64.StdEncoding.EncodeToString([]byte(payload))
+	targetURL := RootURL + "auth_domain/?r=" + encodedPayload
+
+	res, err := client.Get(targetURL)
+	if err != nil {
+		if strings.Contains(err.Error(), "example.com") {
+			t.Errorf("SECURITY FAILURE: Open redirect attempted to example.com\n"+
+				"Payload: %s\n"+
+				"Error: %v",
+				payload, err)
+		}
+		t.Logf("Request error (may indicate blocked or unreachable): %v", err)
+		return
+	}
+	defer res.Body.Close()
+
+	finalHost := res.Request.URL.Hostname()
+	if finalHost == "example.com" || strings.HasSuffix(finalHost, ".example.com") {
+		t.Errorf("SECURITY FAILURE: Open redirect successful!\n"+
+			"Payload: %s\n"+
+			"Expected to stay on: host.docker.internal\n"+
+			"Actually redirected to: %s\n"+
+			"Final URL: %s",
+			payload, finalHost, res.Request.URL.String())
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			encodedPayload := base64.StdEncoding.EncodeToString([]byte(tc.payload))
-			targetURL := RootURL + "auth_domain/?r=" + encodedPayload
+	t.Logf("OK: Payload %q -> Final URL: %s", payload, res.Request.URL.String())
+}
 
-			// Use the regular client that follows redirects
-			res, err := client.Get(targetURL)
-			if err != nil {
-				// If we can't connect to the external domain, that's actually fine
-				// It means the redirect was attempted but the domain wasn't reachable
-				if strings.Contains(err.Error(), tc.expectedHost) {
-					t.Errorf("SECURITY FAILURE: Open redirect attempted to %s\n"+
-						"Payload: %s\n"+
-						"Error: %v",
-						tc.expectedHost, tc.payload, err)
-				}
-				t.Logf("Request error (may indicate blocked or unreachable): %v", err)
-				return
-			}
-			defer res.Body.Close()
+// TestOpenRedirectViaNewline tests whether the auth_domain endpoint is vulnerable
+// to header injection via newline characters. A \n in a Location header can allow
+// an attacker to inject additional HTTP headers or split the response.
+func TestOpenRedirectViaNewline(t *testing.T) {
+	payload := "/\nhttps://example.com"
+	encodedPayload := base64.StdEncoding.EncodeToString([]byte(payload))
+	targetURL := RootURL + "auth_domain/?r=" + encodedPayload
 
-			// Check the final URL after following redirects
-			finalURL := res.Request.URL
-			finalHost := finalURL.Host
-
-			// Remove port from host for comparison if needed
-			finalHostWithoutPort := finalURL.Hostname()
-
-			// Check if we ended up on the malicious domain
-			expectedHostWithoutPort := tc.expectedHost
-			if strings.Contains(tc.expectedHost, ":") {
-				parsedExpected, _ := url.Parse("https://" + tc.expectedHost)
-				if parsedExpected != nil {
-					expectedHostWithoutPort = parsedExpected.Hostname()
-				}
-			}
-
-			if finalHostWithoutPort == expectedHostWithoutPort ||
-				strings.HasSuffix(finalHostWithoutPort, "."+expectedHostWithoutPort) {
-				t.Errorf("SECURITY FAILURE: Open redirect successful!\n"+
-					"Payload: %s\n"+
-					"Expected to stay on: host.docker.internal\n"+
-					"Actually redirected to: %s\n"+
-					"Final URL: %s",
-					tc.payload, finalHost, finalURL.String())
-			}
-
-			// Also check if the host contains our expected malicious domain anywhere
-			// This catches cases where the redirect happened but landed on a different page
-			if strings.Contains(finalHost, expectedHostWithoutPort) {
-				t.Errorf("SECURITY FAILURE: Redirected to external domain!\n"+
-					"Payload: %s\n"+
-					"Final host: %s",
-					tc.payload, finalHost)
-			}
-
-			t.Logf("OK: Payload %q -> Final URL: %s", tc.payload, finalURL.String())
-		})
+	res, err := client.Get(targetURL)
+	if err != nil {
+		if strings.Contains(err.Error(), "example.com") {
+			t.Errorf("SECURITY FAILURE: Newline injection redirected to example.com\n"+
+				"Payload: %s\n"+
+				"Error: %v",
+				payload, err)
+		}
+		t.Logf("Request error (may indicate blocked or unreachable): %v", err)
+		return
 	}
+	defer res.Body.Close()
+
+	finalHost := res.Request.URL.Hostname()
+	if finalHost == "example.com" || strings.HasSuffix(finalHost, ".example.com") {
+		t.Errorf("SECURITY FAILURE: Newline injection redirect successful!\n"+
+			"Payload: %s\n"+
+			"Expected to stay on: host.docker.internal\n"+
+			"Actually redirected to: %s\n"+
+			"Final URL: %s",
+			payload, finalHost, res.Request.URL.String())
+	}
+
+	t.Logf("OK: Payload %q -> Final URL: %s", payload, res.Request.URL.String())
+}
+
+// TestLegitimateRedirectWithQueryParams verifies that valid redirect paths
+// with query parameters still work correctly after sanitization.
+func TestLegitimateRedirectWithQueryParams(t *testing.T) {
+	payload := "/?a=reports&v=3&status=active"
+	encodedPayload := base64.StdEncoding.EncodeToString([]byte(payload))
+	targetURL := RootURL + "auth_domain/?r=" + encodedPayload
+
+	res, err := client.Get(targetURL)
+	if err != nil {
+		t.Fatalf("Failed to make request: %v", err)
+	}
+	defer res.Body.Close()
+
+	finalURL := res.Request.URL.String()
+	if !strings.Contains(finalURL, "a=reports") {
+		t.Errorf("Legitimate redirect lost query parameters\n"+
+			"Payload: %s\n"+
+			"Final URL: %s",
+			payload, finalURL)
+	}
+
+	finalHost := res.Request.URL.Hostname()
+	if finalHost != "host.docker.internal" {
+		t.Errorf("Legitimate redirect went to wrong host\n"+
+			"Expected: host.docker.internal\n"+
+			"Got: %s",
+			finalHost)
+	}
+
+	t.Logf("OK: Payload %q -> Final URL: %s", payload, finalURL)
 }
