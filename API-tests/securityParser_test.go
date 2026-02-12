@@ -28,12 +28,13 @@ import (
 // On master (VULNERABLE): unserialize() creates stdClass, JSON includes "evil":"payload"
 // On security branch (SAFE): parseSerializedData() returns null, no object in JSON
 func TestSecurity_StandardObjectNotDeserialized(t *testing.T) {
-	// GET api/form/200 goes through getForm() which calls parseSerializedData
-	// for multiselect indicators
-	got, _ := httpGet(RootURL + `api/form/200`)
+	// Use rawIndicator endpoint which calls getIndicator() directly.
+	// getIndicator() calls unserialize (master) or parseSerializedData (security)
+	// for multiselect indicators and returns the value in JSON.
+	got, _ := httpGet(RootURL + `api/form/200/rawIndicator/43/1`)
 
-	// On master: value = {"evil":"payload"} (deserialized stdClass properties)
-	// On security: value is raw string fallback, no JSON key-value for object properties
+	// On master: unserialize() creates stdClass, json_encode produces "evil":"payload"
+	// On security: parseSerializedData() rejects the object, no deserialized properties
 	if strings.Contains(got, `"evil":"payload"`) {
 		t.Errorf("Serialized object (O: format) was DESERIALIZED - 'evil':'payload' found as JSON key-value in response")
 	}
