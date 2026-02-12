@@ -5,17 +5,51 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"net/http"
+	"strings"
 	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
 
+var commonWorkflow = Workflow{
+	WorkflowID:    0,
+	InitialStepID: 0,
+	Description:   "Go API Test Workflow",
+}
+var commonWorkflowStep = WorkflowStep{
+	StepID: 0,
+	StepTitle: "Go API Test Step",
+}
+var commonDependencies = WorkflowDependencies{
+	{DependencyID: -1, Description: "Person Designated"},
+	{DependencyID: -2, Description: "Requestor Followup"},
+	{DependencyID: -3, Description: "Group Designated"},
+	{DependencyID: 1, Description: "Service Chief"},
+	{DependencyID: 8, Description: "Quadrad"},
+}
+
 func getWorkflowStep(stepID string) WorkflowStep {
 	res, _ := client.Get(RootURL + "api/workflow/step/" + stepID)
 	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var m WorkflowStep
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse: %v", string(b))
+		log.Printf("JSON parsing error: %v", err.Error())
+	}
+	return m
+}
+
+func getWorkflowStepDependencies(stepID string) WorkflowStepDependencies {
+	res, _ := client.Get(RootURL + "api/workflow/step/" + stepID + "/dependencies")
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var m WorkflowStepDependencies
 	err := json.Unmarshal(b, &m)
 	if err != nil {
 		log.Printf("JSON parsing error, couldn't parse: %v", string(b))
@@ -33,6 +67,7 @@ func setStepCoordinates(workflowID string, stepID string, x string, y string) st
 
 	res, _ := client.PostForm(RootURL+`api/workflow/`+workflowID+`/editorPosition`, postData)
 	bodyBytes, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var c string
 	err := json.Unmarshal(bodyBytes, &c)
@@ -41,6 +76,7 @@ func setStepCoordinates(workflowID string, stepID string, x string, y string) st
 	}
 	return c
 }
+
 
 func TestWorkflow_Set_Step_Coordinates(t *testing.T) {
 	//negative coords use min val of 0
@@ -84,6 +120,7 @@ func TestWorkflow_Set_Step_Coordinates(t *testing.T) {
 func TestWorkflow_Step_Actions(t *testing.T) {
 	res, _ := client.Get(RootURL + "api/workflow/step/2/actions")
 	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
 
 	var data StepActions
 	err := json.Unmarshal(b, &data)
@@ -108,14 +145,449 @@ func TestWorkflow_PreventModifyReservedRequirements(t *testing.T) {
 	// -4 is a reserved requirement ID
 	// this should fail with a HTTP 400 error
 	res, _ := client.PostForm(RootURL+`api/workflow/dependency/-4`, postData)
+	defer res.Body.Close()
 
 	if res.StatusCode != 400 {
 		t.Errorf("Expected status code 400, got %v", res.StatusCode)
 	}
 
 	res, _ = client.PostForm(RootURL+`api/workflow/dependency/-4/privileges`, postData)
+	defer res.Body.Close()
 
 	if res.StatusCode != 400 {
 		t.Errorf("Expected status code 400, got %v", res.StatusCode)
+	}
+}
+
+
+func TestWorkflow_NewWorkflow(t *testing.T) {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("description", commonWorkflow.Description)
+
+	res, _ := client.PostForm(RootURL+`api/workflow/new`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var workflowID string
+	err := json.Unmarshal(b, &workflowID)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	workflowIDInt, err := strconv.Atoi(workflowID)
+	if err != nil || workflowIDInt <= 0 {
+		t.Errorf("Expected valid workflow ID, got %v", workflowID)
+	}
+	commonWorkflow.WorkflowID = workflowIDInt
+}
+
+func TestWorkflow_NewWorkflowStep(t *testing.T) {
+	if(commonWorkflow.WorkflowID == 0) {
+		t.Errorf("commonWorkflow.WorkflowID is 0, cannot create step without valid workflow ID")
+	}
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("stepTitle", commonWorkflowStep.StepTitle)
+
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+	res, _ := client.PostForm(RootURL+`api/workflow/` + workflowIDStr + `/step`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var stepID string
+	err := json.Unmarshal(b, &stepID)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	stepIDInt, err := strconv.Atoi(stepID)
+	if err != nil || stepIDInt <= 0 {
+		t.Errorf("Expected valid step ID, got %v", stepID)
+	}
+	commonWorkflow.InitialStepID = stepIDInt
+	commonWorkflowStep.StepID = stepIDInt
+}
+
+
+var mockWorkflowStepDep = WorkflowStepDependency{
+	DependencyID: 0,
+	Description: "Test API Dependency",
+	IndicatorID_for_assigned_empUID: 8,  //standard test database org_emp indicator ID
+	IndicatorID_for_assigned_groupID: 9, //standard test database org_grp indicator ID
+	GroupID: 206,                        //standard test database group (Group A)
+	Name: "Group A",
+}
+func TestWorkflow_NewDependency(t *testing.T) {
+	depDescription := mockWorkflowStepDep.Description
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("description", depDescription)
+
+	res, _ := client.PostForm(RootURL+`api/workflow/dependencies`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var dependencyID string
+	err := json.Unmarshal(b, &dependencyID)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	dependencyIDInt, err := strconv.Atoi(dependencyID)
+	if err != nil || dependencyIDInt <= 0 {
+		t.Errorf("Expected valid dependency ID, got %v", dependencyID)
+	}
+	commonDependencies = append(
+		commonDependencies,
+		WorkflowDependency{DependencyID: dependencyIDInt, Description: depDescription},
+	)
+}
+
+func TestWorkflow_LinkStepDependenciesToWorkflowStep(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot add dependency without valid ID")
+	}
+
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("workflowID", workflowIDStr)
+
+	for _, dep := range commonDependencies {
+		dependencyIDStr := strconv.Itoa(dep.DependencyID)
+		postData.Set("dependencyID", dependencyIDStr)
+
+		res, _ := client.PostForm(RootURL+`api/workflow/step/` + stepIDStr + `/dependencies`, postData)
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got %v", res.StatusCode)
+		}
+		b, _ := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		var result string
+		err := json.Unmarshal(b, &result)
+		if err != nil {
+			t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+		}
+
+		got := result
+		want := "1"
+		if !cmp.Equal(got, want) {
+			t.Errorf("Error adding requirement type = %v, got = %v, want = %v", dep.Description, got, want)
+		}
+	}
+}
+
+func TestWorkflow_SetCustomDependencyGroupPrivileges(t *testing.T) {
+	newDependency := commonDependencies[len(commonDependencies)-1]
+	newDependencyIDStr := strconv.Itoa(newDependency.DependencyID)
+	if(newDependency.DependencyID <= 8) {
+		t.Errorf("Did not get expected new dependencyID, got %v", newDependencyIDStr)
+	}
+	groupIDStr := strconv.Itoa(mockWorkflowStepDep.GroupID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("groupID", groupIDStr)
+
+	res, _ := client.PostForm(RootURL+`api/workflow/dependency/` + newDependencyIDStr + `/privileges`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err := json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error setting custom group privileges for dependencyID = %v, got = %v, want = %v", newDependencyIDStr, got, want)
+	}
+}
+
+func TestWorkflow_SetStepPersonDesignatedField(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot set person designated field without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	indStr := strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_empUID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("indicatorID", indStr)
+
+	res, _ := client.PostForm(RootURL+`api/workflow/step/` + stepIDStr + `/indicatorID_for_assigned_empUID`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err := json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error setting person designated field for step = %v, got = %v, want = %v", stepIDStr, got, want)
+	}
+}
+
+func TestWorkflow_SetStepGroupDesignatedField(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot set group designated field without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	indStr := strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_groupID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("indicatorID", indStr)
+
+	res, _ := client.PostForm(RootURL+`api/workflow/step/` + stepIDStr + `/indicatorID_for_assigned_groupID`, postData)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err := json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error setting group designated field for step = %v, got = %v, want = %v", stepIDStr, got, want)
+	}
+}
+
+func TestWorkflow_GetStepDependencyConfig(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot get step dependencies without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	stepConfig := getWorkflowStepDependencies(stepIDStr)
+
+	for _, dep := range stepConfig {
+		dependencyID := dep.DependencyID
+
+		switch dependencyID {
+		case -1:
+			got := dep.Description
+			want := "Person Designated by the Requestor"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+			got = strconv.Itoa(dep.IndicatorID_for_assigned_empUID)
+			want = strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_empUID)
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected value of assigned emp, got = %v, want = %v", got, want)
+			}
+		case -2:
+			got := dep.Description
+			want := "Requestor Followup"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+		case -3:
+			got := dep.Description
+			want := "Group Designated by the Requestor"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+			got = strconv.Itoa(dep.IndicatorID_for_assigned_groupID)
+			want = strconv.Itoa(mockWorkflowStepDep.IndicatorID_for_assigned_groupID)
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected value of assigned group, got = %v, want = %v", got, want)
+			}
+		case 1:
+			got := dep.Description
+			want := "Service Chief"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+		case 8:
+			got := dep.Description
+			want := "Quadrad"
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+		case mockWorkflowStepDep.DependencyID:
+			got := dep.Description
+			want := mockWorkflowStepDep.Description
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected requirement description, got = %v, want = %v", got, want)
+			}
+			//if multiple groups had been given privs, they would be additional step dep entries
+			got = strconv.Itoa(dep.GroupID)
+			want = strconv.Itoa(mockWorkflowStepDep.GroupID)
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected custom requirement groupID, got = %v, want = %v", got, want)
+			}
+			got = dep.Name
+			want = mockWorkflowStepDep.Name
+			if !cmp.Equal(got, want) {
+				t.Errorf("Unexpected custom requirement group name, got = %v, want = %v", got, want)
+			}
+		default:
+		}
+	}
+}
+
+func TestWorkflow_UnlinkStepDependenciesFromWorkflowStep(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot get dependencies without valid ID")
+	}
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("workflowID", workflowIDStr)
+
+	for _, dep := range commonDependencies {
+		dependencyIDStr := strconv.Itoa(dep.DependencyID)
+		postData.Set("dependencyID", dependencyIDStr)
+
+		params := "?dependencyID=" + dependencyIDStr + "&workflowID=" + workflowIDStr + "&CSRFToken=" + CsrfToken
+		req, err := http.NewRequest("DELETE", RootURL+`api/workflow/step/` + stepIDStr + `/dependencies` + params, strings.NewReader(postData.Encode()))
+		if err != nil {
+			t.Errorf("Error creating DELETE request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		res, err := client.Do(req)
+		if err != nil {
+			t.Errorf("Error sending delete request: %v", err)
+		}
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got %v", res.StatusCode)
+		}
+		b, _ := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		var result string
+		err = json.Unmarshal(b, &result)
+		if err != nil {
+			t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+		}
+
+		got := result
+		want := "1"
+		if !cmp.Equal(got, want) {
+			t.Errorf("Error removing requirement type = %v, got = %v, want = %v", dep.Description, got, want)
+		}
+	}
+}
+
+func TestWorkflow_DesignatedIndicatorValuesAreResetAfterRemoval(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot add get step without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+	step := getWorkflowStep(stepIDStr)
+
+	got := step.IndicatorID_for_assigned_empUID
+	want := 0
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error clearing designated empID = %v, want = %v", got, want)
+	}
+	got = step.IndicatorID_for_assigned_groupID
+	want = 0
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error clearing designated empID = %v, want = %v", got, want)
+	}
+}
+
+func TestWorkflow_DeleteWorkflowStep(t *testing.T) {
+	if(commonWorkflowStep.StepID == 0) {
+		t.Errorf("commonWorkflowStep.StepID is 0, cannot delete step without valid ID")
+	}
+	stepIDStr := strconv.Itoa(commonWorkflowStep.StepID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	params := "?CSRFToken=" + CsrfToken
+	req, err := http.NewRequest("DELETE", RootURL+`api/workflow/step/` + stepIDStr + params, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating DELETE request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending delete request: %v", err)
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error deleting workflow step = %v, got = %v, want = %v", stepIDStr, got, want)
+	}
+}
+
+func TestWorkflow_DeleteWorkflow(t *testing.T) {
+	if(commonWorkflow.WorkflowID == 0) {
+		t.Errorf("commonWorkflow.WorkflowID is 0, cannot delete workflow without valid ID")
+	}
+	workflowIDStr := strconv.Itoa(commonWorkflow.WorkflowID)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	params := "?CSRFToken=" + CsrfToken
+	req, err := http.NewRequest("DELETE", RootURL+`api/workflow/` + workflowIDStr + params, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating DELETE request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending delete request: %v", err)
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error deleting workflow = %v, got = %v, want = %v", workflowIDStr, got, want)
 	}
 }
