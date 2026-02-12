@@ -114,6 +114,15 @@ func TestFormQuery_NonadminQueryActionable(t *testing.T) {
 	}
 }
 
+// Test situations where a record has incomplete records_dependencies entries
+func TestFormQuery_IncompleteRecordsDependencies(t *testing.T) {
+	res, _ := getFormQuery(RootURL + `api/form/query?q={"terms":[{"id":"stepID","operator":"=","match":"actionable","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["service","categoryName","status","unfilledDependencies"],"sort":{}}`)
+
+	if _, exists := res[16].UnfilledDependencyData["9"]; !exists {
+		t.Errorf("Record 16 should include unfilledDependencyData['9'] even though it has a missing entry in records_dependencies")
+	}
+}
+
 func TestFormQuery_FulltextSearch_ApplePearOrange(t *testing.T) {
 	res, _ := getFormQuery(RootURL + `api/form/query?q={"terms":[{"id":"data","indicatorID":"3","operator":"MATCH","match":"apple pear orange","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["service","status","categoryName"],"sort":{"column":"date","direction":"DESC"},"limit":50}`)
 
