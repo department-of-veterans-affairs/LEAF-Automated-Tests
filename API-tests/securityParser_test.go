@@ -25,16 +25,11 @@ import (
 // stored in the database are NOT unserialized when form data is read.
 //
 // indicator 43 (multiselect) is pre-seeded with: O:8:"stdClass":1:{s:4:"evil";s:7:"payload";}
-// On master (VULNERABLE): unserialize() creates stdClass, JSON includes "evil":"payload"
-// On security branch (SAFE): parseSerializedData() returns null, no object in JSON
 func TestSecurity_StandardObjectNotDeserialized(t *testing.T) {
 	// Use rawIndicator endpoint which calls getIndicator() directly.
-	// getIndicator() calls unserialize (master) or parseSerializedData (security)
 	// for multiselect indicators and returns the value in JSON.
 	got, _ := httpGet(RootURL + `api/form/200/rawIndicator/43/1`)
 
-	// On master: unserialize() creates stdClass, json_encode produces "evil":"payload"
-	// On security: parseSerializedData() rejects the object, no deserialized properties
 	if strings.Contains(got, `"evil":"payload"`) {
 		t.Errorf("Serialized object (O: format) was DESERIALIZED - 'evil':'payload' found as JSON key-value in response")
 	}
