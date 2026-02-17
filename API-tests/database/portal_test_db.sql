@@ -2140,7 +2140,7 @@ INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `ti
 (200,	41,	1,	'',	NULL,	1694021472,	'tester'),
 (200,	42,	1,	'',	NULL,	1694021472,	'tester'),
 (200,	43,	1,	'O:8:\"stdClass\":1:{s:4:\"evil\";s:7:\"payload\";}',	NULL,	1694021472,	'tester'),
-(200,	48,	1,	'a:3:{s:5:\"cells\";a:2:{i:0;a:4:{i:0;s:16:\"test single line\";i:1;s:15:\"test\\nmulti\\nline\";i:2;s:10:\"09/17/2025\";i:3;s:1:\"1\";}i:1;a:4:{i:0;s:18:\"test single line 2\";i:1;O:8:\"stdClass\":1:{s:4:\"evil\";s:7:\"payload\";};i:2;s:10:\"12/05/2025\";i:3;s:1:\"2\";}}s:5:\"names\";a:5:{i:0;s:16:\"single line cell\";i:1;s:15:\"multi-line cell\";i:2;s:9:\"date cell\";i:3;s:13:\"dropdown cell\";i:4;s:2:\" \";}s:7:\"columns\";a:4:{i:0;s:8:\"col_2872\";i:1;s:8:\"col_ff50\";i:2;s:8:\"col_8d19\";i:3;s:8:\"col_58bf\";}}',	NULL,	1694021472,	'tester'),
+(200,	48,	1,	'a:3:{s:5:\"cells\";a:2:{i:0;a:4:{i:0;s:16:\"test single line\";i:1;s:15:\"test\nmulti\nline\";i:2;s:10:\"09/17/2025\";i:3;s:1:\"1\";}i:1;a:4:{i:0;s:18:\"test single line 2\";i:1;O:8:\"stdClass\":1:{s:4:\"evil\";s:7:\"payload\";}i:2;s:10:\"12/05/2025\";i:3;s:1:\"2\";}}s:5:\"names\";a:5:{i:0;s:16:\"single line cell\";i:1;s:15:\"multi-line cell\";i:2;s:9:\"date cell\";i:3;s:13:\"dropdown cell\";i:4;s:1:\" \";}s:7:\"columns\";a:4:{i:0;s:8:\"col_2872\";i:1;s:8:\"col_ff50\";i:2;s:8:\"col_8d19\";i:3;s:8:\"col_58bf\";}}',	NULL,	1694021472,	'tester'),
 (200,	44,	1,	'no',	NULL,	1695331184,	'tester'),
 (201,	3,	1,	'28914',	NULL,	1694021472,	'tester'),
 (201,	4,	1,	'60264',	NULL,	1694021472,	'tester'),
