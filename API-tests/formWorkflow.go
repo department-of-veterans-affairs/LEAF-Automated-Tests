@@ -42,7 +42,7 @@ type Action struct {
 	StepID              int    `json:"stepID"`
 	NextStepID          int    `json:"nextStepID"`
 	DisplayConditional  string `json:"displayConditional"`
-	AcionText           string `json:"acionText"`
+	ActionText           string `json:"actionText"`
 	ActionTextPasttense string `json:"actionTextPasttense"`
 	ActionIcon          string `json:"actionIcon"`
 	ActionAlignment     string `json:"actionAlignment"`
