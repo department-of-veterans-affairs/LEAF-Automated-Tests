@@ -591,3 +591,176 @@ func TestWorkflow_DeleteWorkflow(t *testing.T) {
 		t.Errorf("Error deleting workflow = %v, got = %v, want = %v", workflowIDStr, got, want)
 	}
 }
+
+func TestWorkflow_NewAction_CreationAndInputValidation(t *testing.T) {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	postData.Set("actionText", "<script>alert(1)</script>")
+	postData.Set("actionTextPasttense", "<script>alerted(1)</script>")
+	postData.Set("actionIcon", "\"><img src=\"../files/test_file.png\">")
+	postData.Set("sort", "e3")
+	postData.Set("fillDependency", "invalid value")
+
+	req, err := http.NewRequest("POST", RootURL+`api/system/action`, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating POST request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", RootURL + "admin")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending post request: %v", err)
+	}
+	defer res.Body.Close()
+
+	expectedActionType := "alert1"
+	res, _ = client.Get(RootURL + "api/workflow/action/_" + expectedActionType)
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var a []Action
+	err = json.Unmarshal(b, &a)
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse: %v", string(b))
+		log.Printf("JSON parsing error: %v", err.Error())
+	}
+	newAction := a[0]
+
+	got := newAction.ActionText
+	want := "alert(1)"
+	if !cmp.Equal(got, want) {
+		t.Errorf("tags should be stripped from actionText, got = %v, want = %v", got, want)
+	}
+	got = newAction.ActionTextPasttense
+	want = "alerted(1)"
+	if !cmp.Equal(got, want) {
+		t.Errorf("tags should be stripped from actionTextPasttense, got = %v, want = %v", got, want)
+	}
+	got = newAction.ActionIcon
+	want = "img src=..filestest_file.png"
+	if !cmp.Equal(got, want) {
+		t.Errorf("file name of actionIcon should be scrubbed, got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(newAction.Sort)
+	want = "0"
+	if !cmp.Equal(got, want) {
+		t.Errorf("sort value is 0 if invalid input, got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(newAction.FillDependency)
+	want = "0"
+	if !cmp.Equal(got, want) {
+		t.Errorf("fillDependency value is 0 if invalid input, got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(newAction.Deleted)
+	want = "0"
+	if !cmp.Equal(got, want) {
+		t.Errorf("action is enabled, got = %v, want = %v", got, want)
+	}
+}
+
+func TestWorkflow_EditAction(t *testing.T) {
+	actionType := "alert1"
+	inActionText := "Go API test valid"
+	inActionTextPast := "Go API tested valid"
+	inActionIcon := "LEAF-logo.svg"
+	inSort := "5"
+	inFillDep := "1"
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	postData.Set("actionText", inActionText)
+	postData.Set("actionTextPasttense", inActionTextPast)
+	postData.Set("actionIcon", inActionIcon)
+	postData.Set("sort", inSort)
+	postData.Set("fillDependency", inFillDep)
+
+	req, err := http.NewRequest("POST", RootURL+`api/workflow/editAction/_`+actionType, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating POST request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", RootURL + "admin")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending post request: %v", err)
+	}
+	defer res.Body.Close()
+
+	res, _ = client.Get(RootURL + "api/workflow/action/_" + actionType)
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var a []Action
+	err = json.Unmarshal(b, &a)
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse: %v", string(b))
+		log.Printf("JSON parsing error: %v", err.Error())
+	}
+	editedAction := a[0]
+
+	got := editedAction.ActionText
+	want := inActionText
+	if !cmp.Equal(got, want) {
+		t.Errorf("expected edited action text, got = %v, want = %v", got, want)
+	}
+	got = editedAction.ActionTextPasttense
+	want = inActionTextPast
+	if !cmp.Equal(got, want) {
+		t.Errorf("expected edited action actionTextPasttense, got = %v, want = %v", got, want)
+	}
+	got = editedAction.ActionIcon
+	want = inActionIcon
+	if !cmp.Equal(got, want) {
+		t.Errorf("expected edited action actionIcon, got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(editedAction.Sort)
+	want = inSort
+	if !cmp.Equal(got, want) {
+		t.Errorf("expected edited action sort value, got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(editedAction.FillDependency)
+	want = inFillDep
+	if !cmp.Equal(got, want) {
+		t.Errorf("expected edited action fillDependency, got = %v, want = %v", got, want)
+	}
+	got = strconv.Itoa(editedAction.Deleted)
+	want = "0"
+	if !cmp.Equal(got, want) {
+		t.Errorf("action is enabled, got = %v, want = %v", got, want)
+	}
+}
+
+func TestWorkflow_DeleteAction(t *testing.T) {
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+
+	params := "?CSRFToken=" + CsrfToken
+	req, err := http.NewRequest("DELETE", RootURL+`api/workflow/action/_alert1`+params, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating DELETE request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending delete request: %v", err)
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %v", res.StatusCode)
+	}
+	b, _ := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	var result string
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		t.Errorf("JSON parsing error, couldn't parse: %v", string(b))
+	}
+
+	got := result
+	want := "1"
+	if !cmp.Equal(got, want) {
+		t.Errorf("Error deleting workflow action, got = %v, want = %v",  got, want)
+	}
+}

@@ -437,3 +437,140 @@ test('Hashtag/Pound/number sign in query', async ({ page }) => {
   await page.getByRole('button', { name: 'Generate Report' }).click();
   await expect(page.locator('#reportStats')).toContainText('0 records');
 });
+
+/**
+ * Test for LEAF-5137
+ * Verifies once report is built that shortened URL
+ * and shared URL works correctly
+ */
+test('Shortened URL Redirect', async ({ page }) => {
+  //Login and build report
+  await page.goto(LEAF_URLS.PORTAL_HOME);
+  await page.getByText('Report Builder Create custom').click();
+  await page.getByRole('button', { name: 'Next Step' }).click();
+  await page.locator('#indicatorList').getByText('Type Of Request').click();
+  await page.locator('#indicatorList').getByText('Current Status').click();
+  await page.locator('#indicatorList').getByText('Action Button').click();
+  await page.locator('#indicatorList').getByText('Days Since Last Action').click();
+  await page.getByText('General Form').click();
+  await page.getByText('Assigned Person', { exact: true }).click();
+  await page.getByRole('button', { name: 'Generate Report' }).click();
+
+  //Verify report headers
+  await expect(page.getByRole('columnheader', { name: 'Sort by unique ID' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Title' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Type' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Current Status' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Days Since Last Action' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Assigned Person' })).toBeVisible();
+
+  //Verify more than 100 records are present
+  const statsLocator = page.locator('#reportStats');
+  await statsLocator.waitFor({ state: 'visible' });
+  const maxMs = 30000;
+  const pollMs = 500;
+  const start = Date.now();
+  let reportStatsText = '';
+
+  while (Date.now() - start < maxMs) {
+    reportStatsText = (await statsLocator.textContent()) ?? '';
+    if (!/loading/i.test(reportStatsText) && /\d/.test(reportStatsText)) break;
+    await page.waitForTimeout(pollMs);
+  }
+
+  if (!reportStatsText || !/\d/.test(reportStatsText)) {
+    throw new Error(`Timed out waiting for numeric reportStats. Last value: "${reportStatsText}"`);
+  }
+
+  const recordMatch = reportStatsText.match(/(\d[\d,]*)/);
+  const recordCount = recordMatch ? Number(recordMatch[1].replace(/,/g, '')) : 0;
+  expect(recordCount).toBeGreaterThan(100);
+
+
+  //Get shareable link and navigate to shared link
+  await page.getByRole('button', { name: 'Share Report' }).click();
+  await page.getByText('https://host.docker.internal/').click();
+  await page.getByText('https://host.docker.internal/').press('ControlOrMeta+a');
+  await page.getByText('https://host.docker.internal/').press('ControlOrMeta+c');
+
+  // Read the copied URL from the clipboard and navigate to it
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  const copiedUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+  if (!copiedUrl || !copiedUrl.startsWith('http')) {
+    throw new Error(`Clipboard does not contain a valid URL: "${copiedUrl}"`);
+  }
+
+  await page.goto(copiedUrl, { waitUntil: 'networkidle' });
+
+  //Validate redirected page table headers
+  await expect(page.getByRole('columnheader', { name: 'Sort by unique ID' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Title' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Type' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Current Status' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Days Since Last Action' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sort by Assigned Person' })).toBeVisible();
+
+  //Verify more than 100 records are present
+  const statsLocator1 = page.locator('#reportStats');
+  await statsLocator1.waitFor({ state: 'visible' });
+  const maxMs1 = 30000;
+  const pollMs1 = 500;
+  const start1 = Date.now();
+  let reportStatsText1 = '';
+
+  while (Date.now() - start1 < maxMs1) {
+    reportStatsText1 = (await statsLocator1.textContent()) ?? '';
+    if (!/loading/i.test(reportStatsText1) && /\d/.test(reportStatsText1)) break;
+    await page.waitForTimeout(pollMs1);
+  }
+
+  if (!reportStatsText1 || !/\d/.test(reportStatsText1)) {
+    throw new Error(`Timed out waiting for numeric reportStats. Last value: "${reportStatsText1}"`);
+  }
+
+  const recordMatch1 = reportStatsText1.match(/(\d[\d,]*)/);
+  const recordCount1 = recordMatch1 ? Number(recordMatch1[1].replace(/,/g, '')) : 0;
+  expect(recordCount1).toBeGreaterThan(100);
+
+  //Create and verify shortened JSON link
+  await page.getByRole('button', { name: 'JSON' }).click();
+  await page.getByRole('button', { name: 'Shorten Link' }).click();
+  await page.getByRole('button', { name: 'Copy to Clipboard' }).click();
+  const copiedShortUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+  if (!copiedShortUrl || !copiedShortUrl.startsWith('http')) {
+    throw new Error(`Clipboard does not contain a valid URL: "${copiedShortUrl}"`);
+  }
+
+  // Navigate to the shortened JSON URL and store/parse JSON response
+  const jsonResp = await page.goto(copiedShortUrl, { waitUntil: 'networkidle' });
+  let jsonText = '';
+
+  if (jsonResp) {
+    jsonText = await jsonResp.text();
+  } else {
+    // Fallback: read page body text if navigation response isn't available
+    jsonText = await page.evaluate(() => document.body && (document.body.innerText || document.body.textContent) || '');
+  }
+
+  await page.locator('div').first().click();
+  let parsedJson: any;
+
+  try {
+    parsedJson = JSON.parse(jsonText);
+  } catch (err: any) {
+    throw new Error(`Failed to parse JSON from ${copiedShortUrl}: ${err?.message}\n--- Response start ---\n${jsonText.slice(0,2000)}\n--- Response truncated ---`);
+  }
+
+  expect(parsedJson).toBeTruthy();
+
+  // Look for custom request with userid 67 and title 'Test JSON Shortlink' IN the JSON response
+  const targeRequestId = 67;
+  const targetTitle = 'Test JSON Shortlink';
+  const foundItem = parsedJson?.[targeRequestId] ?? null;
+
+  expect(foundItem).toBeTruthy();
+  expect(foundItem.recordID).toBe(targeRequestId);
+  expect(foundItem.title).toBe(targetTitle);
+});

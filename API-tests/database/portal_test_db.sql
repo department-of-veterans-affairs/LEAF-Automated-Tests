@@ -28,15 +28,17 @@ CREATE TABLE `action_history` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `action_history` (`actionID`, `recordID`, `userID`, `stepID`, `dependencyID`, `actionType`, `actionTypeID`, `time`, `comment`, `userMetadata`) VALUES
-(1,	958,	'tester',	0,	0,	'changeInitiator',	8,	1699055105,	'Initiator changed to Ollie Flatley',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(2,	530,	'tester',	0,	0,	'changeInitiator',	8,	1699056198,	'Initiator changed to Alysa Dare',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(3,	530,	'tester',	0,	0,	'move',	8,	1699056206,	'Moved to Requestor Followup step',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(4,	7,	'tester',	0,	0,	'move',	8,	1700253479,	'Moved to Requestor Followup step',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(5,	7,	'tester',	3,	-2,	'sendback',	8,	1700253822,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(6,	9,	'tester',	1,	9,	'approve',	8,	1716939853,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(7,	9,	'tester',	2,	9,	'approve',	8,	1716939855,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(8,	9,	'tester',	3,	-2,	'approve',	8,	1716939857,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(9,	9,	'tester',	4,	-3,	'approve',	8,	1716939859,	'',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
+
+(1,	958,	'tester',	0,	0,	'changeInitiator',	8,	1699055105,	'Initiator changed to Ollie Flatley', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(2,	530,	'tester',	0,	0,	'changeInitiator',	8,	1699056198,	'Initiator changed to Alysa Dare', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(3,	530,	'tester',	0,	0,	'move',	8,	1699056206,	'Moved to Requestor Followup step', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(4,	7,	'tester',	0,	0,	'move',	8,	1700253479,	'Moved to Requestor Followup step', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(5,	7,	'tester',	3,	-2,	'sendback',	8,	1700253822,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(6,	9,	'tester',	1,	9,	'approve',	8,	1716939853,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(7,	9,	'tester',	2,	9,	'approve',	8,	1716939855,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(8,	9,	'tester',	3,	-2,	'approve',	8,	1716939857,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(9,	9,	'tester',	4,	-3,	'approve',	8,	1716939859,	'', '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(10,	80,	'tester',	1,	9,	'researchdevelop',	8,	1771426901,	'test comment R &amp; D',	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"O\'Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}');
 
 DROP TABLE IF EXISTS `action_types`;
 CREATE TABLE `action_types` (
@@ -79,7 +81,8 @@ INSERT INTO `actions` (`actionType`, `actionText`, `actionTextPasttense`, `actio
 ('Note',	'Note',	'Note',	'accessories-text-editor.svg',	'right',	0,	1,	0),
 ('sendback',	'Return to Requestor',	'Returned to Requestor',	'edit-undo.svg',	'left',	0,	0,	0),
 ('sign',	'Sign',	'Signed',	'application-certificate.svg',	'right',	0,	1,	0),
-('submit',	'Submit',	'Submitted',	'gnome-emblem-default.svg',	'right',	0,	1,	0);
+('submit',	'Submit',	'Submitted',	'gnome-emblem-default.svg',	'right',	0,	1,	0),
+('researchdevelop',	'research & develop',	'researched & developed',	'utilities-system-monitor.svg',	'right',	0,	1,	0);
 
 DROP TABLE IF EXISTS `approvals`;
 CREATE TABLE `approvals` (
@@ -5867,8 +5870,8 @@ INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `prio
 (13,	1694021465,	0,	'tester_disabled',	'TestFormQuery_Initiator_Disabled__Empty_Metadata',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"\", \"lastName\": \"\", \"userName\": \"\", \"firstName\": \"\", \"middleName\": \"\"}'),
 (14,	1694021465,	0,	'tester',	'Workflow Form Fields',	0,	'Approved',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (15,	1694021465,	0,	'tester',	'Clickable User Content Links',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(16,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(17,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(16,	1694021465,	0,	'tester',	'TestFormQuery_IncompleteRecordsDependencies',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(17,	1694021465,	0,	'tester',	'TestFormWorkflow_ChangeStepDifferentWorkflow',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (18,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (19,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (20,	1694021465,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021485,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
@@ -5918,7 +5921,7 @@ INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `prio
 (64,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (65,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (66,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(67,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(67, 1694021465, 0, 'tester', 'Test JSON Shortlink', 0, 'Submitted', 1694021487, 0, 0, 1, '{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (68,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (69,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (70,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
@@ -5931,8 +5934,8 @@ INSERT INTO `records` (`recordID`, `date`, `serviceID`, `userID`, `title`, `prio
 (77,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (78,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (79,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(80,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
-(81,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(80,	1694021467,	0,	'tester',	'Request Last Action Summary',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
+(81,	1694021467,	0,	'tester',	'Print View Take-Action with comment',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (82,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021488,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (83,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021488,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
 (84,	1694021467,	0,	'tester',	'Available for test case',	0,	'Submitted',	1694021487,	0,	0,	1,	'{\"email\": \"tester.tester@fake-email.com\", \"lastName\": \"Tester\", \"userName\": \"tester\", \"firstName\": \"Tester\", \"middleName\": \"\"}'),
@@ -6881,7 +6884,6 @@ INSERT INTO `records_dependencies` (`recordID`, `dependencyID`, `filled`, `time`
 (16,	-2,	0,	1694021485),
 (16,	-1,	0,	NULL),
 (16,	5,	1,	1694021485),
-(16,	9,	0,	NULL),
 (17,	-3,	0,	NULL),
 (17,	-2,	0,	1694021485),
 (17,	-1,	0,	NULL),
@@ -12944,6 +12946,7 @@ INSERT INTO `workflow_routes` (`workflowID`, `stepID`, `nextStepID`, `actionType
 (-1,	-2,	0,	'approve',	''),
 (-1,	-2,	0,	'sendback',	''),
 (1,	1,	2,	'approve',	''),
+(1,	1,	1,	'researchdevelop',	''),
 (1,	2,	3,	'approve',	''),
 (1,	2,	2,	'Note',	''),
 (1,	3,	4,	'approve',	''),

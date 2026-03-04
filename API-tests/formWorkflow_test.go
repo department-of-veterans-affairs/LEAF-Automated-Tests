@@ -155,3 +155,23 @@ func TestFormWorkflow_currentStepRequestorFollowupNonAdmin(t *testing.T) {
 		t.Errorf("Description = %v, want = %v", got, want)
 	}
 }
+
+func TestFormWorkflow_ChangeStepDifferentWorkflow(t *testing.T) {
+
+	// Move record 17 to step 7, which is in a different workflow
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("stepID", "7")
+	postData.Set("comment", "")
+	_, err := client.PostForm(RootURL+`api/formWorkflow/17/step`, postData)
+	if err != nil {
+		t.Errorf("api/formWorkflow/17/step could not change step")
+	}
+
+	// Verify that the record includes correct dependency data for record 17
+	res, _ := getFormQuery(RootURL + `api/form/query?q={"terms":[{"id":"recordID","operator":"=","match":"17","gate":"AND"},{"id":"deleted","operator":"=","match":0,"gate":"AND"}],"joins":["unfilledDependencies"],"sort":{}}`)
+
+	if _, exists := res[17].UnfilledDependencyData["1"]; !exists {
+		t.Errorf("Record 17 should include unfilledDependencyData['1']")
+	}
+}
