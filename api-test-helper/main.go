@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"strings"
 	"sync"
 )
 
@@ -39,7 +40,7 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 	mxRunningTests.Lock()
 	if !runningTests {
 		runningTests = true
-		printLog(w, "Running API tests: LEAF/API-tester")
+		printLog(w, "# Running API tests: LEAF/API-tester")
 
 		cmdClear := exec.Command("go", "clean", "-testcache")
 		cmdClear.Dir = "../API-tests/"
@@ -62,10 +63,18 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		io.Copy(w, pipe)
 		cmd.Wait()
 
-		printLog(w, "\n")
+		// Count API tests
+		fmt.Fprint(w, "Total number of API tests: ")
+		cmd = exec.Command("bash", "-c", `grep -r "^func Test" | wc -l`)
+		cmd.Dir = "../API-tests/"
+		out, err := cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Fprintln(w, strings.TrimSpace(string(out))+"\n")
 
 		// Run Unit tests
-		printLog(w, "Running Unit tests: github.com/department-of-veterans-affairs/LEAF/pkg/agent")
+		printLog(w, "# Running Unit tests: ./pkg/agent")
 		if modeVerbose {
 			printLog(w, "Running in verbose mode")
 			cmd = exec.Command("go", "test", "-v")
@@ -80,6 +89,48 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		cmd.Start()
 		io.Copy(w, pipe)
 		cmd.Wait()
+		fmt.Fprint(w, "\n")
+
+		// Install govulncheck
+		printLog(w, "# Vulnerability Assessments")
+		cmd = exec.Command("go", "install", "golang.org/x/vuln/cmd/govulncheck@latest")
+		cmd.Start()
+		cmd.Wait()
+
+		// Show govulncheck version on first run
+		printLog(w, "## ./LEAF_Agent")
+		cmd = exec.Command("govulncheck", "-version", "./...")
+		cmd.Dir = "../LEAF_Agent"
+
+		// buffer output to simplify "no vulnerabilities found"
+		out, err = cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+
+		// If no vulnerabilities found, respond with "No vulnerabilities found."
+		if strings.Contains(string(out), "No vulnerabilities found") {
+			// Remove everything past "No vulnerabilities found"
+			out = out[:strings.Index(string(out), "No vulnerabilities found")+25]
+		}
+		fmt.Fprintln(w, string(out)+"\n")
+
+		printLog(w, "## ./pkg/agent")
+		cmd = exec.Command("govulncheck", "./...")
+		cmd.Dir = "../pkg/agent"
+
+		// buffer output to simplify "no vulnerabilities found"
+		out, err = cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+
+		// If no vulnerabilities found, respond with "No vulnerabilities found."
+		if strings.Contains(string(out), "No vulnerabilities found") {
+			// Remove everything past "No vulnerabilities found"
+			out = out[:strings.Index(string(out), "No vulnerabilities found")+25]
+		}
+		fmt.Fprintln(w, string(out)+"\n")
 
 		runningTests = false
 		mxRunningTests.Unlock()
