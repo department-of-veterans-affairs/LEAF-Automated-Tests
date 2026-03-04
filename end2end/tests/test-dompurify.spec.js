@@ -4,7 +4,7 @@ test('DOMPurify sanitizes HTML as expected', async ({ page }) => {
     await page.setContent(`
         <html>
         <head>
-            <script src="https://host.docker.internal/Test_Request_Portal/js/dompurify.min.js"></script>
+            <script src="https://host.docker.internal/app/libs/js/dompurify/dompurify.min.js"></script>
         </head>
         <body>
             <div id="output"></div>
