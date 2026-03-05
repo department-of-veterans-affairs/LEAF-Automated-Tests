@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"strings"
 	"sync"
 )
 
@@ -39,13 +40,22 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 	mxRunningTests.Lock()
 	if !runningTests {
 		runningTests = true
-		printLog(w, "Running API tests: LEAF/API-tester")
+
+		// Count API tests
+		cmd := exec.Command("bash", "-c", `grep -r "^func Test" | wc -l`)
+		cmd.Dir = "../API-tests/"
+		out, err := cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+		numTests := strings.TrimSpace(string(out))
+
+		printLog(w, "# Running "+numTests+" API tests: LEAF/API-tester")
 
 		cmdClear := exec.Command("go", "clean", "-testcache")
 		cmdClear.Dir = "../API-tests/"
 		cmdClear.Run()
 
-		var cmd *exec.Cmd
 		if modeVerbose {
 			printLog(w, "Running in verbose mode")
 			cmd = exec.Command("go", "test", "-v")
@@ -62,10 +72,20 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		io.Copy(w, pipe)
 		cmd.Wait()
 
-		printLog(w, "\n")
+		fmt.Fprint(w, "\n")
+
+		// Count Unit tests
+		cmd = exec.Command("bash", "-c", `grep -r "^func Test" | wc -l`)
+		cmd.Dir = "../pkg/agent"
+		out, err = cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+		numTests = strings.TrimSpace(string(out))
 
 		// Run Unit tests
-		printLog(w, "Running Unit tests: github.com/department-of-veterans-affairs/LEAF/pkg/agent")
+		printLog(w, "# Running "+numTests+" Unit tests: ./pkg/agent")
+
 		if modeVerbose {
 			printLog(w, "Running in verbose mode")
 			cmd = exec.Command("go", "test", "-v")
@@ -80,6 +100,67 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		cmd.Start()
 		io.Copy(w, pipe)
 		cmd.Wait()
+
+		fmt.Fprint(w, "\n")
+
+		// Install govulncheck
+		printLog(w, "# Vulnerability Assessments")
+		cmd = exec.Command("go", "install", "golang.org/x/vuln/cmd/govulncheck@latest")
+		cmd.Start()
+		cmd.Wait()
+
+		// Show govulncheck version
+		cmd = exec.Command("govulncheck", "-version")
+		out, err = cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+		govulncheckVersion := strings.Split(string(out), "\n")
+		fmt.Fprintln(w, strings.Join(govulncheckVersion[:4], "\n"))
+
+		fmt.Fprint(w, "\n")
+
+		printLog(w, "## ./LEAF_Agent")
+		if modeVerbose {
+			cmd = exec.Command("govulncheck", "-show", "verbose", "./...")
+		} else {
+			cmd = exec.Command("govulncheck", "./...")
+		}
+		cmd.Dir = "../LEAF_Agent"
+
+		// buffer output to simplify "no vulnerabilities found"
+		out, err = cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+
+		// If no vulnerabilities found, simplify output
+		if strings.Contains(string(out), "No vulnerabilities found") {
+			// Remove everything past "No vulnerabilities found."
+			out = out[:strings.Index(string(out), "No vulnerabilities found")+25]
+		}
+		fmt.Fprintln(w, string(out)+"\n")
+
+		printLog(w, "## ./pkg/agent")
+		if modeVerbose {
+			cmd = exec.Command("govulncheck", "-show", "verbose", "./...")
+		} else {
+			cmd = exec.Command("govulncheck", "./...")
+		}
+		cmd.Dir = "../pkg/agent"
+
+		// buffer output to simplify "no vulnerabilities found"
+		out, err = cmd.Output()
+		if err != nil {
+			log.Println(err)
+		}
+
+		// If no vulnerabilities found, simplify output
+		if strings.Contains(string(out), "No vulnerabilities found") {
+			// Remove everything past "No vulnerabilities found."
+			out = out[:strings.Index(string(out), "No vulnerabilities found")+25]
+		}
+		fmt.Fprintln(w, string(out)+"\n")
 
 		runningTests = false
 		mxRunningTests.Unlock()
