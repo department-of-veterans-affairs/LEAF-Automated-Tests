@@ -121,7 +121,11 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "\n")
 
 		printLog(w, "## ./LEAF_Agent")
-		cmd = exec.Command("govulncheck", "./...")
+		if modeVerbose {
+			cmd = exec.Command("govulncheck", "-show", "verbose", "./...")
+		} else {
+			cmd = exec.Command("govulncheck", "./...")
+		}
 		cmd.Dir = "../LEAF_Agent"
 
 		// buffer output to simplify "no vulnerabilities found"
@@ -138,7 +142,11 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, string(out)+"\n")
 
 		printLog(w, "## ./pkg/agent")
-		cmd = exec.Command("govulncheck", "./...")
+		if modeVerbose {
+			cmd = exec.Command("govulncheck", "-show", "verbose", "./...")
+		} else {
+			cmd = exec.Command("govulncheck", "./...")
+		}
 		cmd.Dir = "../pkg/agent"
 
 		// buffer output to simplify "no vulnerabilities found"
