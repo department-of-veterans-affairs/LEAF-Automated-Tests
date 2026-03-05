@@ -130,9 +130,9 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		// If no vulnerabilities found, respond with "No vulnerabilities found."
+		// If no vulnerabilities found, simplify output
 		if strings.Contains(string(out), "No vulnerabilities found") {
-			// Remove everything past "No vulnerabilities found"
+			// Remove everything past "No vulnerabilities found."
 			out = out[:strings.Index(string(out), "No vulnerabilities found")+25]
 		}
 		fmt.Fprintln(w, string(out)+"\n")
@@ -147,9 +147,9 @@ func handleRunTest(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		// If no vulnerabilities found, respond with "No vulnerabilities found."
+		// If no vulnerabilities found, simplify output
 		if strings.Contains(string(out), "No vulnerabilities found") {
-			// Remove everything past "No vulnerabilities found"
+			// Remove everything past "No vulnerabilities found."
 			out = out[:strings.Index(string(out), "No vulnerabilities found")+25]
 		}
 		fmt.Fprintln(w, string(out)+"\n")
