@@ -16,8 +16,8 @@ type SiteCard struct {
 	FontColor       string            `json:"fontColor"`
 	Icon            string            `json:"icon"`
 	Order           int               `json:"order"`
-	Columns	        string            `json:"columns"`
-	FormColumns     map[string]string `json:"formColumns"`
+	Columns	        string            `json:"columns,omitempty"`
+	FormColumns     map[string]string `json:"formColumns,omitempty"`
 }
 
 

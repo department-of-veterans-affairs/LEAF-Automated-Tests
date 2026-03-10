@@ -6,15 +6,11 @@ import (
 	"encoding/json"
 	"testing"
 	"github.com/google/go-cmp/cmp"
-	/*
-	
+	"strings"
 	"net/url"
 	"net/http"
-	"strings"
-	"strconv"
-
-	 */
 )
+
 
 func getSitemapJSON() (string, error) {
 	res, _ := client.Get(RootURL + "api/site/settings/sitemap_json")
@@ -55,6 +51,20 @@ func TestSitemap_Get_Sitemap_Cards(t *testing.T) {
 }
 
 func TestSitemap_Post_New_Card_Validation(t *testing.T) {
+	originalSitejson, err := getSitemapJSON()
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse sitemap json: %v", err)
+	}
+	cards, err := parseSitemapCards(originalSitejson)
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse sitemap cards: %v", err)
+	}
+
+	var portalSitemapCards []SiteCard
+	for _, c := range cards {
+		portalSitemapCards = append(portalSitemapCards, c)
+	}
+
 	//iconPath := RootURL + "libs/dynicons/svg/"
 
 	newCardId := "12345"
@@ -76,12 +86,31 @@ func TestSitemap_Post_New_Card_Validation(t *testing.T) {
 		Order: 3,
 	}
 
-	// Marshal the Go value into a JSON byte slice.
-	cardJsonBytes, err := json.Marshal(inCard)
+	portalSitemapCards = append(portalSitemapCards, inCard)
+	sitemapConfigIn := SitemapConfig{
+		Buttons: portalSitemapCards,
+	}
+	configBytes, err := json.Marshal(sitemapConfigIn)
 	if err != nil {
 		log.Printf("Error on card marshal: %v", err)
-	} else {
-		log.Printf("card marshal: %v", string(cardJsonBytes))
 	}
+	configJson := string(configBytes)
+
+	postData := url.Values{}
+	postData.Set("CSRFToken", CsrfToken)
+	postData.Set("sitemap_json", configJson)
+
+	req, err := http.NewRequest("POST", RootURL+`api/site/settings/sitemap_json`, strings.NewReader(postData.Encode()))
+	if err != nil {
+		t.Errorf("Error creating POST request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", RootURL + "admin")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("Error sending post request: %v", err)
+	}
+	defer res.Body.Close()
 	
+
 }
