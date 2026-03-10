@@ -19,6 +19,7 @@ var RootURL = HostURL + "/Test_Request_Portal/"
 var NationalOrgchartURL = HostURL + "/LEAF_NationalNexus/"
 var RootOrgchartURL = HostURL + "/Test_Nexus/"
 var LibraryURL = HostURL + "/LEAF/library/"
+var PlatformPrivacyURL = HostURL + "/platform/privacy/"
 
 var dbHost = os.Getenv("MYSQL_HOST")
 var dbUsername = os.Getenv("MYSQL_USER")
@@ -27,6 +28,7 @@ var testPortalDbName = "leaf_portal_API_testing"
 var testNexusDbName = "leaf_users_API_testing"
 var testNationalNexusDbName = "national_orgchart"
 var testLibraryDbName = "leaf_library_testing"
+var testPlatformPrivacyDbName = "leaf_platform_privacy_testing"
 
 var CsrfToken string
 
