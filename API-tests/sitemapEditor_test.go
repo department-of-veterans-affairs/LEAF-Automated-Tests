@@ -7,6 +7,7 @@ import (
 	"testing"
 	"github.com/google/go-cmp/cmp"
 	"strings"
+	"strconv"
 	"net/url"
 	"net/http"
 )
@@ -33,7 +34,17 @@ func parseSitemapCards(sitemapJSON string) (SiteCards, error) {
 	return cards, err
 }
 
-func TestSitemap_Get_Sitemap_Cards(t *testing.T) {
+func findCardByID(cards []SiteCard, id string) (SiteCard, bool) {
+    for _, c := range cards {
+        if c.Id == id {
+            return c, true
+        }
+    }
+    return SiteCard{}, false
+}
+
+
+func TestSitemapEditor_Get_Sitemap_JSON(t *testing.T) {
 	sitejson, err := getSitemapJSON()
 	if err != nil {
 		log.Printf("JSON parsing error, couldn't parse sitemap json: %v", err)
@@ -50,7 +61,7 @@ func TestSitemap_Get_Sitemap_Cards(t *testing.T) {
 	}
 }
 
-func TestSitemap_Post_New_Card_Validation(t *testing.T) {
+func TestSitemapEditor_Post_Sitemap_JSON(t *testing.T) {
 	originalSitejson, err := getSitemapJSON()
 	if err != nil {
 		log.Printf("JSON parsing error, couldn't parse sitemap json: %v", err)
@@ -65,25 +76,34 @@ func TestSitemap_Post_New_Card_Validation(t *testing.T) {
 		portalSitemapCards = append(portalSitemapCards, c)
 	}
 
-	//iconPath := RootURL + "libs/dynicons/svg/"
-
 	newCardId := "12345"
+	iconPath := HostURL + "/libs/dynicons/svg/"
+	iconFile := "LEAF-thumbprint.svg"
+
 	expectedTitle := "site card"
 	expectedDescr := "site description"
-	expectedTarget := "custom_report"
-	// expectedFontColor := "#000000"
-	// expectedBgColor := "#ffffff"
-	// expectedIcon := iconPath + "mock-LEAF-thumbprint.svg"
+	expectedTarget := "report.php?a=customreport"
+	expectedFontColor := "#000000"
+	expectedBgColor := "#ffffff"
+	expectedIcon := iconPath + iconFile
+	expectedOrder := 3
+	expectedColumns := "service,title,status,priority"
+	expectedFormColumns := map[string]string{
+		"form_5ea07": "service,title,status,8",
+		"form_512fa": "service,36,37,34",
+	}
 
 	inCard := SiteCard{
 		Id: newCardId,
 		Title: "<p>" + expectedTitle + "</p>",
 		Description: "<img src=1>" + expectedDescr,
-		Target: expectedTarget + "\r\n",
+		Target: "report.php?a=custom\r\nreport\r\n",
 		FontColor: "invalid color",
 		Color: "invalid color",
-		Icon: "../mock-LEAF-thumbprint.svg",
-		Order: 3,
+		Icon: "../LEAF-thumbprint.svg",
+		Order: expectedOrder,
+		Columns: expectedColumns,
+		FormColumns: expectedFormColumns,
 	}
 
 	portalSitemapCards = append(portalSitemapCards, inCard)
@@ -111,6 +131,70 @@ func TestSitemap_Post_New_Card_Validation(t *testing.T) {
 		t.Errorf("Error sending post request: %v", err)
 	}
 	defer res.Body.Close()
-	
 
+	sitejson, err := getSitemapJSON()
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse sitemap json: %v", err)
+	}
+	cards, err = parseSitemapCards(sitejson)
+	if err != nil {
+		log.Printf("JSON parsing error, couldn't parse sitemap cards: %v", err)
+	}
+
+	newCard, found := findCardByID(cards, newCardId)
+	if !cmp.Equal(found, true) {
+		t.Errorf("Expected new card not found by ID")
+	}
+
+	got := newCard.Title
+	want := expectedTitle
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected title: got = %v, want = %v", got, want)
+	}
+	got = newCard.Description
+	want = expectedDescr
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected description: got = %v, want = %v", got, want)
+	}
+	got = newCard.Target
+	want = expectedTarget
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected target (URL): got = %v, want = %v", got, want)
+	}
+	got = newCard.FontColor
+	want = expectedFontColor
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected font color: got = %v, want = %v", got, want)
+	}
+	got = newCard.Color
+	want = expectedBgColor
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected bg color: got = %v, want = %v", got, want)
+	}
+	got = newCard.Icon
+	want = expectedIcon
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected icon src: got = %v, want = %v", got, want)
+	}
+	got = newCard.Columns
+	want = expectedColumns
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected columns: got = %v, want = %v", got, want)
+	}
+	gotmap := newCard.FormColumns
+	wantmap := expectedFormColumns
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected columns: got = %v, want = %v", got, want)
+	}
+	for k, _ := range gotmap {
+		if !cmp.Equal(gotmap[k], wantmap[k]) {
+			t.Errorf("Did not get expected form setting: got = %v, want = %v", gotmap[k], wantmap[k])
+		}
+	}
+
+	got = strconv.Itoa(newCard.Order)
+	want = strconv.Itoa(expectedOrder)
+	if !cmp.Equal(got, want) {
+		t.Errorf("Did not get expected order: got = %v, want = %v", got, want)
+	}
 }

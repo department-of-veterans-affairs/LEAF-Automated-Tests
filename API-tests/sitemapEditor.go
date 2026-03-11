@@ -20,7 +20,6 @@ type SiteCard struct {
 	FormColumns     map[string]string `json:"formColumns,omitempty"`
 }
 
-
 type SiteCards []SiteCard
 
 type SitemapConfig struct {
