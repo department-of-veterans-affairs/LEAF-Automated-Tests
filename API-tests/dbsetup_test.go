@@ -52,6 +52,12 @@ func setupTestDB() {
 	}
 	importLibrarySql := string(f)
 
+	f, err = os.ReadFile("database/platform_privacy_test_db.sql")
+	if err != nil {
+		log.Fatal("Couldn't open the file: ", err.Error())
+	}
+	importPlatformPrivSql := string(f)
+
 	f, err = os.ReadFile("database/portal_agent_db.sql")
 	if err != nil {
 		log.Fatal("Couldn't open the file: ", err.Error())
@@ -129,6 +135,11 @@ func setupTestDB() {
 	}()
 	wg.Wait()
 
+	db.Exec("DROP DATABASE " + testPlatformPrivacyDbName)
+	db.Exec("CREATE DATABASE " + testPlatformPrivacyDbName)
+	db.Exec("USE " + testPlatformPrivacyDbName)
+	db.Exec(importPlatformPrivSql)
+
 	// Switch to test DB
 	db.Exec("USE national_leaf_launchpad")
 
@@ -157,11 +168,23 @@ func setupTestDB() {
 			testNationalNexusDbName,
 		)
 	}
+
+	err = db.QueryRow(`SELECT portal_database FROM sites
+			WHERE portal_database="leaf_platform_privacy_testing"`).
+	Scan(&testPlatformPrivacyDbName)
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		_, err = db.Exec(
+			`INSERT INTO sites (launchpadID, site_type, site_path, site_uploads, portal_database, orgchart_path, orgchart_database, decommissionTimestamp)
+			VALUES (0, "portal", "/platform/privacy", "/var/www/html/LEAF_Request_Portal/UPLOADS_test/", ?,	"/LEAF_NationalNexus", ?, 0)`,
+			testPlatformPrivacyDbName,
+			testNationalNexusDbName,
+		)
+	}
 }
 
 func updateTestDBSchema() {
 	wg := sync.WaitGroup{}
-	wg.Add(5)
+	wg.Add(6)
 
 	go func() {
 		defer wg.Done()
@@ -203,6 +226,16 @@ func updateTestDBSchema() {
 			log.Fatal(`Could not update LEAF Library schema: ` + res)
 		}
 		fmt.Println("Updated DB Schema: LEAF Library ... OK")
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		res, _ := httpGet(PlatformPrivacyURL + `scripts/updateDatabase.php`)
+		if strings.Contains(res, `Db Update failed`) {
+			log.Fatal(`Could not update Platform Privacy schema: ` + res)
+		}
+		fmt.Println("Updated DB Schema: Platform Privacy ... OK")
 	}()
 
 	go func() {
