@@ -68,6 +68,7 @@ INSERT INTO `actions` (`actionType`, `actionText`, `actionTextPasttense`, `actio
 ('deleted',	'Cancel',	'Cancelled',	'',	'',	0,	0,	0),
 ('disapprove',	'Disapprove',	'Disapproved',	'process-stop.svg',	'left',	0,	-1,	0),
 ('move',	'Change Step',	'Changed Step',	'',	'',	0,	0,	0),
+('RequestContextAmendment',	'Request Context Amendment',	'Requested Context Amendment',	'go-next.svg',	'right',	0,	1,	0),
 ('sendback',	'Return to Requestor',	'Returned to Requestor',	'edit-undo.svg',	'left',	0,	0,	0),
 ('sign',	'Sign',	'Signed',	'application-certificate.svg',	'right',	0,	1,	0),
 ('submit',	'Submit',	'Submitted',	'gnome-emblem-default.svg',	'right',	0,	1,	0);
@@ -175,7 +176,7 @@ INSERT INTO `data` (`recordID`, `indicatorID`, `series`, `data`, `metadata`, `ti
 (1,	6,	1,	'1756330534',	NULL,	1756330534,	'*LEAF Agent*'),
 (2,	2,	1,	'https://host.docker.internal/platform/agent/',	NULL,	1756342601,	'tester'),
 (2,	3,	1,	'2',	NULL,	1756342601,	'tester'),
-(2,	4,	1,	'[{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Decommission duplicate tasks&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Execute tasks&quot;}}]',	NULL,	1759885734,	'tester'),
+(2,	4,	1,	'[{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Decommission duplicate tasks&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;Execute tasks&quot;}},{&quot;type&quot;:&quot;annotation&quot;,&quot;payload&quot;:{&quot;data&quot;:&quot;If a LLM Constraint Error exists: Take Action: Request Context Amendment&quot;}}]',	NULL,	1773425200,	'tester'),
 (2,	6,	1,	'1756330534',	NULL,	1756330534,	'*LEAF Agent*');
 
 DROP TABLE IF EXISTS `data_action_log`;
@@ -643,6 +644,7 @@ CREATE TABLE `step_dependencies` (
 INSERT INTO `step_dependencies` (`stepID`, `dependencyID`) VALUES
 (1,	-4),
 (2,	-4),
+(3,	-2),
 (-4,	-1),
 (-3,	-1),
 (-2,	-1);
@@ -719,7 +721,9 @@ INSERT INTO `workflow_routes` (`workflowID`, `stepID`, `nextStepID`, `actionType
 (-1,	-2,	0,	'sendback',	''),
 (1,	1,	2,	'Activate',	''),
 (1,	1,	0,	'Decommission',	''),
-(1,	2,	0,	'Decommission',	'');
+(1,	2,	0,	'Decommission',	''),
+(1,	2,	3,	'RequestContextAmendment',	''),
+(1,	3,	1,	'submit',	'');
 
 DROP TABLE IF EXISTS `workflow_steps`;
 CREATE TABLE `workflow_steps` (
@@ -746,7 +750,8 @@ INSERT INTO `workflow_steps` (`workflowID`, `stepID`, `stepTitle`, `stepBgColor`
 (-1,	-3,	'Supervisory Review for LEAF-S Certification',	'#82b9fe',	'black',	'1px solid black',	'',	579,	146,	-4,	NULL,	NULL,	NULL),
 (-1,	-2,	'Privacy Officer Review for LEAF-S Certification',	'#82b9fe',	'black',	'1px solid black',	'',	575,	331,	-1,	NULL,	NULL,	NULL),
 (1,	1,	'Staging',	'#fffdcd',	'black',	'1px solid black',	'',	586,	125,	NULL,	NULL,	NULL,	NULL),
-(1,	2,	'Active',	'#fffdcd',	'black',	'1px solid black',	'',	866,	202,	NULL,	NULL,	NULL,	NULL);
+(1,	2,	'Active',	'#fffdcd',	'black',	'1px solid black',	'',	866,	202,	NULL,	NULL,	NULL,	NULL),
+(1,	3,	'Update Context',	'#fffdcd',	'black',	'1px solid black',	'',	1273,	142,	NULL,	NULL,	NULL,	NULL);
 
 DROP TABLE IF EXISTS `workflows`;
 CREATE TABLE `workflows` (
